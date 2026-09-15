@@ -234,4 +234,16 @@ async def readiness_check():
     )
 
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="0.0.0.0", port=settings.PORT, reload=settings.DEBUG)
+    port = int(os.getenv("PORT", settings.PORT))
+    workers = int(os.getenv("WORKERS", 1 if settings.DEBUG else 2))
+    if settings.DEBUG:
+        uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
+    else:
+        uvicorn.run(
+            "app.main:app",
+            host="0.0.0.0",
+            port=port,
+            workers=workers,
+            proxy_headers=True,
+            forwarded_allow_ips="*"
+        )
