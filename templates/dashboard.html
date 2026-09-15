@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TekTutors AI Sales Agent | Control Panel & Simulator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="/static/images/tektutors-icon.svg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/dashboard.css?v=2.1.0">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <a href="/dashboard" class="brand-link" title="TekTutors AI Control Panel">
+                    <div class="brand-logo-card">
+                        <img src="/static/images/tektutors-logo.svg" alt="TekTutors" class="brand-logo-img">
+                    </div>
+                    <div class="brand-badge-row">
+                        <span class="brand-agent-badge"><i class="fa-solid fa-bolt"></i> AI Sales Copilot</span>
+                        <span class="brand-live-dot" title="AI Agent Live"></span>
+                    </div>
+                </a>
+            </div>
+
+            <nav class="nav-menu">
+                <div class="nav-section-label">INBOX & SIMULATION</div>
+                <button class="nav-btn active" data-tab="handoff">
+                    <i class="fa-solid fa-headset"></i>
+                    <span>Live Handoff</span>
+                    <span class="badge" id="active-chats-count">0</span>
+                </button>
+                <button class="nav-btn" data-tab="simulator">
+                    <i class="fa-brands fa-whatsapp"></i>
+                    <span>WA Simulator</span>
+                    <span class="badge badge-test">LIVE</span>
+                </button>
+                <button class="nav-btn" data-tab="appointments">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>Appointments</span>
+                    <span class="badge" id="appointments-count">0</span>
+                </button>
+
+                <div class="nav-section-label">GROWTH & CRM</div>
+                <button class="nav-btn" data-tab="leads">
+                    <i class="fa-solid fa-user-tag"></i>
+                    <span>Leads CRM</span>
+                    <span class="badge badge-hot" id="hot-leads-count">0</span>
+                </button>
+                <button class="nav-btn" data-tab="analytics">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Executive Funnel</span>
+                    <span class="badge badge-roi">ROI</span>
+                </button>
+                <button class="nav-btn" data-tab="campaigns">
+                    <i class="fa-solid fa-bullhorn"></i>
+                    <span>Broadcasts</span>
+                    <span class="badge badge-pro">PRO</span>
+                </button>
+                <button class="nav-btn" data-tab="emails">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span>Email Hub</span>
+                    <span class="badge badge-new">NEW</span>
+                </button>
+
+                <div class="nav-section-label">ACADEMY CONFIG</div>
+                <button class="nav-btn" data-tab="courses">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <span>Course Catalog</span>
+                </button>
+                <button class="nav-btn" data-tab="faqs">
+                    <i class="fa-solid fa-circle-question"></i>
+                    <span>FAQ Manager</span>
+                </button>
+                <button class="nav-btn" data-tab="settings">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>System Settings</span>
+                </button>
+            </nav>
+
+            <div class="user-guide-box" style="margin-top: auto; padding: 0.85rem; background: rgba(235, 103, 17, 0.08); border: 1px solid rgba(235, 103, 17, 0.25); border-radius: 10px; text-align: center; margin-bottom: 0.75rem;">
+                <div style="font-size: 0.8rem; font-weight: 600; color: #ff8c3a; margin-bottom: 0.25rem;">
+                    <i class="fa-solid fa-circle-question"></i> Non-Tech Quick Guide
+                </div>
+                <p style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.5rem; line-height: 1.3;">Learn how to navigate and manage your AI in 1 minute.</p>
+                <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.35rem 0.65rem; width: 100%;" onclick="openHelpModal()">
+                    <i class="fa-solid fa-book-open"></i> How It Works
+                </button>
+            </div>
+
+            <div class="system-status">
+                <div class="status-item">
+                    <span class="indicator online"></span>
+                    <span>FastAPI Server Active</span>
+                </div>
+                <div class="status-item">
+                    <i class="fa-solid fa-bolt" style="color: #ff8c3a;"></i>
+                    <span>Sub-Second Response Engine</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Mobile Sidebar Backdrop Overlay -->
+        <div id="sidebar-backdrop" class="sidebar-backdrop" onclick="toggleMobileSidebar()"></div>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Executive Navigation & Quick Bar -->
+            <header class="top-action-bar">
+                <div class="top-header-left">
+                    <button class="btn-mobile-menu" id="mobile-sidebar-toggle" onclick="toggleMobileSidebar()" title="Toggle Navigation">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="view-title-group">
+                        <div class="view-title-row">
+                            <h2 id="header-view-title"><i class="fa-solid fa-headset" style="color: #ff8c3a;"></i> Live Handoff Console</h2>
+                            <span class="sla-badge" title="Guaranteed Sub-Second Response Architecture"><i class="fa-solid fa-bolt"></i> Ultra-Fast &lt;50ms</span>
+                        </div>
+                        <p id="header-view-desc" class="view-subtext">Monitor active student WhatsApp conversations, take over manually, or inspect AI drafts in real-time.</p>
+                    </div>
+                </div>
+
+                <div class="top-header-center">
+                    <div class="global-search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="global-search-input" placeholder="Quick find leads, courses, FAQs... (Press /)" oninput="handleGlobalSearch(this.value)">
+                        <span class="search-kbd-hint">/</span>
+                    </div>
+                </div>
+
+                <div class="top-header-right">
+                    <button class="btn btn-sm btn-demo-glow" onclick="runInteractiveDemo()" title="Experience full 10-second agent walkthrough">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> ✨ 10s Demo
+                    </button>
+                    <button class="btn btn-sm btn-quick" onclick="switchToTab('simulator')" title="Test chat with Tara AI">
+                        <i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> Simulator
+                    </button>
+                    <button class="btn btn-sm btn-quick" onclick="switchToTab('emails')" title="Open Email Hub & Composer">
+                        <i class="fa-solid fa-envelope" style="color: #38bdf8;"></i> Emails
+                    </button>
+                    <button class="btn btn-sm btn-quick" onclick="seedSampleData()" title="Populate demo data for testing">
+                        <i class="fa-solid fa-database" style="color: #10b981;"></i> Demo Data
+                    </button>
+                    <button class="btn btn-sm btn-quick" onclick="openHelpModal()" title="View quick start guide">
+                        <i class="fa-solid fa-circle-question" style="color: #f59e0b;"></i> Guide
+                    </button>
+                </div>
+            </header>
+
+            <!-- Quick-Start Action Launchpad (Dismissible) -->
+            <div class="quick-start-strip" id="quick-start-strip">
+                <div class="qs-title-row">
+                    <span class="qs-label"><i class="fa-solid fa-compass" style="color: #ff8c3a;"></i> Quick Action Hub:</span>
+                    <button class="qs-close-btn" onclick="dismissQuickStart()" title="Hide quick launch bar">&times;</button>
+                </div>
+                <div class="qs-grid">
+                    <div class="qs-card" onclick="switchToTab('simulator')">
+                        <div class="qs-icon wa-green"><i class="fa-brands fa-whatsapp"></i></div>
+                        <div class="qs-text">
+                            <strong>Test AI Simulator</strong>
+                            <span>Simulate chats, questions & voice notes in &lt;1s</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right qs-arrow"></i>
+                    </div>
+                    <div class="qs-card" onclick="switchToTab('leads')">
+                        <div class="qs-icon lead-orange"><i class="fa-solid fa-user-tag"></i></div>
+                        <div class="qs-text">
+                            <strong>Manage Hot Leads</strong>
+                            <span>Qualify prospects, view buying scores & 1-click WhatsApp</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right qs-arrow"></i>
+                    </div>
+                    <div class="qs-card" onclick="switchToTab('emails')">
+                        <div class="qs-icon email-blue"><i class="fa-solid fa-paper-plane"></i></div>
+                        <div class="qs-text">
+                            <strong>Send Email Campaign</strong>
+                            <span>Branded follow-ups, curriculum & promo vouchers</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right qs-arrow"></i>
+                    </div>
+                    <div class="qs-card" onclick="switchToTab('analytics')">
+                        <div class="qs-icon roi-purple"><i class="fa-solid fa-chart-line"></i></div>
+                        <div class="qs-text">
+                            <strong>Sales & Cost ROI</strong>
+                            <span>Track conversion funnels & saved token telemetry</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right qs-arrow"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 1: LIVE HANDOFF CONSOLE -->
+            <section id="tab-handoff" class="tab-pane active">
+                <div class="handoff-grid">
+                    <!-- Conversations List -->
+                    <div class="chat-list-panel glass-card">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-comments"></i> Active Chats</h3>
+                            <button class="btn-icon" id="refresh-chats-btn" title="Refresh"><i class="fa-solid fa-arrows-rotate"></i></button>
+                        </div>
+                        <div class="chat-search">
+                            <i class="fa-solid fa-search"></i>
+                            <input type="text" id="chat-search-input" placeholder="Search phone or name...">
+                        </div>
+                        <div class="conversations-list" id="conversations-container">
+                            <div class="empty-state">Loading active WhatsApp chats...</div>
+                        </div>
+                    </div>
+
+                    <!-- Selected Chat Thread -->
+                    <div class="chat-thread-panel glass-card">
+                        <div class="thread-header" id="thread-header">
+                            <div class="user-meta">
+                                <h3 id="current-chat-name">Select a conversation</h3>
+                                <span id="current-chat-phone" class="sub-text">Choose a chat from the left panel</span>
+                            </div>
+                            <div class="handoff-controls" id="handoff-controls-bar" style="display: none; align-items: center; gap: 0.75rem;">
+                                <div class="toggle-wrapper">
+                                    <span class="toggle-label" style="font-size: 0.78rem;">AI Auto-Reply</span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="ai-active-toggle" checked>
+                                        <span class="slider round"></span>
+                                    </label>
+                                </div>
+                                <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.6rem;" onclick="toggleCustomer360Drawer()"><i class="fa-solid fa-id-badge"></i> Dossier</button>
+                            </div>
+                        </div>
+
+                        <div class="thread-messages" id="messages-container">
+                            <div class="empty-state">
+                                <i class="fa-regular fa-comment-dots fa-3x"></i>
+                                <p>Select a conversation on the left to view message history and step in as a human advisor.</p>
+                            </div>
+                        </div>
+
+                        <!-- Human Response Box -->
+                        <div class="thread-input-area" id="human-input-area" style="display: none;">
+                            <div class="takeover-banner-interactive ai-on" id="ai-active-banner">
+                                <span><i class="fa-solid fa-robot"></i> <strong>AI Auto-Pilot Active:</strong> Tara is auto-replying in 1s.</span>
+                                <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.25rem 0.6rem; background: rgba(239,68,68,0.2); color: #ef4444; border: 1px solid rgba(239,68,68,0.4);" onclick="takeOverConversation()"><i class="fa-solid fa-hand"></i> Take Over Chat</button>
+                            </div>
+                            <div class="takeover-banner-interactive ai-off" id="override-banner" style="display: none;">
+                                <span><i class="fa-solid fa-user-gear"></i> <strong>You Have Control:</strong> AI paused. You are chatting directly.</span>
+                                <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.25rem 0.6rem; background: rgba(37,211,102,0.2); color: #25D366; border: 1px solid rgba(37,211,102,0.4);" onclick="resumeAiConversation()"><i class="fa-solid fa-robot"></i> Hand Back to AI</button>
+                            </div>
+                            
+                            <!-- Co-Pilot Draft Box -->
+                            <div class="copilot-draft-box" id="copilot-draft-container" style="display: none; margin-bottom: 0.5rem;">
+                                <div class="copilot-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                                    <span style="font-size: 0.8rem; font-weight: 600; color: #ff8c3a;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Co-Pilot Suggestion</span>
+                                    <button class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.7rem; background: var(--primary); color: #fff;" onclick="useCopilotSuggestion()">Use Draft</button>
+                                </div>
+                                <div class="copilot-body" id="copilot-draft-text" style="font-size: 0.8rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 0.5rem; border-radius: 8px; color: var(--text-muted); max-height: 80px; overflow-y: auto; white-space: pre-wrap;">Generating suggested response...</div>
+                            </div>
+
+                            <!-- Dynamic AI Copilot Suggestions -->
+                            <div id="copilot-dynamic-suggestions" style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.5rem;"></div>
+
+                            <!-- Quick Reply Templates -->
+                            <div class="quick-templates" style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.5rem;">
+                                <button class="chip" style="background: rgba(255,255,255,0.05); font-size: 0.75rem; border: 1px solid var(--border-color);" onclick="applyTemplate('Hi there! 👋 Welcome to TekTutors. How can I help you accelerate your career today?')">👋 Greeting</button>
+                                <button class="chip" style="background: rgba(255,255,255,0.05); font-size: 0.75rem; border: 1px solid var(--border-color);" onclick="applyTemplate('We offer a flexible month-to-month billing plan (₦100,000 per month) for all our courses.')">💳 Installments</button>
+                                <button class="chip" style="background: rgba(255,255,255,0.05); font-size: 0.75rem; border: 1px solid var(--border-color);" onclick="applyTemplate('Would you like to schedule a quick 1-on-1 discovery call with our Admissions Advisor to discuss details?')">📅 Book Call</button>
+                                <button class="chip" style="background: rgba(255,255,255,0.05); font-size: 0.75rem; border: 1px solid var(--border-color);" onclick="applyTemplate('Our programs feature live weekend classes with industry experts, lab assignments, and direct job referrals.')">🎓 Format</button>
+                            </div>
+
+                            <div class="input-row">
+                                <input type="text" id="human-message-input" placeholder="Type a message to send directly to WhatsApp customer...">
+                                <button class="btn btn-primary" id="send-human-btn">
+                                    <i class="fa-solid fa-paper-plane"></i> Send
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Customer 360 & Advisor CRM Notes Drawer -->
+                    <div class="chat-profile-panel glass-card" id="chat-profile-panel" style="display: none;">
+                        <div class="panel-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.6rem; display: flex; justify-content: space-between; align-items: center;">
+                            <h3 style="font-size: 0.95rem;"><i class="fa-solid fa-id-card-clip" style="color: #ff8c3a;"></i> Customer 360°</h3>
+                            <span class="badge" id="profile-stage-badge">QUALIFIED</span>
+                        </div>
+                        <div class="profile-body" style="padding-top: 0.75rem; display: flex; flex-direction: column; gap: 0.75rem; overflow-y: auto; max-height: calc(100vh - 220px);">
+                            <!-- Lead Score & Quick Stats -->
+                            <div class="profile-score-box" style="background: rgba(15, 23, 42, 0.6); padding: 0.75rem; border-radius: 10px; border: 1px solid var(--border-color); text-align: center;">
+                                <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Lead Buying Score</div>
+                                <div style="font-size: 1.6rem; font-weight: 800; color: #f59e0b; margin: 0.2rem 0;" id="profile-lead-score">🔥 85<span style="font-size: 0.8rem; color: var(--text-muted);">/100</span></div>
+                                <div class="profile-score-track" style="height: 6px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin: 0.35rem 0.5rem 0.5rem 0.5rem;">
+                                    <div id="profile-score-fill" style="width: 85%; height: 100%; background: linear-gradient(90deg, #f59e0b, #10b981); border-radius: 4px;"></div>
+                                </div>
+                                <div style="font-size: 0.72rem; color: #10b981;" id="profile-budget-label"><i class="fa-solid fa-circle-check"></i> Budget Verified</div>
+                            </div>
+
+                            <!-- Student Info Summary -->
+                            <div class="profile-meta-list" style="font-size: 0.8rem; display: flex; flex-direction: column; gap: 0.4rem;">
+                                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">Target Course:</span> <strong id="profile-course-interest" style="color: #e2e8f0;">Data Analytics</strong></div>
+                                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">Skill Level:</span> <strong id="profile-skill-level" style="color: #e2e8f0;">Beginner</strong></div>
+                                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">Phone:</span> <strong id="profile-phone-text" style="color: #e2e8f0;">+234...</strong></div>
+                                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">Email:</span> <strong id="profile-email-text" style="color: #e2e8f0;">alex@...</strong></div>
+                            </div>
+
+                            <!-- Student Real-Time Activity Journey -->
+                            <div class="profile-timeline-box" style="background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.65rem;">
+                                <div style="font-size: 0.72rem; font-weight: 600; color: #38bdf8; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.35rem;">
+                                    <i class="fa-solid fa-clock-rotate-left"></i> Student Activity Timeline
+                                </div>
+                                <div class="activity-timeline-list" id="profile-activity-timeline" style="display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.73rem;">
+                                    <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
+                                        <span style="color: #25D366; font-size: 0.7rem;">●</span>
+                                        <div><strong style="color: #e2e8f0;">WhatsApp Chat Initiated</strong><div style="color: var(--text-muted); font-size: 0.67rem;">Inquired about course catalog</div></div>
+                                    </div>
+                                    <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
+                                        <span style="color: #ff8c3a; font-size: 0.7rem;">●</span>
+                                        <div><strong style="color: #e2e8f0;">Numbered Tracks Presented</strong><div style="color: var(--text-muted); font-size: 0.67rem;">Prompted to choose by number or type course</div></div>
+                                    </div>
+                                    <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
+                                        <span style="color: #f59e0b; font-size: 0.7rem;">●</span>
+                                        <div><strong style="color: #e2e8f0;">Tuition & Mentorship Verified</strong><div style="color: var(--text-muted); font-size: 0.67rem;">1-on-1 model & month-to-month billing</div></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 1-Click AI Lead Summary -->
+                            <div class="profile-ai-summary" style="background: rgba(27, 36, 117, 0.25); border: 1px solid rgba(235, 103, 17, 0.25); border-radius: 8px; padding: 0.6rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                                    <span style="font-size: 0.72rem; font-weight: 600; color: #ff8c3a;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Prospect Dossier</span>
+                                    <button class="btn-icon" style="font-size: 0.7rem; padding: 2px;" onclick="refreshLeadSummary()" title="Regenerate Summary"><i class="fa-solid fa-arrows-rotate"></i></button>
+                                </div>
+                                <p id="profile-ai-dossier-text" style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.35; margin: 0;">Click below to generate an instant executive summary of this lead.</p>
+                            </div>
+
+                            <!-- Move Stage Dropdown -->
+                            <div class="form-group" style="margin: 0;">
+                                <label style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Update Pipeline Stage</label>
+                                <select id="profile-stage-select" class="form-control" style="font-size: 0.8rem; padding: 0.4rem;" onchange="updateProfileStage()">
+                                    <option value="new">🆕 New Lead</option>
+                                    <option value="qualified">✅ Qualified</option>
+                                    <option value="hot">🔥 Hot Prospect</option>
+                                    <option value="enrolled">🎉 Enrolled / Won</option>
+                                    <option value="cold">❄️ Cold</option>
+                                </select>
+                            </div>
+
+                            <!-- Private Advisor Notes -->
+                            <div class="form-group" style="margin: 0;">
+                                <label style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Private Internal Notes</label>
+                                <textarea id="profile-notes-input" class="form-control" rows="3" placeholder="Add confidential notes (e.g. wants weekend schedule, pays Friday)..." style="font-size: 0.75rem;"></textarea>
+                                <button class="btn btn-primary" style="margin-top: 0.4rem; width: 100%; font-size: 0.75rem; padding: 0.4rem;" onclick="saveProfileNotes()"><i class="fa-solid fa-floppy-disk"></i> Save Notes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: WHATSAPP SIMULATOR -->
+            <section id="tab-simulator" class="tab-pane">
+                <div class="simulator-layout">
+                    <div class="simulator-info glass-card">
+                        <h2><i class="fa-brands fa-whatsapp glow-icon"></i> WhatsApp Browser Simulator</h2>
+                        <p>Experience the <strong>TekTutors AI Sales Agent</strong> in real-time. Test customer objections, lead qualification, and voice notes instantly without needing live Meta credentials!</p>
+                        
+                        <div class="sim-config">
+                            <label><i class="fa-solid fa-phone"></i> Test Student Phone Number:</label>
+                            <input type="text" id="sim-phone-input" value="2348012345678" class="form-control">
+                        </div>
+
+                        <div class="persona-sim-chips">
+                            <span class="chip-title"><i class="fa-solid fa-user-check"></i> 1-Click Student Personas (Zero Typing):</span>
+                            <div class="persona-sim-grid">
+                                <button class="btn-persona-sim" onclick="loadSimPersona('blessing')">
+                                    <span class="persona-sim-avatar">👩‍🎓</span>
+                                    <div class="persona-sim-meta">
+                                        <strong>Blessing</strong>
+                                        <small>Beginner / Non-coder</small>
+                                    </div>
+                                </button>
+                                <button class="btn-persona-sim" onclick="loadSimPersona('emeka')">
+                                    <span class="persona-sim-avatar">👨‍💼</span>
+                                    <div class="persona-sim-meta">
+                                        <strong>Emeka</strong>
+                                        <small>Installment Buyer</small>
+                                    </div>
+                                </button>
+                                <button class="btn-persona-sim" onclick="loadSimPersona('alex')">
+                                    <span class="persona-sim-avatar">🎯</span>
+                                    <div class="persona-sim-meta">
+                                        <strong>Alex</strong>
+                                        <small>Book Consultation</small>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="prompt-chips">
+                            <span class="chip-title"><i class="fa-solid fa-bolt" style="color: #ff8c3a;"></i> 1-Click Test Scenarios (Sub-Second Tested):</span>
+                            
+                            <div class="chip-group-label">📚 Course Tracks & Offerings:</div>
+                            <div class="chip-group-row">
+                                <button class="chip chip-highlight" onclick="sendSimPrompt('What courses do you offer and how much are they?')">💰 Course & Fees</button>
+                                <button class="chip" onclick="sendSimPrompt('1')">1️⃣ Track 1: Data Analytics</button>
+                                <button class="chip" onclick="sendSimPrompt('6')">6️⃣ Explore Other Courses</button>
+                            </div>
+
+                            <div class="chip-group-label">👩‍💼 Career Transition & Questions:</div>
+                            <div class="chip-group-row">
+                                <button class="chip" onclick="sendSimPrompt('I don\'t have any coding experience. Can I join?')">👩‍💻 Zero Coding Background</button>
+                                <button class="chip" onclick="sendSimPrompt('I am a banker with no tech experience, can I cope?')">📊 Banker Career Switch</button>
+                                <button class="chip" onclick="sendSimPrompt('What kind of laptop do I need?')">💻 Laptop Specs</button>
+                                <button class="chip" onclick="sendSimPrompt('Do you have weekend classes for working professionals?')">⏰ Weekend Schedule</button>
+                            </div>
+
+                            <div class="chip-group-label">💳 Tuition, Offers & Next Steps:</div>
+                            <div class="chip-group-row">
+                                <button class="chip" onclick="sendSimPrompt('Can I pay in installments?')">💳 ₦100k Month-to-Month</button>
+                                <button class="chip chip-promo" onclick="sendSimPrompt('Do you offer any discounts or promo codes?')">🎁 Tuition Discounts & TEK10</button>
+                                <button class="chip" onclick="sendSimPrompt('I want to schedule a 15-minute call with an admissions advisor tomorrow')">📅 Book 1-on-1 Call</button>
+                                <button class="chip" onclick="sendSimPrompt('Send curriculum to test_student@gmail.com')">📧 Send Syllabus to Email</button>
+                                <button class="chip chip-voice" onclick="simulateVoiceNote()"><i class="fa-solid fa-microphone"></i> 🎙️ Voice Note</button>
+                                <button class="chip" onclick="sendSimPrompt('I would like to speak with a human advisor')">🚨 Human Agent</button>
+                            </div>
+                        </div>
+
+                        <div class="tools-execution-log" id="tools-log-box">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <h4 style="margin: 0; font-size: 0.85rem;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Thought Process & Actions</h4>
+                                <div style="display: flex; gap: 0.35rem;">
+                                    <button class="btn btn-secondary" id="btn-log-mode" style="font-size: 0.68rem; padding: 0.2rem 0.5rem;" onclick="toggleLogMode()"><i class="fa-solid fa-code"></i> Toggle Tech Logs</button>
+                                </div>
+                            </div>
+                            <div class="log-entries" id="tools-log-container">
+                                <div class="log-item info">Ready to observe AI actions...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Phone Mockup Container -->
+                    <div class="phone-container">
+                        <div class="phone-mockup">
+                            <div class="phone-header">
+                                <div class="dynamic-island">
+                                    <span class="island-camera"></span>
+                                    <span class="island-sensor"></span>
+                                </div>
+                                <div class="wa-header-bar">
+                                    <div class="wa-avatar">
+                                        <img src="/static/images/tektutors-icon.svg" alt="TekTutors" class="wa-avatar-img">
+                                    </div>
+                                    <div class="wa-contact-info">
+                                        <h4>TekTutors AI Advisor</h4>
+                                        <span class="online-status"><span class="status-pulse-dot"></span> Online • WhatsApp Business</span>
+                                    </div>
+                                    <button class="btn-icon sound-btn" id="sound-toggle-btn" onclick="toggleAudioChimes()" title="Toggle Notification Audio" style="margin-left: auto; color: #fff; font-size: 0.9rem;">
+                                        <i class="fa-solid fa-volume-high"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="phone-body" id="sim-messages-body">
+                                <div class="wa-date-divider">Today</div>
+                                <div class="msg-bubble assistant-bubble">
+                                    <div class="msg-text">Hello! 👋 Welcome to <strong>TekTutors AI &amp; Data Academy</strong>.<br><br>How can I help you accelerate your technical career today?</div>
+                                    <span class="msg-time">Just now</span>
+                                </div>
+                                <div id="wa-typing-indicator" class="wa-typing-bubble" style="display: none;">
+                                    <div class="typing-dots"><span></span><span></span><span></span></div>
+                                    <span class="typing-text">Tara is typing...</span>
+                                </div>
+                            </div>
+
+                            <div class="phone-quick-chips" style="display: flex; gap: 0.35rem; overflow-x: auto; padding: 0.4rem 0.75rem; background: #111b21; border-top: 1px solid rgba(255,255,255,0.06);">
+                                <button class="chip" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; background: rgba(37,211,102,0.15); color: #25D366; border: 1px solid rgba(37,211,102,0.3);" onclick="simulateVoiceNote()">🎙️ Voice Note</button>
+                                <button class="chip" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="sendSimPrompt('What courses do you offer?')">🎓 Courses</button>
+                                <button class="chip" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="sendSimPrompt('How much is the tuition fee?')">💰 Pricing</button>
+                                <button class="chip" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="sendSimPrompt('Can I pay month-to-month in installments?')">💳 Installments</button>
+                                <button class="chip" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="sendSimPrompt('Book a 15-minute call with an admissions advisor')">📅 Book Call</button>
+                            </div>
+
+                            <div class="phone-footer">
+                                <input type="text" id="sim-user-input" placeholder="Type a message on WhatsApp..." onkeydown="if(event.key==='Enter') sendSimMessage()">
+                                <button class="sim-send-btn" onclick="sendSimMessage()">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: LEADS CRM -->
+            <section id="tab-leads" class="tab-pane">
+                <div class="glass-card panel-full">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-users-gear"></i> TekTutors Sales Leads CRM</h2>
+                        <div class="filter-group" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <div class="crm-search-box">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="lead-search-input" placeholder="Search student name, phone, course..." class="form-control" oninput="filterLeadsLocally()">
+                            </div>
+                            <!-- Segmented View Toggle: Kanban vs Table -->
+                            <div class="view-switch-group" style="display: flex; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 2px; border: 1px solid var(--border-color);">
+                                <button class="btn btn-sm active" id="btn-view-kanban" onclick="setLeadView('kanban')"><i class="fa-solid fa-table-columns"></i> Kanban</button>
+                                <button class="btn btn-sm" id="btn-view-table" onclick="setLeadView('table')"><i class="fa-solid fa-table-list"></i> Table</button>
+                            </div>
+                            <select id="lead-status-filter" class="form-control" onchange="fetchLeads()">
+                                <option value="">All Lead Stages</option>
+                                <option value="hot">🔥 Hot Leads</option>
+                                <option value="qualified">✅ Qualified</option>
+                                <option value="new">🆕 New</option>
+                                <option value="enrolled">🎉 Enrolled</option>
+                            </select>
+                            <button class="btn btn-secondary" onclick="fetchLeads()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                            <button class="btn btn-secondary" style="background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3);" onclick="exportLeads()"><i class="fa-solid fa-file-export"></i> Export CSV</button>
+                        </div>
+                    </div>
+
+                    <!-- Sales Analytics Executive KPI Panel -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div class="kpi-info">
+                                <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Pipeline Value</span>
+                                <h3 style="font-size: 1.35rem; font-weight: 700; color: #10b981; margin-top: 0.25rem;" id="kpi-pipeline">₦0.00</h3>
+                            </div>
+                            <div style="font-size: 1.6rem; color: rgba(16,185,129,0.4);"><i class="fa-solid fa-sack-dollar"></i></div>
+                        </div>
+                        <div class="kpi-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div class="kpi-info">
+                                <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">AI Automation</span>
+                                <h3 style="font-size: 1.35rem; font-weight: 700; color: #25D366; margin-top: 0.25rem;" id="kpi-automation">94.2%</h3>
+                            </div>
+                            <div style="font-size: 1.6rem; color: rgba(37,211,102,0.4);"><i class="fa-solid fa-robot"></i></div>
+                        </div>
+                        <div class="kpi-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div class="kpi-info">
+                                <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Hours Saved</span>
+                                <h3 style="font-size: 1.35rem; font-weight: 700; color: #38bdf8; margin-top: 0.25rem;" id="kpi-hours">18.5 hrs</h3>
+                            </div>
+                            <div style="font-size: 1.6rem; color: rgba(56,189,248,0.4);"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                        </div>
+                        <div class="kpi-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div class="kpi-info">
+                                <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Conversion Rate</span>
+                                <h3 style="font-size: 1.35rem; font-weight: 700; color: #eb6711; margin-top: 0.25rem;" id="kpi-conversion">0%</h3>
+                            </div>
+                            <div style="font-size: 1.6rem; color: rgba(235,103,17,0.4);"><i class="fa-solid fa-percent"></i></div>
+                        </div>
+                        <div class="kpi-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div class="kpi-info">
+                                <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Total Leads</span>
+                                <h3 style="font-size: 1.35rem; font-weight: 700; color: #3b82f6; margin-top: 0.25rem;" id="kpi-leads">0</h3>
+                            </div>
+                            <div style="font-size: 1.6rem; color: rgba(59,130,246,0.4);"><i class="fa-solid fa-user-group"></i></div>
+                        </div>
+                        <div class="kpi-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div class="kpi-info">
+                                <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Hot Prospects</span>
+                                <h3 style="font-size: 1.35rem; font-weight: 700; color: #ef4444; margin-top: 0.25rem;" id="kpi-hot">0</h3>
+                            </div>
+                            <div style="font-size: 1.6rem; color: rgba(239,68,68,0.4);"><i class="fa-solid fa-fire"></i></div>
+                        </div>
+                    </div>
+
+                    <!-- VIEW A: Pipeline Visual Kanban Board -->
+                    <div id="leads-kanban-container" class="kanban-wrapper" style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem; height: calc(100vh - 360px);">
+                        <!-- Rendered by JS -->
+                    </div>
+
+                    <!-- VIEW B: Traditional Data Table -->
+                    <div id="leads-table-container" class="table-responsive" style="display: none;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Phone</th>
+                                    <th>Course Interest</th>
+                                    <th>Skill Level</th>
+                                    <th>Stage</th>
+                                    <th>Score</th>
+                                    <th>Budget</th>
+                                    <th>Notes</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leads-table-body">
+                                <tr><td colspan="9" class="text-center">Loading leads...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: EXECUTIVE SALES FUNNEL & COMMERCIAL ROI INTELLIGENCE -->
+            <section id="tab-analytics" class="tab-pane">
+                <div class="glass-card panel-full" style="height: calc(100vh - 3rem); overflow-y: auto;">
+                    <div class="panel-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                        <div>
+                            <h2><i class="fa-solid fa-chart-line" style="color: #10b981;"></i> Executive Sales Funnel & Commercial ROI Intelligence</h2>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Enterprise conversion progression, multi-channel student attribution, and projected revenue metrics.</p>
+                        </div>
+                        <button class="btn btn-secondary" onclick="fetchFunnelAnalytics()"><i class="fa-solid fa-arrows-rotate"></i> Refresh Telemetry</button>
+                    </div>
+
+                    <div style="padding: 1.25rem 0; display: flex; flex-direction: column; gap: 1.25rem;">
+                        <!-- Commercial ROI Summary Cards -->
+                        <div class="kpi-grid">
+                            <div class="kpi-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Projected MRR</span>
+                                    <h3 style="font-size: 1.35rem; font-weight: 700; color: #10b981; margin-top: 0.25rem;" id="funnel-mrr">₦0.00</h3>
+                                </div>
+                                <div style="font-size: 1.6rem; color: rgba(16,185,129,0.4);"><i class="fa-solid fa-money-bill-trend-up"></i></div>
+                            </div>
+                            <div class="kpi-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">CAC Cost Saved</span>
+                                    <h3 style="font-size: 1.35rem; font-weight: 700; color: #38bdf8; margin-top: 0.25rem;" id="funnel-cac">$0.00</h3>
+                                </div>
+                                <div style="font-size: 1.6rem; color: rgba(56,189,248,0.4);"><i class="fa-solid fa-piggy-bank"></i></div>
+                            </div>
+                            <div class="kpi-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Advisor Time Freed</span>
+                                    <h3 style="font-size: 1.35rem; font-weight: 700; color: #ff8c3a; margin-top: 0.25rem;" id="funnel-time">18.5 hrs</h3>
+                                </div>
+                                <div style="font-size: 1.6rem; color: rgba(235,103,17,0.4);"><i class="fa-solid fa-user-clock"></i></div>
+                            </div>
+                            <div class="kpi-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Avg Response Speed</span>
+                                    <h3 style="font-size: 1.35rem; font-weight: 700; color: #25D366; margin-top: 0.25rem;" id="funnel-speed">1.2s</h3>
+                                </div>
+                                <div style="font-size: 1.6rem; color: rgba(37,211,102,0.4);"><i class="fa-solid fa-bolt-lightning"></i></div>
+                            </div>
+                            <div class="kpi-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Self-Service Rate</span>
+                                    <h3 style="font-size: 1.35rem; font-weight: 700; color: #f59e0b; margin-top: 0.25rem;" id="funnel-resolution">94.8%</h3>
+                                </div>
+                                <div style="font-size: 1.6rem; color: rgba(245,158,11,0.4);"><i class="fa-solid fa-circle-check"></i></div>
+                            </div>
+                            <div class="kpi-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Enrolled Cohorts</span>
+                                    <h3 style="font-size: 1.35rem; font-weight: 700; color: #ec4899; margin-top: 0.25rem;" id="funnel-enrolled-count">0</h3>
+                                </div>
+                                <div style="font-size: 1.6rem; color: rgba(236,72,153,0.4);"><i class="fa-solid fa-award"></i></div>
+                            </div>
+                            <div class="kpi-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Tokens Saved (Zero-Cost)</span>
+                                    <h3 style="font-size: 1.35rem; font-weight: 700; color: #10b981; margin-top: 0.25rem;" id="funnel-tokens-saved">0</h3>
+                                </div>
+                                <div style="font-size: 1.6rem; color: rgba(16,185,129,0.4);"><i class="fa-solid fa-microchip"></i></div>
+                            </div>
+                            <div class="kpi-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Zero-Cost Fast Path</span>
+                                    <h3 style="font-size: 1.35rem; font-weight: 700; color: #ff8c3a; margin-top: 0.25rem;" id="funnel-fast-path-rate">0%</h3>
+                                </div>
+                                <div style="font-size: 1.6rem; color: rgba(235,103,17,0.4);"><i class="fa-solid fa-bolt"></i></div>
+                            </div>
+                        </div>
+
+                        <!-- Funnel Progression & Channel Attribution Visuals -->
+                        <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 1.25rem;">
+                            <!-- Funnel Stages -->
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem;">
+                                <h3 style="font-size: 0.95rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fa-solid fa-filter-circle-dollar" style="color: #38bdf8;"></i> WhatsApp Admissions Funnel Conversion
+                                </h3>
+                                <div id="funnel-stages-container" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                                    <div class="empty-state">Loading sales funnel telemetry...</div>
+                                </div>
+                            </div>
+
+                            <!-- Channel Attribution -->
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem;">
+                                <h3 style="font-size: 0.95rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fa-solid fa-bullseye" style="color: #c084fc;"></i> Lead Channel Attribution
+                                </h3>
+                                <div id="funnel-channels-container" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                                    <div class="empty-state">Loading channel attribution...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: BROADCASTS & MARKETING CAMPAIGNS -->
+            <section id="tab-campaigns" class="tab-pane">
+                <div class="glass-card panel-full" style="height: calc(100vh - 3rem); overflow-y: auto;">
+                    <div class="panel-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                        <div>
+                            <h2><i class="fa-solid fa-bullhorn glow-icon"></i> WhatsApp Broadcasts & Campaign Manager</h2>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Send interactive WhatsApp promotional templates to prospects in seconds. Boost enrollment with 1-click campaigns.</p>
+                        </div>
+                    </div>
+
+                    <div class="campaign-layout" style="display: grid; grid-template-columns: 1fr 380px; gap: 1.5rem; padding: 1.5rem 0;">
+                        <!-- Left: Template Catalog -->
+                        <div class="campaign-templates-section">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                                <h3 style="font-size: 1rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fa-solid fa-layer-group" style="color: #ff8c3a;"></i> High-Converting WhatsApp Campaign Templates
+                                </h3>
+                                <div class="campaign-category-filters" style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
+                                    <button class="btn btn-sm active campaign-cat-btn" data-cat="all" onclick="filterCampaignCategory('all')">All (14)</button>
+                                    <button class="btn btn-sm campaign-cat-btn" data-cat="Offers & Closing" onclick="filterCampaignCategory('Offers & Closing')">⚡ Offers</button>
+                                    <button class="btn btn-sm campaign-cat-btn" data-cat="Objection Handlers" onclick="filterCampaignCategory('Objection Handlers')">🛡️ Objections</button>
+                                    <button class="btn btn-sm campaign-cat-btn" data-cat="Proof & ROI" onclick="filterCampaignCategory('Proof & ROI')">📊 Proof</button>
+                                    <button class="btn btn-sm campaign-cat-btn" data-cat="Cohorts & Events" onclick="filterCampaignCategory('Cohorts & Events')">🚀 Cohorts</button>
+                                    <button class="btn btn-sm campaign-cat-btn" data-cat="Re-engagement" onclick="filterCampaignCategory('Re-engagement')">⏰ Nurture</button>
+                                </div>
+                            </div>
+                            <div class="campaign-templates-grid" id="campaign-templates-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; max-height: calc(100vh - 12rem); overflow-y: auto; padding-right: 0.25rem;">
+                                <!-- Rendered by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Right: Broadcast Dispatch Console & WhatsApp Card Preview -->
+                        <div class="campaign-dispatch-console glass-card" style="padding: 1.25rem; background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 12px; display: flex; flex-direction: column; gap: 1rem;">
+                            <h3 style="font-size: 0.95rem; display: flex; align-items: center; justify-content: space-between;">
+                                <span><i class="fa-solid fa-paper-plane" style="color: #10b981;"></i> Broadcast Dispatcher</span>
+                                <span class="badge" id="campaign-selected-badge" style="background: rgba(235,103,17,0.2); color: #ff8c3a;">Template 1</span>
+                            </h3>
+
+                            <div class="form-group" style="margin: 0;">
+                                <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Target Audience</label>
+                                <select id="broadcast-audience-select" class="form-control" style="font-size: 0.85rem;" onchange="updateBroadcastPreview()">
+                                    <option value="all">👥 All Leads in Database</option>
+                                    <option value="hot">🔥 Hot Prospects Only</option>
+                                    <option value="qualified">✅ Qualified Leads</option>
+                                    <option value="new">🆕 New Uncontacted Leads</option>
+                                </select>
+                            </div>
+
+                            <div class="broadcast-preview-box" style="background: #0b141a; border-radius: 10px; padding: 1rem; border: 1px solid rgba(255,255,255,0.08);">
+                                <div style="font-size: 0.7rem; color: #8696a0; margin-bottom: 0.5rem; text-transform: uppercase;"><i class="fa-brands fa-whatsapp"></i> Live Customer WhatsApp Preview:</div>
+                                <div id="broadcast-preview-message" style="background: #005c4b; color: #e9edef; padding: 0.75rem; border-radius: 8px; font-size: 0.82rem; line-height: 1.4; white-space: pre-wrap;">Select a template on the left...</div>
+                                <div id="broadcast-preview-actions" style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.35rem;"></div>
+                            </div>
+
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.6rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;"><i class="fa-solid fa-mobile-screen"></i> Test On Your Phone Before Blasting:</label>
+                                <div style="display: flex; gap: 0.4rem;">
+                                    <input type="text" id="broadcast-test-phone" value="2348012345678" placeholder="e.g. 2348012345678" class="form-control" style="font-size: 0.78rem; padding: 0.35rem 0.5rem;">
+                                    <button class="btn btn-secondary" style="font-size: 0.75rem; white-space: nowrap; padding: 0.35rem 0.6rem;" onclick="sendTestBroadcast()">
+                                        <i class="fa-solid fa-paper-plane"></i> Test Send
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary" id="btn-dispatch-campaign" style="padding: 0.75rem; font-size: 0.9rem; font-weight: 600; background: linear-gradient(135deg, #10b981, #059669); border: none;" onclick="dispatchBroadcastCampaign()">
+                                <i class="fa-solid fa-rocket"></i> Launch WhatsApp Broadcast
+                            </button>
+
+                            <!-- Broadcast Telemetry Stats -->
+                            <div class="broadcast-telemetry" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.25rem;">
+                                <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 0.68rem; color: var(--text-muted);">Avg Delivery Rate</div>
+                                    <div style="font-size: 1rem; font-weight: 700; color: #10b981;">99.4%</div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 0.68rem; color: var(--text-muted);">Avg Click-Through</div>
+                                    <div style="font-size: 1rem; font-weight: 700; color: #ff8c3a;">38.6%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: EMAIL MARKETING & AUTOMATED FOLLOW-UP HUB -->
+            <section id="tab-emails" class="tab-pane">
+                <div class="glass-card panel-full" style="height: calc(100vh - 3rem); overflow-y: auto;">
+                    <div class="panel-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                        <div>
+                            <h2><i class="fa-solid fa-envelope-open-text glow-icon" style="color: #38bdf8;"></i> TekTutors Email Hub &amp; Campaign Engine</h2>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Dispatch high-converting consultation follow-ups, syllabus roadmaps, and promotional tuition vouchers with personalized branding.</p>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-secondary" onclick="loadEmailHub()"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+                            <button class="btn btn-secondary" style="background: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.3);" onclick="openEmailComposer(null, null, 'broadcast')"><i class="fa-solid fa-bullhorn"></i> Broadcast Campaign</button>
+                            <button class="btn btn-primary" onclick="openEmailComposer()"><i class="fa-solid fa-plus"></i> Compose Email</button>
+                        </div>
+                    </div>
+
+                    <!-- Email KPIs -->
+                    <div class="kpi-grid" style="margin-top: 1rem;">
+                        <div class="kpi-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Total Dispatched</span>
+                                <h3 style="font-size: 1.35rem; font-weight: 700; color: #38bdf8; margin-top: 0.25rem;" id="email-kpi-total">0</h3>
+                            </div>
+                            <div style="font-size: 1.6rem; color: rgba(56,189,248,0.4);"><i class="fa-solid fa-paper-plane"></i></div>
+                        </div>
+                        <div class="kpi-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">1-on-1 Follow-Ups</span>
+                                <h3 style="font-size: 1.35rem; font-weight: 700; color: #10b981; margin-top: 0.25rem;" id="email-kpi-followup">0</h3>
+                            </div>
+                            <div style="font-size: 1.6rem; color: rgba(16,185,129,0.4);"><i class="fa-solid fa-user-check"></i></div>
+                        </div>
+                        <div class="kpi-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Marketing &amp; Promos</span>
+                                <h3 style="font-size: 1.35rem; font-weight: 700; color: #ff8c3a; margin-top: 0.25rem;" id="email-kpi-marketing">0</h3>
+                            </div>
+                            <div style="font-size: 1.6rem; color: rgba(235,103,17,0.4);"><i class="fa-solid fa-tag"></i></div>
+                        </div>
+                        <div class="kpi-card" style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Delivery Success Rate</span>
+                                <h3 style="font-size: 1.35rem; font-weight: 700; color: #25D366; margin-top: 0.25rem;" id="email-kpi-rate">100%</h3>
+                            </div>
+                            <div style="font-size: 1.6rem; color: rgba(37,211,102,0.4);"><i class="fa-solid fa-circle-check"></i></div>
+                        </div>
+                    </div>
+
+                    <!-- Email Templates Catalog -->
+                    <div style="margin-top: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                            <h3 style="font-size: 1rem; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-layer-group" style="color: #ff8c3a;"></i> High-Converting Email Template Library
+                            </h3>
+                            <!-- Category Filter Pills -->
+                            <div class="email-category-filters" style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                                <button class="btn btn-sm active email-cat-btn" data-cat="all" onclick="filterEmailTemplates('all')">All Templates (18)</button>
+                                <button class="btn btn-sm email-cat-btn" data-cat="conversion" onclick="filterEmailTemplates('conversion')">⚡ Conversion &amp; Closing</button>
+                                <button class="btn btn-sm email-cat-btn" data-cat="follow_up" onclick="filterEmailTemplates('follow_up')">📞 Follow-Up &amp; Objections</button>
+                                <button class="btn btn-sm email-cat-btn" data-cat="marketing" onclick="filterEmailTemplates('marketing')">📢 Authority &amp; Proof</button>
+                                <button class="btn btn-sm email-cat-btn" data-cat="promotional" onclick="filterEmailTemplates('promotional')">🎟️ Scholarships &amp; Offers</button>
+                            </div>
+                        </div>
+
+                        <!-- Template Cards Grid -->
+                        <div class="email-templates-grid" id="email-templates-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem;">
+                            <div class="empty-state">Loading templates...</div>
+                        </div>
+                    </div>
+
+                    <!-- Dispatched Email Audit Trail & History -->
+                    <div style="margin-top: 2rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                            <h3 style="font-size: 1rem; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-clock-rotate-left" style="color: #38bdf8;"></i> Dispatched Email History &amp; Audit Trail
+                            </h3>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Real-time delivery log</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Recipient</th>
+                                        <th>Name</th>
+                                        <th>Type</th>
+                                        <th>Subject</th>
+                                        <th>Status</th>
+                                        <th>Sent At</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="email-logs-table-body">
+                                    <tr><td colspan="8" class="text-center">Loading email dispatch history...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: APPOINTMENTS & CONSULTATIONS -->
+            <section id="tab-appointments" class="tab-pane">
+                <div class="glass-card panel-full" style="height: calc(100vh - 3rem); overflow-y: auto;">
+                    <div class="panel-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                        <div>
+                            <h2><i class="fa-solid fa-calendar-check glow-icon"></i> 1-on-1 Admissions Consultations</h2>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Admissions calls and discovery sessions booked automatically by the AI agent.</p>
+                        </div>
+                        <button class="btn btn-secondary" onclick="fetchAppointments()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                    </div>
+
+                    <div class="table-responsive" style="margin-top: 1rem;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Student Name</th>
+                                    <th>Phone</th>
+                                    <th>Course Interest</th>
+                                    <th>Preferred Time</th>
+                                    <th>Status</th>
+                                    <th>Booked At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="appointments-table-body">
+                                <tr><td colspan="8" class="text-center">Loading booked consultations...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 6: COURSE CATALOG & KNOWLEDGE BASE -->
+            <section id="tab-courses" class="tab-pane">
+                <div class="glass-card panel-full">
+                    <div class="panel-header">
+                        <div>
+                            <h2><i class="fa-solid fa-book-open"></i> TekTutors Course Catalog</h2>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Add or update courses and pricing. The AI advisor uses this data in real-time!</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openAddCourseModal()"><i class="fa-solid fa-plus"></i> Add Course</button>
+                    </div>
+                    <div class="courses-grid" id="courses-container">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 7: FAQ MANAGER -->
+            <section id="tab-faqs" class="tab-pane">
+                <div class="glass-card panel-full">
+                    <div class="panel-header">
+                        <div>
+                            <h2><i class="fa-solid fa-circle-question"></i> FAQ Knowledge Base</h2>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Answer questions about payments, certificates, and schedules without writing code.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openAddFaqModal()"><i class="fa-solid fa-plus"></i> Add FAQ</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Question</th>
+                                    <th>Answer</th>
+                                    <th style="width: 180px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="faqs-table-body">
+                                <tr><td colspan="4" class="text-center">Loading FAQs...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 8: SYSTEM SETTINGS -->
+            <section id="tab-settings" class="tab-pane">
+                <div class="glass-card panel-full" style="height: calc(100vh - 3rem); overflow-y: auto;">
+                    <div class="panel-header" style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <h2><i class="fa-solid fa-sliders"></i> System Settings & AI Personality</h2>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Customize your AI sales agent's tone, name, and business hours with zero code.</p>
+                        </div>
+                    </div>
+                    <div class="settings-container" style="padding: 1.5rem;">
+                        <form id="settings-form" onsubmit="saveSettings(event)" style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 820px;">
+                            
+                            <!-- No-Code Persona Tone Selection Cards -->
+                            <div>
+                                <label style="font-size: 0.9rem; font-weight: 600; color: #fff; display: block; margin-bottom: 0.5rem;">
+                                    <i class="fa-solid fa-masks-theater" style="color: #ff8c3a;"></i> AI Persona & Conversation Tone (Select One)
+                                </label>
+                                <div class="persona-cards-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem;">
+                                    <div class="persona-card active" data-tone="consultative" onclick="selectPersonaTone('consultative')">
+                                        <div class="persona-icon">🧭</div>
+                                        <div class="persona-name">Consultative Advisor</div>
+                                        <div class="persona-desc">Diagnoses goals, recommends perfect curriculum, highly trusted.</div>
+                                    </div>
+                                    <div class="persona-card" data-tone="closer" onclick="selectPersonaTone('closer')">
+                                        <div class="persona-icon">🚀</div>
+                                        <div class="persona-name">Sales Closer</div>
+                                        <div class="persona-desc">High-energy, drives instant enrollment & scholarship claims.</div>
+                                    </div>
+                                    <div class="persona-card" data-tone="friendly" onclick="selectPersonaTone('friendly')">
+                                        <div class="persona-icon">🌟</div>
+                                        <div class="persona-name">Friendly Mentor</div>
+                                        <div class="persona-desc">Warm, empathetic, patient with non-technical beginners.</div>
+                                    </div>
+                                    <div class="persona-card" data-tone="formal" onclick="selectPersonaTone('formal')">
+                                        <div class="persona-icon">💼</div>
+                                        <div class="persona-name">Corporate B2B</div>
+                                        <div class="persona-desc">Structured, executive style for corporate tech teams.</div>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="settings-persona-tone" value="consultative">
+                            </div>
+
+                            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label for="settings-agent-name" style="font-size: 0.85rem; font-weight: 600; color: #fff;">Agent Name</label>
+                                    <input type="text" id="settings-agent-name" class="form-control" required placeholder="e.g. Tara">
+                                </div>
+                                <div class="form-group">
+                                    <label for="settings-business-hours" style="font-size: 0.85rem; font-weight: 600; color: #fff;">Business Working Hours</label>
+                                    <input type="text" id="settings-business-hours" class="form-control" placeholder="e.g. 9:00 AM - 6:00 PM (Mon-Sat)">
+                                </div>
+                            </div>
+
+                            <!-- Multi-Currency Configuration -->
+                            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label for="settings-currency" style="font-size: 0.85rem; font-weight: 600; color: #fff;">
+                                        <i class="fa-solid fa-coins" style="color: #f59e0b;"></i> Tuition & Analytics Currency
+                                    </label>
+                                    <select id="settings-currency" class="form-control" onchange="onCurrencyChange()">
+                                        <option value="NGN">₦ NGN - Nigerian Naira</option>
+                                        <option value="USD">$ USD - US Dollar</option>
+                                        <option value="GBP">£ GBP - British Pound</option>
+                                        <option value="EUR">€ EUR - Euro</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="settings-currency-symbol" style="font-size: 0.85rem; font-weight: 600; color: #fff;">Currency Symbol</label>
+                                    <input type="text" id="settings-currency-symbol" class="form-control" value="₦" readonly style="background: rgba(255,255,255,0.05); color: #10b981; font-weight: 700;">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="settings-away-message" style="font-size: 0.85rem; font-weight: 600; color: #fff;">After-Hours Away Message</label>
+                                <input type="text" id="settings-away-message" class="form-control" placeholder="Message sent automatically when outside working hours...">
+                            </div>
+
+                            <!-- Outbound CRM & Webhook Integration Box -->
+                            <div class="glass-card" style="background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.15rem; display: flex; flex-direction: column; gap: 0.85rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <h4 style="margin: 0; font-size: 0.9rem; color: #fff; display: flex; align-items: center; gap: 0.4rem;">
+                                            <i class="fa-solid fa-network-wired" style="color: #38bdf8;"></i> Outbound CRM & Webhook Integration
+                                        </h4>
+                                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">Push qualified WhatsApp leads and enrollment triggers directly to HubSpot, Zapier, or Make.com.</p>
+                                    </div>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="testWebhookPing()"><i class="fa-solid fa-paper-plane"></i> Test Ping</button>
+                                </div>
+                                <div class="form-row" style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.85rem;">
+                                    <div class="form-group" style="margin: 0;">
+                                        <label for="settings-webhook-url" style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">Webhook Endpoint URL</label>
+                                        <input type="url" id="settings-webhook-url" class="form-control" placeholder="https://api.hubspot.com/v1/webhook or Zapier hook...">
+                                    </div>
+                                    <div class="form-group" style="margin: 0;">
+                                        <label for="settings-webhook-secret" style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">Secret / Signing Token</label>
+                                        <input type="password" id="settings-webhook-secret" class="form-control" placeholder="whsec_...">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Advanced System Prompt Accordion -->
+                            <details style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem;">
+                                <summary style="font-size: 0.85rem; font-weight: 600; color: #ff8c3a; cursor: pointer;">
+                                    <i class="fa-solid fa-code"></i> Advanced Developer Prompts (Optional)
+                                </summary>
+                                <div style="margin-top: 0.75rem;">
+                                    <textarea id="settings-system-prompt" class="form-control" rows="8" required style="font-family: monospace; font-size: 0.8rem;"></textarea>
+                                </div>
+                            </details>
+
+                            <div class="form-group checkbox-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" id="settings-ai-enabled" checked style="width: auto;">
+                                <label for="settings-ai-enabled" style="font-size: 0.9rem; font-weight: 600; color: #fff; cursor: pointer;">Enable AI Global Auto-Pilot</label>
+                            </div>
+
+                            <div>
+                                <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem;"><i class="fa-solid fa-save"></i> Save Configuration</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Course Add/Edit Modal -->
+    <div id="course-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h3 id="course-modal-title">Add New Course</h3>
+                <button class="btn-icon" onclick="closeCourseModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="course-form" onsubmit="saveCourse(event)">
+                <input type="hidden" id="course-id">
+                <div class="form-group">
+                    <label for="course-title">Course Title</label>
+                    <input type="text" id="course-title" class="form-control" required placeholder="e.g., Python Bootcamp">
+                </div>
+                <div class="form-group">
+                    <label for="course-slug">Slug (URL-friendly name)</label>
+                    <input type="text" id="course-slug" class="form-control" required placeholder="e.g., python-bootcamp">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="course-price">Tuition Price per Month</label>
+                        <input type="number" step="0.01" id="course-price" class="form-control" required placeholder="e.g., 100000">
+                    </div>
+                    <div class="form-group">
+                        <label for="course-duration">Duration (Weeks)</label>
+                        <input type="number" id="course-duration" class="form-control" required placeholder="e.g., 8">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="course-description">Short Description</label>
+                    <textarea id="course-description" class="form-control" rows="2" required placeholder="Brief summary of the course..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="course-syllabus">Syllabus Details</label>
+                    <textarea id="course-syllabus" class="form-control" rows="3" required placeholder="Syllabus overview..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="course-prerequisites">Prerequisites</label>
+                        <input type="text" id="course-prerequisites" class="form-control" required placeholder="e.g., No prior experience needed">
+                    </div>
+                    <div class="form-group">
+                        <label for="course-outcomes">Career Outcomes</label>
+                        <input type="text" id="course-outcomes" class="form-control" required placeholder="e.g., Data Analyst, Python Developer">
+                    </div>
+                </div>
+                <div class="form-group checkbox-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+                    <input type="checkbox" id="course-active" checked style="width: auto;">
+                    <label for="course-active">Is Active</label>
+                </div>
+                <div class="modal-footer" style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeCourseModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Course</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- FAQ Add/Edit Modal -->
+    <div id="faq-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h3 id="faq-modal-title">Add New FAQ</h3>
+                <button class="btn-icon" onclick="closeFaqModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="faq-form" onsubmit="saveFaq(event)">
+                <input type="hidden" id="faq-id">
+                <div class="form-group">
+                    <label for="faq-category">Category</label>
+                    <input type="text" id="faq-category" class="form-control" required placeholder="e.g., Payments & Discounts, Schedule">
+                </div>
+                <div class="form-group">
+                    <label for="faq-question">Question</label>
+                    <textarea id="faq-question" class="form-control" rows="2" required placeholder="State the question..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="faq-answer">Answer</label>
+                    <textarea id="faq-answer" class="form-control" rows="4" required placeholder="State the answer..."></textarea>
+                </div>
+                <div class="modal-footer" style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeFaqModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save FAQ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Interactive Quick Help & Non-Tech Onboarding Modal -->
+    <div id="help-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass-card" style="max-width: 650px;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                <h3><i class="fa-solid fa-circle-question" style="color: #ff8c3a;"></i> Quick Guide: How to Use TekTutors AI</h3>
+                <button class="btn-icon" onclick="closeHelpModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="padding: 1rem 0; display: flex; flex-direction: column; gap: 1rem;">
+                <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                    <div style="width: 38px; height: 38px; background: rgba(37,211,102,0.15); color: #25D366; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">1</div>
+                    <div>
+                        <strong style="color: #fff;">Test in the WA Simulator</strong>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Click scenario chips to see how the AI answers course pricing, handles beginner doubts, and plays realistic voice notes.</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                    <div style="width: 38px; height: 38px; background: rgba(235,103,17,0.15); color: #ff8c3a; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">2</div>
+                    <div>
+                        <strong style="color: #fff;">Track Students in Leads CRM & Kanban</strong>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">As prospects chat, the AI qualifies them and calculates their buying score. Move leads between stages with 1 click.</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                    <div style="width: 38px; height: 38px; background: rgba(245,158,11,0.15); color: #f59e0b; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">3</div>
+                    <div>
+                        <strong style="color: #fff;">Step in with Live Handoff & AI Co-Pilot</strong>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">When a high-value customer needs custom negotiation, pause the bot, view their 360° dossier, and use AI-suggested replies.</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                    <div style="width: 38px; height: 38px; background: rgba(168,85,247,0.15); color: #c084fc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">4</div>
+                    <div>
+                        <strong style="color: #fff;">Launch WhatsApp Broadcasts in 1 Click</strong>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Pick a pre-written template (like Weekend 20% Scholarship) and dispatch it to all leads with interactive WhatsApp action buttons.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 0.75rem; text-align: right;">
+                <button class="btn btn-primary" onclick="closeHelpModal()">Got It! Let's Go 🚀</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Composer & Live Preview Modal -->
+    <div id="email-composer-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass-card" style="max-width: 1020px; width: 95vw; max-height: 92vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <h3 id="email-modal-title" style="display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                        <i class="fa-solid fa-paper-plane" style="color: #38bdf8;"></i> Compose &amp; Dispatch Email
+                    </h3>
+                    <!-- Mode Switcher: Single vs Broadcast -->
+                    <div class="view-switch-group" style="display: flex; background: rgba(0,0,0,0.35); border-radius: 8px; padding: 2px; border: 1px solid var(--border-color);">
+                        <button type="button" class="btn btn-sm active" id="btn-mode-single" onclick="setComposerMode('single')">
+                            <i class="fa-solid fa-user"></i> Single Recipient
+                        </button>
+                        <button type="button" class="btn btn-sm" id="btn-mode-broadcast" onclick="setComposerMode('broadcast')">
+                            <i class="fa-solid fa-bullhorn"></i> Broadcast Campaign
+                        </button>
+                    </div>
+                </div>
+                <button class="btn-icon" onclick="closeEmailComposer()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 1.25rem; padding: 1.25rem 0; overflow-y: auto; flex: 1;">
+                <!-- Left: Form Controls -->
+                <form id="email-composer-form" onsubmit="event.preventDefault(); submitEmailDispatch();" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                    <input type="hidden" id="composer-mode" value="single">
+                    <input type="hidden" id="composer-lead-id" value="">
+
+                    <!-- Pre-built Template Quick Selector -->
+                    <div class="form-group" style="margin: 0; background: rgba(235,103,17,0.06); padding: 0.6rem; border-radius: 8px; border: 1px solid rgba(235,103,17,0.25);">
+                        <label for="composer-template-select" style="font-size: 0.75rem; font-weight: 700; color: #ff8c3a; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.3rem;">
+                            <i class="fa-solid fa-layer-group"></i> Load High-Converting Campaign Template
+                        </label>
+                        <select id="composer-template-select" class="form-control" style="font-size: 0.82rem;" onchange="onComposerTemplateSelected(this.value)">
+                            <option value="">-- Or Choose a Pre-Built Conversion Template --</option>
+                        </select>
+                    </div>
+
+                    <!-- Single Recipient Fields -->
+                    <div id="composer-single-fields">
+                        <div class="form-row" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 0.75rem;">
+                            <div class="form-group" style="margin: 0;">
+                                <label for="composer-recipient-email" style="font-size: 0.75rem; font-weight: 600; color: #fff;">Recipient Email</label>
+                                <input type="email" id="composer-recipient-email" class="form-control" placeholder="student@example.com">
+                            </div>
+                            <div class="form-group" style="margin: 0;">
+                                <label for="composer-recipient-name" style="font-size: 0.75rem; font-weight: 600; color: #fff;">Student Name</label>
+                                <input type="text" id="composer-recipient-name" class="form-control" placeholder="e.g. Alex" oninput="updateEmailLivePreviewDebounced()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Broadcast Target Selector -->
+                    <div id="composer-broadcast-fields" style="display: none;">
+                        <div class="form-group" style="margin: 0;">
+                            <label for="composer-target-audience" style="font-size: 0.75rem; font-weight: 600; color: #fff;">Target Audience Segment</label>
+                            <select id="composer-target-audience" class="form-control">
+                                <option value="all">👥 All Leads with Email</option>
+                                <option value="hot">🔥 Hot Prospects (Score ≥ 80)</option>
+                                <option value="qualified">✅ Qualified Prospects (Score ≥ 60)</option>
+                                <option value="new">🆕 New Inquiries</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <div class="form-group" style="margin: 0;">
+                            <label for="composer-campaign-type" style="font-size: 0.75rem; font-weight: 600; color: #fff;">Email Category</label>
+                            <select id="composer-campaign-type" class="form-control">
+                                <option value="follow_up">📞 Follow-Up (Admissions &amp; Calls)</option>
+                                <option value="marketing">📢 Marketing (Cohorts &amp; Roadmaps)</option>
+                                <option value="promotional">⚡ Promotional (Scholarships &amp; Invoices)</option>
+                                <option value="direct">✉️ Direct Personalized</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label for="composer-course-name" style="font-size: 0.75rem; font-weight: 600; color: #fff;">Course Context</label>
+                            <select id="composer-course-name" class="form-control" onchange="updateEmailLivePreviewDebounced()">
+                                <option value="Data Analytics & BI Accelerator">Data Analytics &amp; BI Accelerator</option>
+                                <option value="Excel for Data Analysis">Excel for Data Analysis</option>
+                                <option value="SQL for Data Analysis">SQL for Data Analysis</option>
+                                <option value="Power BI & Business Intelligence">Power BI &amp; Business Intelligence</option>
+                                <option value="Applied Python for Data Analysis & AI">Applied Python for Data Analysis &amp; AI</option>
+                                <option value="AI & Machine Learning Foundations">AI &amp; Machine Learning Foundations</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin: 0;">
+                        <label for="composer-subject" style="font-size: 0.75rem; font-weight: 600; color: #fff;">Subject Line</label>
+                        <input type="text" id="composer-subject" class="form-control" required placeholder="Subject..." oninput="updateEmailLivePreviewDebounced()">
+                    </div>
+
+                    <div class="form-group" style="margin: 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                            <label for="composer-body" style="font-size: 0.75rem; font-weight: 600; color: #fff;">Email Body (Markdown supported)</label>
+                            <span style="font-size: 0.68rem; color: #38bdf8;">Tokens: {{name}}, {{course}}, {{registration_url}}</span>
+                        </div>
+                        <textarea id="composer-body" class="form-control" rows="8" required placeholder="Type your email message..." oninput="updateEmailLivePreviewDebounced()"></textarea>
+                    </div>
+
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 0.75rem;">
+                        <div class="form-group" style="margin: 0;">
+                            <label for="composer-cta-text" style="font-size: 0.75rem; font-weight: 600; color: #fff;">Button Text (CTA)</label>
+                            <input type="text" id="composer-cta-text" class="form-control" value="Complete Registration" oninput="updateEmailLivePreviewDebounced()">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label for="composer-cta-url" style="font-size: 0.75rem; font-weight: 600; color: #fff;">Button URL</label>
+                            <input type="url" id="composer-cta-url" class="form-control" value="https://tektutors.com.ng/registration" oninput="updateEmailLivePreviewDebounced()">
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Right: Real-time Branded HTML Preview -->
+                <div class="email-preview-container" style="display: flex; flex-direction: column; background: #0b141a; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 0.75rem; overflow: hidden;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; padding-bottom: 0.4rem; border-bottom: 1px solid rgba(255,255,255,0.06);">
+                        <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 600; text-transform: uppercase;">
+                            <i class="fa-solid fa-eye" style="color: #38bdf8;"></i> Live Branded Student Preview
+                        </span>
+                        <span class="badge" style="background: rgba(16,185,129,0.15); color: #10b981; font-size: 0.68rem;">HTML5 Responsive</span>
+                    </div>
+                    <div id="composer-preview-frame-wrapper" style="flex: 1; min-height: 380px; background: #0f172a; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+                        <iframe id="composer-preview-iframe" style="width: 100%; height: 100%; border: none; background: #ffffff;"></iframe>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                <!-- Test Send Drawer -->
+                <div style="display: flex; gap: 0.4rem; align-items: center; background: rgba(255,255,255,0.03); padding: 0.35rem 0.6rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <label for="composer-test-email" style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;"><i class="fa-solid fa-vial"></i> Test Send:</label>
+                    <input type="email" id="composer-test-email" placeholder="my.email@gmail.com" class="form-control" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; width: 175px;">
+                    <button type="button" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.3rem 0.6rem; white-space: nowrap;" onclick="sendTestEmailFromComposer()">
+                        Dispatch Test
+                    </button>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeEmailComposer()">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-submit-email" onclick="submitEmailDispatch()">
+                        <i class="fa-solid fa-paper-plane"></i> Send Email Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dispatched Email Log Inspector Modal -->
+    <div id="email-log-detail-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass-card" style="max-width: 900px; width: 92vw; max-height: 88vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="email-log-detail-title" style="display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; margin: 0;">
+                    <i class="fa-solid fa-envelope-circle-check" style="color: #38bdf8;"></i> Dispatched Email Audit Details
+                </h3>
+                <button class="btn-icon" onclick="closeEmailLogDetail()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="padding: 0.6rem 0; font-size: 0.78rem; display: flex; flex-wrap: wrap; gap: 1.25rem; border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+                <div><strong>Recipient:</strong> <span id="log-detail-recipient" style="color: #fff;"></span></div>
+                <div><strong>Subject:</strong> <span id="log-detail-subject" style="color: #38bdf8; font-weight: 600;"></span></div>
+                <div><strong>Status:</strong> <span id="log-detail-status"></span></div>
+                <div><strong>Sent:</strong> <span id="log-detail-sent-at" style="color: #fff;"></span></div>
+            </div>
+            <div id="log-detail-error" style="display: none; padding: 0.5rem; margin-top: 0.5rem; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; color: #f87171; font-size: 0.75rem;"></div>
+            <div style="flex: 1; min-height: 400px; margin-top: 0.75rem; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08);">
+                <iframe id="log-detail-iframe" style="width: 100%; height: 100%; border: none; background: #ffffff;"></iframe>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 0.75rem; text-align: right;">
+                <button class="btn btn-secondary" onclick="closeEmailLogDetail()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Conversion Follow-Up Action Modal for Leads CRM -->
+    <div id="conversion-followup-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass-card" style="max-width: 520px; width: 92vw; display: flex; flex-direction: column; gap: 1rem;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; margin: 0;">
+                    <i class="fa-solid fa-bolt" style="color: #ff8c3a;"></i> 1-Click Conversion Email Follow-Up
+                </h3>
+                <button class="btn-icon" onclick="closeConversionFollowup()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
+                Select a high-converting email touchpoint for <strong id="conversion-target-name" style="color: #fff;"></strong> (<span id="conversion-target-email" style="color: #38bdf8;"></span>):
+            </p>
+
+            <input type="hidden" id="conversion-target-lead-id" value="">
+
+            <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+                <button class="btn btn-secondary" style="text-align: left; padding: 0.7rem 0.9rem; justify-content: flex-start; background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.3); color: #fff;" onclick="executeConversionFollowup('syllabus')">
+                    <div>
+                        <strong style="color: #38bdf8; display: block; font-size: 0.85rem;"><i class="fa-solid fa-book"></i> 1. Syllabus &amp; Roadmap Delivery</strong>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">Week-by-week curriculum, capstone portfolio breakdown, and 1-on-1 mentorship overview.</span>
+                    </div>
+                </button>
+
+                <button class="btn btn-secondary" style="text-align: left; padding: 0.7rem 0.9rem; justify-content: flex-start; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #fff;" onclick="executeConversionFollowup('consultation')">
+                    <div>
+                        <strong style="color: #10b981; display: block; font-size: 0.85rem;"><i class="fa-solid fa-calendar-check"></i> 2. 1-on-1 Discovery Call Confirmation</strong>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">Appointment details, skill assessment agenda, and mentor pairing preview.</span>
+                    </div>
+                </button>
+
+                <button class="btn btn-secondary" style="text-align: left; padding: 0.7rem 0.9rem; justify-content: flex-start; background: rgba(235,103,17,0.1); border: 1px solid rgba(235,103,17,0.3); color: #fff;" onclick="executeConversionFollowup('scholarship')">
+                    <div>
+                        <strong style="color: #ff8c3a; display: block; font-size: 0.85rem;"><i class="fa-solid fa-ticket"></i> 3. 20% Fast-Action Scholarship Voucher</strong>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">Code TEK-EARLY20 (₦80,000/mo) and ₦90,000 upfront full payment discount.</span>
+                    </div>
+                </button>
+
+                <button class="btn btn-secondary" style="text-align: left; padding: 0.7rem 0.9rem; justify-content: flex-start; background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.3); color: #fff;" onclick="executeConversionFollowup('invoice')">
+                    <div>
+                        <strong style="color: #c084fc; display: block; font-size: 0.85rem;"><i class="fa-solid fa-receipt"></i> 4. Official Invoice &amp; Registration Checkout</strong>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">Direct checkout link, cohort onboarding date, and seat reservation guarantee.</span>
+                    </div>
+                </button>
+
+                <button class="btn btn-secondary" style="text-align: left; padding: 0.7rem 0.9rem; justify-content: flex-start; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: #fff;" onclick="executeConversionFollowup('reengagement')">
+                    <div>
+                        <strong style="color: #f59e0b; display: block; font-size: 0.85rem;"><i class="fa-solid fa-user-clock"></i> 5. Alumni Success Story &amp; Re-engagement</strong>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">Career transition case study and limited seat reservation reminder.</span>
+                    </div>
+                </button>
+            </div>
+
+            <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 0.5rem; text-align: right;">
+                <button class="btn btn-secondary" onclick="closeConversionFollowup()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" style="position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem;"></div>
+
+    <script src="/static/js/dashboard.js?v=1.0.2"></script>
+</body>
+</html>

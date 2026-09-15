@@ -1,0 +1,36 @@
+# Ignore virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Ignore local SQLite databases and logs
+*.db
+*.sqlite3
+tektutors.db
+*.log
+
+# Ignore environment files (secrets must be injected via Railway / Cloud dashboard)
+.env
+.env.*
+!.env.example
+
+# Ignore Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Ignore git and documentation not needed in runtime container
+.git/
+.gitignore
+.github/
+README.md
+RAILWAY_DEPLOYMENT_GUIDE.md
+
+# Ignore OS junk
+.DS_Store
+Thumbs.db
