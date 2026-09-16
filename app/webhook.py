@@ -12,6 +12,7 @@ from app.database import get_db, AsyncSessionLocal
 from app.models import Conversation, Message, Lead
 from app.whatsapp import whatsapp_client
 from app.agent import agent_manager
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["WhatsApp Webhook"])
@@ -21,6 +22,26 @@ processed_message_ids = set()
 
 # In-memory concurrency locks per phone number to serialize processing
 user_locks: Dict[str, asyncio.Lock] = {}
+
+# Live diagnostics store for real-time inspection
+webhook_diagnostics = {
+    "total_webhooks_received": 0,
+    "last_webhook_at": None,
+    "last_incoming_message": None,
+    "last_agent_response": None,
+    "last_meta_dispatch": None
+}
+
+@router.get("/api/webhook/status")
+async def webhook_status():
+    """Live diagnostic endpoint to inspect webhook health, token configuration, and recent events."""
+    return {
+        "whatsapp_configured": whatsapp_client.is_configured(),
+        "whatsapp_token_configured": bool(settings.WHATSAPP_TOKEN),
+        "whatsapp_phone_number_id_configured": bool(settings.WHATSAPP_PHONE_NUMBER_ID),
+        "groq_configured": bool(settings.GROQ_API_KEY),
+        "diagnostics": webhook_diagnostics
+    }
 
 async def verify_meta_signature(request: Request) -> bool:
     """Validate that incoming webhook payload matches the Meta App Secret signature."""
@@ -89,6 +110,11 @@ async def process_webhook_message_in_background(conversation_id: int, phone: str
                 )
 
                 ai_reply = ai_result.get("response")
+                webhook_diagnostics["last_agent_response"] = {
+                    "phone": phone,
+                    "reply": ai_reply[:140] if ai_reply else None,
+                    "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
 
                 # Refetch conversation state to avoid dirty writes
                 stmt = select(Conversation).where(Conversation.id == conversation_id)
@@ -111,6 +137,11 @@ async def process_webhook_message_in_background(conversation_id: int, phone: str
 
                         # Send reply back to user on WhatsApp
                         send_res = await whatsapp_client.send_text_message(phone, ai_reply)
+                        webhook_diagnostics["last_meta_dispatch"] = {
+                            "phone": phone,
+                            "result": send_res,
+                            "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        }
                         logger.info(f"WhatsApp reply sent to {phone}. Result: {send_res}")
                 else:
                     # AI is NOT active (Human mode). Generate background draft.
@@ -140,6 +171,8 @@ async def receive_webhook(
         return {"status": "ignored", "reason": "invalid_json"}
 
     logger.info(f"📩 Webhook event received from Meta: {body}")
+    webhook_diagnostics["total_webhooks_received"] += 1
+    webhook_diagnostics["last_webhook_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # Extract entry & changes
     entries = body.get("entry", [])
@@ -193,6 +226,12 @@ async def receive_webhook(
                 if not user_text or not from_number:
                     continue
 
+                webhook_diagnostics["last_incoming_message"] = {
+                    "phone": from_number,
+                    "name": contact_name,
+                    "text": user_text,
+                    "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
                 logger.info(f"📨 Incoming WhatsApp message from {from_number} ({contact_name}): '{user_text}'")
 
                 # Mark message as read on WhatsApp

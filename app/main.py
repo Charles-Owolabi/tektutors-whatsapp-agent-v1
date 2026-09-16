@@ -266,11 +266,18 @@ async def readiness_check():
     groq_status = "configured" if settings.GROQ_API_KEY else "not_configured"
     is_ready = (db_status == "ok") and (groq_status == "configured")
 
+    from app.whatsapp import whatsapp_client
+    from app.webhook import webhook_diagnostics
+
     return Response(
         content=json.dumps({
             "status": "ready" if is_ready else "degraded",
             "database": db_status,
             "groq_engine": groq_status,
+            "whatsapp_configured": whatsapp_client.is_configured(),
+            "whatsapp_phone_number_id_set": bool(settings.WHATSAPP_PHONE_NUMBER_ID),
+            "whatsapp_token_set": bool(settings.WHATSAPP_TOKEN),
+            "webhook_diagnostics": webhook_diagnostics,
             "model": settings.GROQ_MODEL,
             "env": settings.APP_ENV
         }),
