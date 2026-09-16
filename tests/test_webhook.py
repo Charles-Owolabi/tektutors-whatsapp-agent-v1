@@ -39,3 +39,23 @@ def test_simulator_chat_endpoint():
     assert data["status"] == "success"
     assert data["phone"] == "2348099887766"
     assert "ai_response" in data
+
+def test_webhook_post_incoming_message():
+    payload = {
+        "entry": [{
+            "changes": [{
+                "value": {
+                    "messages": [{
+                        "id": "wamid.test_incoming_123",
+                        "from": "2348011223344",
+                        "type": "text",
+                        "text": {"body": "Hello can i learn about your course"}
+                    }],
+                    "contacts": [{"profile": {"name": "Test Prospect"}}]
+                }
+            }]
+        }]
+    }
+    response = client.post("/webhook", json=payload)
+    assert response.status_code == 200
+    assert response.json() == {"status": "success"}

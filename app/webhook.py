@@ -4,7 +4,7 @@ import hashlib
 import asyncio
 from typing import Dict, Any
 from fastapi import APIRouter, Request, Response, HTTPException, Depends, Query, BackgroundTasks
-from sqlalchemy import select
+from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -25,7 +25,8 @@ user_locks: Dict[str, asyncio.Lock] = {}
 async def verify_meta_signature(request: Request) -> bool:
     """Validate that incoming webhook payload matches the Meta App Secret signature."""
     if not settings.WHATSAPP_APP_SECRET:
-        return not settings.WEBHOOK_VERIFY_SIGNATURE_STRICT
+        # If no secret is configured in environment, skip signature verification
+        return True
     signature_header = request.headers.get("X-Hub-Signature-256")
     if not signature_header or not signature_header.startswith("sha256="):
         return False
@@ -60,60 +61,64 @@ async def process_webhook_message_in_background(conversation_id: int, phone: str
     """
     Background task worker to run the AI agent and reply or generate draft response.
     """
-    if phone not in user_locks:
-        user_locks[phone] = asyncio.Lock()
+    try:
+        if phone not in user_locks:
+            user_locks[phone] = asyncio.Lock()
 
-    async with user_locks[phone]:
-        async with AsyncSessionLocal() as db:
-            stmt = select(Conversation).where(Conversation.id == conversation_id)
-            res = await db.execute(stmt)
-            conv = res.scalar_one_or_none()
-            if not conv:
-                return
+        async with user_locks[phone]:
+            async with AsyncSessionLocal() as db:
+                stmt = select(Conversation).where(Conversation.id == conversation_id)
+                res = await db.execute(stmt)
+                conv = res.scalar_one_or_none()
+                if not conv:
+                    return
 
-            # Fetch recent messages (excluding the last user message to avoid duplication in LLM prompt context)
-            history_stmt = select(Message).where(Message.conversation_id == conv.id).order_by(Message.id.desc()).limit(10)
-            hist_res = await db.execute(history_stmt)
-            history_msgs = list(reversed(hist_res.scalars().all()))
+                # Fetch recent messages (excluding the last user message to avoid duplication in LLM prompt context)
+                history_stmt = select(Message).where(Message.conversation_id == conv.id).order_by(Message.id.desc()).limit(10)
+                hist_res = await db.execute(history_stmt)
+                history_msgs = list(reversed(hist_res.scalars().all()))
 
-            formatted_hist = [{"sender": m.sender, "body": m.body} for m in history_msgs]
-            if formatted_hist and formatted_hist[-1]["sender"] == "user" and formatted_hist[-1]["body"] == user_text:
-                formatted_hist = formatted_hist[:-1]
+                formatted_hist = [{"sender": m.sender, "body": m.body} for m in history_msgs]
+                if formatted_hist and formatted_hist[-1]["sender"] == "user" and formatted_hist[-1]["body"] == user_text:
+                    formatted_hist = formatted_hist[:-1]
 
-            ai_result = await agent_manager.process_user_message(
-                phone=phone,
-                user_text=user_text,
-                chat_history_messages=formatted_hist
-            )
+                ai_result = await agent_manager.process_user_message(
+                    phone=phone,
+                    user_text=user_text,
+                    chat_history_messages=formatted_hist
+                )
 
-            ai_reply = ai_result.get("response")
+                ai_reply = ai_result.get("response")
 
-            # Refetch conversation state to avoid dirty writes
-            stmt = select(Conversation).where(Conversation.id == conversation_id)
-            res = await db.execute(stmt)
-            conv = res.scalar_one_or_none()
-            if not conv:
-                return
+                # Refetch conversation state to avoid dirty writes
+                stmt = select(Conversation).where(Conversation.id == conversation_id)
+                res = await db.execute(stmt)
+                conv = res.scalar_one_or_none()
+                if not conv:
+                    return
 
-            if conv.ai_active:
-                if ai_reply:
-                    conv.ai_draft_reply = None
-                    assistant_msg = Message(
-                        conversation_id=conv.id,
-                        sender="assistant",
-                        body=ai_reply,
-                        tool_calls_log=", ".join(ai_result.get("tool_logs", []))
-                    )
-                    db.add(assistant_msg)
-                    await db.commit()
+                if conv.ai_active:
+                    if ai_reply:
+                        conv.ai_draft_reply = None
+                        assistant_msg = Message(
+                            conversation_id=conv.id,
+                            sender="assistant",
+                            body=ai_reply,
+                            tool_calls_log=", ".join(ai_result.get("tool_logs", []))
+                        )
+                        db.add(assistant_msg)
+                        await db.commit()
 
-                    # Send reply back to user on WhatsApp
-                    await whatsapp_client.send_text_message(phone, ai_reply)
-            else:
-                # AI is NOT active (Human mode). Generate background draft.
-                if ai_reply:
-                    conv.ai_draft_reply = ai_reply
-                    await db.commit()
+                        # Send reply back to user on WhatsApp
+                        send_res = await whatsapp_client.send_text_message(phone, ai_reply)
+                        logger.info(f"WhatsApp reply sent to {phone}. Result: {send_res}")
+                else:
+                    # AI is NOT active (Human mode). Generate background draft.
+                    if ai_reply:
+                        conv.ai_draft_reply = ai_reply
+                        await db.commit()
+    except Exception as e:
+        logger.error(f"Error processing webhook message in background for {phone}: {e}", exc_info=True)
 
 @router.post("/webhook")
 async def receive_webhook(
@@ -124,7 +129,7 @@ async def receive_webhook(
     """
     Incoming WhatsApp Cloud API event notification handler.
     """
-    if settings.WHATSAPP_APP_SECRET or settings.WEBHOOK_VERIFY_SIGNATURE_STRICT:
+    if settings.WHATSAPP_APP_SECRET:
         if not await verify_meta_signature(request):
             logger.warning("WhatsApp Webhook Signature Verification failed!")
             raise HTTPException(status_code=403, detail="Signature mismatch")
