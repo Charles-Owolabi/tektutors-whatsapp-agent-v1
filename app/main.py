@@ -148,7 +148,7 @@ async def init_db_and_seed():
                             subject="Following Up: Your TekTutors AI & Data Analytics Roadmap",
                             body_html="<p>Hi Adebayo, following up on your consultation inquiry.</p>",
                             status="delivered",
-                            sent_at=datetime.now(timezone.utc)
+                            sent_at=datetime.now(timezone.utc).replace(tzinfo=None)
                         ),
                         EmailLog(
                             lead_id=None,
@@ -158,7 +158,7 @@ async def init_db_and_seed():
                             subject="🎓 TekTutors Next Cohort Kickoff: Secure Your 1-on-1 Mentorship Seat",
                             body_html="<p>Hi Chinwe, our upcoming cohort commences on the 1st of next month.</p>",
                             status="delivered",
-                            sent_at=datetime.now(timezone.utc)
+                            sent_at=datetime.now(timezone.utc).replace(tzinfo=None)
                         ),
                         EmailLog(
                             lead_id=None,
@@ -168,7 +168,7 @@ async def init_db_and_seed():
                             subject="⚡ Flash 20% Tuition Voucher: Unlock Your Tech Career",
                             body_html="<p>Hi Emeka, save 20% on your first month tuition with code TEK20.</p>",
                             status="delivered",
-                            sent_at=datetime.now(timezone.utc)
+                            sent_at=datetime.now(timezone.utc).replace(tzinfo=None)
                         )
                     ])
                     await db.commit()
