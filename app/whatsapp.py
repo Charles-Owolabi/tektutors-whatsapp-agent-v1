@@ -6,11 +6,21 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 class WhatsAppClient:
-    def __init__(self):
-        self.token = settings.WHATSAPP_TOKEN
-        self.phone_number_id = settings.WHATSAPP_PHONE_NUMBER_ID
-        self.api_url = f"{settings.WHATSAPP_API_URL}/{self.phone_number_id}/messages" if self.phone_number_id else ""
-        self.headers = {
+    @property
+    def token(self) -> str:
+        return (settings.WHATSAPP_TOKEN or "").strip()
+
+    @property
+    def phone_number_id(self) -> str:
+        return (settings.WHATSAPP_PHONE_NUMBER_ID or "").strip()
+
+    @property
+    def api_url(self) -> str:
+        return f"{settings.WHATSAPP_API_URL}/{self.phone_number_id}/messages" if self.phone_number_id else ""
+
+    @property
+    def headers(self) -> dict:
+        return {
             "Authorization": f"Bearer {self.token}",
             "Content-Type": "application/json"
         }
@@ -20,14 +30,18 @@ class WhatsAppClient:
 
     async def send_text_message(self, recipient_phone: str, text: str) -> Dict[str, Any]:
         """Send a standard text message via WhatsApp Cloud API."""
+        clean_recipient = recipient_phone.strip().replace("+", "")
         if not self.is_configured():
-            logger.info(f"[MOCK WHATSAPP SEND to {recipient_phone}]: {text}")
-            return {"status": "mocked", "recipient": recipient_phone, "text": text}
+            logger.warning(
+                f"[MOCK WHATSAPP SEND to {clean_recipient}]: {text[:100]}... "
+                "(Note: WHATSAPP_TOKEN or WHATSAPP_PHONE_NUMBER_ID is not configured in Railway variables!)"
+            )
+            return {"status": "mocked", "recipient": clean_recipient, "text": text}
 
         payload = {
             "messaging_product": "whatsapp",
             "recipient_type": "individual",
-            "to": recipient_phone,
+            "to": clean_recipient,
             "type": "text",
             "text": {"preview_url": True, "body": text}
         }
@@ -37,10 +51,12 @@ class WhatsAppClient:
                 response = await client.post(self.api_url, json=payload, headers=self.headers, timeout=10.0)
                 res_data = response.json()
                 if response.status_code != 200:
-                    logger.error(f"WhatsApp API Error ({response.status_code}): {res_data}")
+                    logger.error(f"❌ Meta WhatsApp API Error ({response.status_code}) for {clean_recipient}: {res_data}")
+                else:
+                    logger.info(f"✅ WhatsApp message successfully dispatched via Meta Cloud API to {clean_recipient}")
                 return res_data
         except Exception as e:
-            logger.error(f"Failed to send WhatsApp message: {e}")
+            logger.error(f"❌ Failed to send WhatsApp message to {clean_recipient}: {e}")
             return {"error": str(e)}
 
     async def send_interactive_buttons(

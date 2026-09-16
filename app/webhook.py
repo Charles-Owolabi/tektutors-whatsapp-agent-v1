@@ -139,6 +139,8 @@ async def receive_webhook(
     except Exception:
         return {"status": "ignored", "reason": "invalid_json"}
 
+    logger.info(f"📩 Webhook event received from Meta: {body}")
+
     # Extract entry & changes
     entries = body.get("entry", [])
     if not entries:
@@ -190,6 +192,8 @@ async def receive_webhook(
 
                 if not user_text or not from_number:
                     continue
+
+                logger.info(f"📨 Incoming WhatsApp message from {from_number} ({contact_name}): '{user_text}'")
 
                 # Mark message as read on WhatsApp
                 await whatsapp_client.mark_message_as_read(msg_id)
