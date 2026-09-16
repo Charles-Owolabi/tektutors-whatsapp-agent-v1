@@ -35,130 +35,175 @@ logger = logging.getLogger("tektutors")
 
 async def init_db_and_seed():
     """Create database tables and seed TekTutors course catalog if empty."""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-        # Safe column check for SQLite
-        from sqlalchemy import text
-        for col, col_type in [
-            ("persona_tone", "VARCHAR(50) DEFAULT 'consultative'"),
-            ("business_hours", "VARCHAR(100) DEFAULT '9:00 AM - 6:00 PM (Mon-Sat)'"),
-            ("away_message", "TEXT DEFAULT 'Thanks for contacting TekTutors!'"),
-            ("currency", "VARCHAR(10) DEFAULT 'NGN'"),
-            ("currency_symbol", "VARCHAR(5) DEFAULT '₦'"),
-            ("outbound_webhook_url", "VARCHAR(255)"),
-            ("outbound_webhook_secret", "VARCHAR(100)")
-        ]:
-            try:
-                await conn.execute(text(f"ALTER TABLE system_config ADD COLUMN {col} {col_type}"))
-            except Exception:
-                pass
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+            
+            # Safe column check depending on database dialect
+            from sqlalchemy import text
+            dialect_name = conn.dialect.name
+            
+            if dialect_name == "sqlite":
+                sys_cols_res = await conn.execute(text("PRAGMA table_info(system_config)"))
+                existing_sys_cols = {row[1] for row in sys_cols_res.fetchall()}
+                for col, col_type in [
+                    ("persona_tone", "VARCHAR(50) DEFAULT 'consultative'"),
+                    ("business_hours", "VARCHAR(100) DEFAULT '9:00 AM - 6:00 PM (Mon-Sat)'"),
+                    ("away_message", "TEXT DEFAULT 'Thanks for contacting TekTutors!'"),
+                    ("currency", "VARCHAR(10) DEFAULT 'NGN'"),
+                    ("currency_symbol", "VARCHAR(5) DEFAULT '₦'"),
+                    ("outbound_webhook_url", "VARCHAR(255)"),
+                    ("outbound_webhook_secret", "VARCHAR(100)")
+                ]:
+                    if col not in existing_sys_cols:
+                        await conn.execute(text(f"ALTER TABLE system_config ADD COLUMN {col} {col_type}"))
 
-        try:
-            await conn.execute(text("ALTER TABLE leads ADD COLUMN lead_score INTEGER DEFAULT 50"))
-        except Exception:
-            pass
+                lead_cols_res = await conn.execute(text("PRAGMA table_info(leads)"))
+                existing_lead_cols = {row[1] for row in lead_cols_res.fetchall()}
+                if "lead_score" not in existing_lead_cols:
+                    await conn.execute(text("ALTER TABLE leads ADD COLUMN lead_score INTEGER DEFAULT 50"))
 
-    async with AsyncSessionLocal() as db:
-        # Seed Courses
-        course_res = await db.execute(select(Course))
-        existing_courses = course_res.scalars().all()
-        if not existing_courses:
-            logger.info("Seeding TekTutors courses dataset...")
-            for c_data in SEED_COURSES:
-                db.add(Course(**c_data))
-            await db.commit()
-        else:
-            # Sync course durations and descriptions from SEED_COURSES
-            for c_data in SEED_COURSES:
-                for ec in existing_courses:
-                    if ec.slug == c_data["slug"]:
-                        if ec.duration_weeks != c_data["duration_weeks"] or ec.description != c_data["description"]:
-                            ec.duration_weeks = c_data["duration_weeks"]
-                            ec.description = c_data["description"]
-            await db.commit()
+            elif dialect_name == "postgresql":
+                # PostgreSQL natively supports ADD COLUMN IF NOT EXISTS without aborting transactions
+                for col, col_type in [
+                    ("persona_tone", "VARCHAR(50) DEFAULT 'consultative'"),
+                    ("business_hours", "VARCHAR(100) DEFAULT '9:00 AM - 6:00 PM (Mon-Sat)'"),
+                    ("away_message", "TEXT DEFAULT 'Thanks for contacting TekTutors!'"),
+                    ("currency", "VARCHAR(10) DEFAULT 'NGN'"),
+                    ("currency_symbol", "VARCHAR(5) DEFAULT '₦'"),
+                    ("outbound_webhook_url", "VARCHAR(255)"),
+                    ("outbound_webhook_secret", "VARCHAR(100)")
+                ]:
+                    await conn.execute(text(f"ALTER TABLE system_config ADD COLUMN IF NOT EXISTS {col} {col_type}"))
 
-        # Seed FAQs
-        faq_res = await db.execute(select(FAQ))
-        existing_faqs = faq_res.scalars().all()
-        if not existing_faqs:
-            logger.info("Seeding TekTutors FAQs dataset...")
-            for f_data in SEED_FAQS:
-                db.add(FAQ(**f_data))
-            await db.commit()
-        else:
-            # Ensure all SEED_FAQS are synced to existing database
-            existing_questions_res = await db.execute(select(FAQ.question))
-            existing_questions = set(existing_questions_res.scalars().all())
-            added_faqs = False
-            for f_data in SEED_FAQS:
-                if f_data["question"] not in existing_questions:
+                await conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS lead_score INTEGER DEFAULT 50"))
+
+    except Exception as e:
+        logger.error(f"Error creating or updating database schema: {e}", exc_info=True)
+
+    try:
+        async with AsyncSessionLocal() as db:
+            # Seed Courses
+            course_res = await db.execute(select(Course))
+            existing_courses = course_res.scalars().all()
+            if not existing_courses:
+                logger.info("Seeding TekTutors courses dataset...")
+                for c_data in SEED_COURSES:
+                    db.add(Course(**c_data))
+                await db.commit()
+            else:
+                # Sync course durations and descriptions from SEED_COURSES
+                for c_data in SEED_COURSES:
+                    for ec in existing_courses:
+                        if ec.slug == c_data["slug"]:
+                            if ec.duration_weeks != c_data["duration_weeks"] or ec.description != c_data["description"]:
+                                ec.duration_weeks = c_data["duration_weeks"]
+                                ec.description = c_data["description"]
+                await db.commit()
+
+            # Seed FAQs
+            faq_res = await db.execute(select(FAQ))
+            existing_faqs = faq_res.scalars().all()
+            if not existing_faqs:
+                logger.info("Seeding TekTutors FAQs dataset...")
+                for f_data in SEED_FAQS:
                     db.add(FAQ(**f_data))
-                    added_faqs = True
-            if added_faqs:
                 await db.commit()
+            else:
+                # Ensure all SEED_FAQS are synced to existing database
+                existing_questions_res = await db.execute(select(FAQ.question))
+                existing_questions = set(existing_questions_res.scalars().all())
+                added_faqs = False
+                for f_data in SEED_FAQS:
+                    if f_data["question"] not in existing_questions:
+                        db.add(FAQ(**f_data))
+                        added_faqs = True
+                if added_faqs:
+                    await db.commit()
 
-        # Ensure SystemConfig has updated prompt with registration link, Track 6, ₦90,000 discount rule, and 6-8 weeks single-tool duration
-        try:
-            from app.agent import SYSTEM_PROMPT_TEXT
-            cfg_res = await db.execute(select(SystemConfig).limit(1))
-            cfg = cfg_res.scalar_one_or_none()
-            if cfg and ("https://tektutors.com.ng/registration" not in (cfg.system_prompt or "") or "6)" not in (cfg.system_prompt or "") or "COURSE LISTING" not in (cfg.system_prompt or "") or "₦90,000" not in (cfg.system_prompt or "") or "6-8 wks" not in (cfg.system_prompt or "")):
-                cfg.system_prompt = SYSTEM_PROMPT_TEXT.strip()
-                await db.commit()
-        except Exception as e:
-            logger.warning(f"Note: SystemConfig sync skipped: {e}")
+            # Ensure SystemConfig has updated prompt with registration link, Track 6, ₦90,000 discount rule, and 6-8 weeks single-tool duration
+            try:
+                from app.agent import SYSTEM_PROMPT_TEXT
+                cfg_res = await db.execute(select(SystemConfig).limit(1))
+                cfg = cfg_res.scalar_one_or_none()
+                if cfg and ("https://tektutors.com.ng/registration" not in (cfg.system_prompt or "") or "6)" not in (cfg.system_prompt or "") or "COURSE LISTING" not in (cfg.system_prompt or "") or "₦90,000" not in (cfg.system_prompt or "") or "6-8 wks" not in (cfg.system_prompt or "")):
+                    cfg.system_prompt = SYSTEM_PROMPT_TEXT.strip()
+                    await db.commit()
+            except Exception as e:
+                logger.warning(f"Note: SystemConfig sync skipped: {e}")
 
-        # Seed Sample Email Logs if empty
-        try:
-            email_res = await db.execute(select(EmailLog).limit(1))
-            existing_email = email_res.scalar_one_or_none()
-            if not existing_email:
-                from datetime import datetime, timezone
-                logger.info("Seeding initial TekTutors sample email logs...")
-                db.add_all([
-                    EmailLog(
-                        lead_id=None,
-                        recipient_email="adebayo.consult@example.com",
-                        recipient_name="Adebayo Ogunlesi",
-                        campaign_type="follow_up",
-                        subject="Following Up: Your TekTutors AI & Data Analytics Roadmap",
-                        body_html="<p>Hi Adebayo, following up on your consultation inquiry.</p>",
-                        status="delivered",
-                        sent_at=datetime.now(timezone.utc)
-                    ),
-                    EmailLog(
-                        lead_id=None,
-                        recipient_email="chinwe.analytics@example.com",
-                        recipient_name="Chinwe Eze",
-                        campaign_type="marketing",
-                        subject="🎓 TekTutors Next Cohort Kickoff: Secure Your 1-on-1 Mentorship Seat",
-                        body_html="<p>Hi Chinwe, our upcoming cohort commences on the 1st of next month.</p>",
-                        status="delivered",
-                        sent_at=datetime.now(timezone.utc)
-                    ),
-                    EmailLog(
-                        lead_id=None,
-                        recipient_email="emeka.tech@example.com",
-                        recipient_name="Emeka Okafor",
-                        campaign_type="promotional",
-                        subject="⚡ Flash 20% Tuition Voucher: Unlock Your Tech Career",
-                        body_html="<p>Hi Emeka, save 20% on your first month tuition with code TEK20.</p>",
-                        status="delivered",
-                        sent_at=datetime.now(timezone.utc)
-                    )
-                ])
-                await db.commit()
-        except Exception as e:
-            logger.warning(f"Note: EmailLog seeding skipped: {e}")
+            # Seed Sample Email Logs if empty
+            try:
+                email_res = await db.execute(select(EmailLog).limit(1))
+                existing_email = email_res.scalar_one_or_none()
+                if not existing_email:
+                    from datetime import datetime, timezone
+                    logger.info("Seeding initial TekTutors sample email logs...")
+                    db.add_all([
+                        EmailLog(
+                            lead_id=None,
+                            recipient_email="adebayo.consult@example.com",
+                            recipient_name="Adebayo Ogunlesi",
+                            campaign_type="follow_up",
+                            subject="Following Up: Your TekTutors AI & Data Analytics Roadmap",
+                            body_html="<p>Hi Adebayo, following up on your consultation inquiry.</p>",
+                            status="delivered",
+                            sent_at=datetime.now(timezone.utc)
+                        ),
+                        EmailLog(
+                            lead_id=None,
+                            recipient_email="chinwe.analytics@example.com",
+                            recipient_name="Chinwe Eze",
+                            campaign_type="marketing",
+                            subject="🎓 TekTutors Next Cohort Kickoff: Secure Your 1-on-1 Mentorship Seat",
+                            body_html="<p>Hi Chinwe, our upcoming cohort commences on the 1st of next month.</p>",
+                            status="delivered",
+                            sent_at=datetime.now(timezone.utc)
+                        ),
+                        EmailLog(
+                            lead_id=None,
+                            recipient_email="emeka.tech@example.com",
+                            recipient_name="Emeka Okafor",
+                            campaign_type="promotional",
+                            subject="⚡ Flash 20% Tuition Voucher: Unlock Your Tech Career",
+                            body_html="<p>Hi Emeka, save 20% on your first month tuition with code TEK20.</p>",
+                            status="delivered",
+                            sent_at=datetime.now(timezone.utc)
+                        )
+                    ])
+                    await db.commit()
+            except Exception as e:
+                logger.warning(f"Note: EmailLog seeding skipped: {e}")
+
+    except Exception as e:
+        logger.error(f"Error seeding database: {e}", exc_info=True)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting TekTutors WhatsApp AI Sales Agent Server...")
-    await init_db_and_seed()
+    try:
+        await init_db_and_seed()
+    except Exception as e:
+        logger.error(f"Error during startup init_db_and_seed: {e}", exc_info=True)
     yield
     logger.info("Shutting down TekTutors Server...")
 
 START_TIME = time.time()
+
+
+def _safe_int_env(name: str, default: int) -> int:
+    """Accept only numeric env values; reject literal shell placeholders like '$PORT'."""
+    raw = os.getenv(name)
+    if raw is None or raw.strip() == "":
+        return int(default)
+    value = raw.strip().strip('"').strip("'")
+    if value.startswith("$"):
+        return int(default)
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return int(default)
+
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -234,10 +279,18 @@ async def readiness_check():
     )
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", settings.PORT))
-    workers = int(os.getenv("WORKERS", 1 if settings.DEBUG else 2))
+    port = _safe_int_env("PORT", settings.PORT)
+    workers = _safe_int_env("WORKERS", 1)
     if settings.DEBUG:
         uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
+    elif workers <= 1:
+        uvicorn.run(
+            "app.main:app",
+            host="0.0.0.0",
+            port=port,
+            proxy_headers=True,
+            forwarded_allow_ips="*"
+        )
     else:
         uvicorn.run(
             "app.main:app",

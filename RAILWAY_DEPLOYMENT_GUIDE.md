@@ -57,7 +57,7 @@ Railway automatically creates a `DATABASE_URL` variable linked to your database!
 APP_ENV=production
 DEBUG=False
 PORT=8000
-WORKERS=2
+WORKERS=1
 ALLOWED_ORIGINS=*
 WEBHOOK_VERIFY_SIGNATURE_STRICT=True
 
