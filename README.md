@@ -1,160 +1,163 @@
-# TekTutors WhatsApp AI Customer Service & Sales Agent
+# TekTutors WhatsApp AI Sales Agent & Academy Management Platform
 
-Enterprise-grade, low-cost **WhatsApp AI Sales & Customer Support Agent** built for **TekTutors** (AI & Data Analytics Training Academy).
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110.0-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg?logo=python)](https://python.org)
+[![Groq](https://img.shields.io/badge/Groq-gpt--oss--120b-orange.svg)](https://groq.com)
+[![Meta WhatsApp Cloud API](https://img.shields.io/badge/Meta%20WhatsApp-Graph%20v20.0-25D366.svg?logo=whatsapp)](https://developers.facebook.com)
+[![Tests](https://img.shields.io/badge/Tests-64%2F64%20Passing-brightgreen.svg)]()
+[![License](https://img.shields.io/badge/License-Proprietary-red.svg)]()
 
-The agent automatically responds to WhatsApp inquiries, answers course questions, overcomes objections (e.g. non-coders, payment installment plans), qualifies prospective students, captures leads into Supabase/PostgreSQL, and escalates hot leads to human admissions advisors via a built-in web dashboard.
+Enterprise-grade, ultra-low latency **WhatsApp AI Customer Service & Sales Platform** designed specifically for **TekTutors Academy** (AI, Data Analytics, Python, Machine Learning, Power BI, and Full-Stack Engineering).
 
----
-
-## 🛠️ Core Tech Stack
-
-- **Backend & Webhooks**: Python **FastAPI** (Async ASGI engine)
-- **AI Engine & Orchestration**: **LangChain** + **Groq**
-- **Database**: **Supabase / PostgreSQL** (SQLAlchemy Async ORM with SQLite auto-fallback for local development)
-- **WhatsApp Integration**: **Meta WhatsApp Business Cloud API** (Graph API v20.0)
-- **Web Interface**: **TekTutors Control Panel & Browser WhatsApp Simulator** (Live Human Handoff, Leads CRM, Course KB)
+The system acts as a 24/7 senior admissions advisor: answering technical syllabus inquiries, addressing prerequisites and non-coder doubts, overcoming pricing objections, qualifying prospective learners into a CRM funnel, booking advisor consultations, and nurturing unconverted leads through an automated **5-day morning drip campaign**.
 
 ---
 
-## 🚀 Quick Start Guide (Local Development)
+## 🌟 Key Features
 
-### 1. Install Dependencies
-Ensure Python 3.10+ is installed.
+### 1. High-Intelligence Conversational Sales Engine
+- **State-of-the-Art Reasoning**: Powered by Groq's high-speed **`openai/gpt-oss-120b`** (120B reasoning parameters) with sub-second turnaround (~0.9s–1.2s) and automatic fallback to `openai/gpt-oss-20b`.
+- **Diagnostic Sales Discovery**: Discovers learner background, recommends the right track (e.g. Data Analytics vs. Machine Learning), and builds urgency without hard-selling.
+- **Accurate Pricing Guardrails**: Firmly defends real academy pricing (₦100,000/month or ₦90,000 upfront discount) with zero hallucinations.
+
+### 2. Sub-Second Latency & Zero-Cost Fast Paths
+- **Zero-Token Fast Path Engine**: Frequently asked queries (course numbered menus `1`–`6`, greetings, syllabus download links, payment terms, phone vs. laptop requirements, physical Ikeja location) resolve in **< 1ms** at **$0.00 LLM cost**.
+- **In-Memory TTL Caching**: Course catalog and FAQs are cached in memory with automatic cache invalidation upon dashboard updates.
+
+### 3. Automated 5-Day Follow-Up Nurture Drip Sequence
+- Automatically schedules a strategic 5-day educational email sequence once a lead is captured:
+  - **Day 1**: *What Makes Us Different* (100% Live 1-on-1 Mentorship & Screen Sharing vs. 50-person crowded webinars).
+  - **Day 2**: *Our Irresistible Offer* (₦100k/mo flexible tuition, ₦90k upfront discount, and free ₦35k CV/LinkedIn audit).
+  - **Day 3**: *Relevance & Career ROI* (Real hiring salaries: ₦350k–₦750k/mo local, $1,500–$3,500 remote, < 3-week tuition payback).
+  - **Day 4**: *Our Competitive Advantages* (3 employer-grade GitHub capstone projects and live code walkthroughs).
+  - **Day 5**: *Urgency & Seat Reservation* (Mentors strictly capped at 4 students/month; deadline before cohort kickoff).
+- **Smart Enrollment De-duplication**: If a student enrolls (`status == "enrolled"`), remaining scheduled drip emails are automatically cancelled.
+
+### 4. Email Scheduling Engine
+- Allows learners to request deferred material on WhatsApp (*"Please email me the curriculum tomorrow morning"* or *"Follow up with me next Monday"*).
+- Admin dashboard allows scheduling custom or templated emails for future delivery with an interactive queue manager.
+- Background asynchronous worker running in the FastAPI lifespan continuously queries and dispatches due emails with rate limiting.
+
+### 5. Unified Web Control Panel & Simulator
+- **Live WhatsApp Simulator**: Test conversations, tools, and qualification behavior directly in the browser without spending Meta API credits.
+- **Human Escalation & Live Takeover**: Toggle "Pause AI" on any active chat to allow human advisors to step in seamlessly.
+- **Lead CRM & Funnel Metrics**: Track leads across `inquiry`, `qualified`, `call_scheduled`, `invoice_sent`, and `enrolled` with one-click CSV export.
+- **Marketing Campaign Broadcasts**: Segment leads by stage or course and dispatch personalized bulk emails with live HTML preview and SMTP audit logs.
+
+---
+
+## 🛠️ Architecture & Tech Stack
+
+```
+WhatsApp Agent v1/
+├── app/
+│   ├── main.py                  # FastAPI entrypoint, lifespan worker, security middleware
+│   ├── config.py                # Environment configuration & sanitation
+│   ├── database.py              # Async SQLAlchemy engine (PostgreSQL / SQLite)
+│   ├── models.py                # Database models (Lead, Conversation, Message, Course, FAQ, ScheduledEmail)
+│   ├── schemas.py               # Pydantic validation schemas
+│   ├── agent.py                 # LangChain Groq agent & prompt engineering
+│   ├── tools.py                 # Core tools (course search, lead capture, schedule call, schedule email)
+│   ├── email_service.py         # 5-Day Drip sequence, schedule parser, worker dispatcher, Gmail SMTP
+│   ├── cache.py                 # Fast-path cache routing & non-blocking cost telemetry
+│   ├── whatsapp.py              # Meta Cloud API Graph v20.0 client
+│   ├── webhook.py               # Webhook verification & decoupled async worker
+│   └── dashboard_routes.py      # Admin control panel REST endpoints
+├── templates/
+│   └── dashboard.html           # Glassmorphism Admin Dashboard UI
+├── static/
+│   ├── css/dashboard.css        # Responsive dark theme styling
+│   └── js/dashboard.js          # Live chat polling, human handoff, and schedule queue logic
+├── tests/                       # 64 Automated unit and integration tests
+├── HANDOVER.md                  # Comprehensive operator manual & runbook
+├── RAILWAY_DEPLOYMENT_GUIDE.md  # Detailed Railway cloud deployment instructions
+├── Dockerfile                   # Production container definition
+├── docker-compose.yml           # Local multi-container development environment
+└── requirements.txt             # Python dependencies
+```
+
+---
+
+## 🚀 Quick Start Guide
+
+### Prerequisites
+- Python 3.10+
+- Groq API Key ([console.groq.com](https://console.groq.com/))
+- Meta WhatsApp Business Account ([developers.facebook.com](https://developers.facebook.com/))
+
+### 1. Installation
 ```bash
+git clone https://github.com/Charles-Owolabi/tektutors-whatsapp-agent-v1.git
+cd tektutors-whatsapp-agent-v1
+
+python -m venv venv
+venv\Scripts\activate      # Windows
+source venv/bin/activate   # Linux/macOS
+
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment Variables
-Copy `.env.example` to `.env`:
+### 2. Environment Configuration
+Copy the template configuration:
 ```bash
 cp .env.example .env
 ```
-
-Edit `.env` with your Groq API key and Meta credentials:
+Fill in the required values in `.env`:
 ```env
-GROQ_API_KEY=gsk_...
-GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_API_KEY=gsk_your_groq_key
+GROQ_MODEL=openai/gpt-oss-120b
 
-WHATSAPP_TOKEN=EAAG...
-WHATSAPP_PHONE_NUMBER_ID=100000...
+WHATSAPP_TOKEN=EAAG_your_token
+WHATSAPP_PHONE_NUMBER_ID=100000000000000
 WHATSAPP_VERIFY_TOKEN=tektutors_verify_token_secret
+WHATSAPP_APP_SECRET=your_meta_app_secret
 
-# Supabase / PostgreSQL or local SQLite fallback
-DATABASE_URL=sqlite+aiosqlite:///./tektutors.db
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_USER=tektutorsng@gmail.com
+SMTP_PASSWORD=your_16_letter_app_password
 ```
 
-### 3. Run the FastAPI Application
-```bash
-python app/main.py
-```
-Or with uvicorn:
+### 3. Run the Server
 ```bash
 uvicorn app.main:app --reload --port 8000
 ```
-
-### 4. Access Web Admin Dashboard & Browser Simulator
-Open `http://localhost:8000/dashboard` in your browser.
-
-You can instantly test talking to the **TekTutors AI Sales Agent** using the interactive **WhatsApp Browser Simulator** without needing Meta API keys right away!
+Open `http://localhost:8000/dashboard` to access the Control Panel & Simulator.
 
 ---
 
-## 📲 Meta WhatsApp Business Cloud API Setup
+## 🐳 Docker Deployment
 
-1. **Meta Developer Console**:
-   - Go to [Meta for Developers](https://developers.facebook.com/) and create a **Business App**.
-   - Add **WhatsApp** product to your app.
-
-2. **Retrieve Credentials**:
-   - Copy **Temporary / Permanent Access Token** to `WHATSAPP_TOKEN`.
-   - Copy **Phone Number ID** to `WHATSAPP_PHONE_NUMBER_ID`.
-
-3. **Expose Local Server to Public Internet (ngrok / Cloudflare Tunnel)**:
-   ```bash
-   ngrok http 8000
-   ```
-   Copy the https URL (e.g. `https://abc1234.ngrok-free.app`).
-
-4. **Configure Webhook in Meta Console**:
-   - **Callback URL**: `https://abc1234.ngrok-free.app/webhook`
-   - **Verify Token**: `tektutors_verify_token_secret` (matches `WHATSAPP_VERIFY_TOKEN` in `.env`)
-   - Subscribe to **`messages`** webhook field.
-
----
-
-## 🗄️ Supabase / PostgreSQL Setup
-
-To use Supabase in production:
-1. Create a database on [Supabase.com](https://supabase.com/).
-2. Under Project Settings -> Database -> Connection String (URI), copy the URI string.
-3. Update `DATABASE_URL` in `.env`:
-   ```env
-   DATABASE_URL=postgresql+asyncpg://postgres:YOUR_PASSWORD@db.xxxx.supabase.co:5432/postgres
-   ```
-4. On application launch, FastAPI will automatically create the tables (`leads`, `conversations`, `messages`, `courses`, `faqs`, `appointments`) and seed TekTutors course data!
-
----
-
-## 🧪 Running Automated Tests
-
-Run pytest to execute all 46 enterprise test suites covering production readiness, security headers, tool calling, accuracy, and latency:
-```bash
-pytest
-```
-
----
-
-## 🚀 Enterprise Production Deployment & Scaling
-
-### Option A: One-Command Docker Compose (Recommended)
-Spin up the complete production stack (FastAPI Multi-Worker Agent + PostgreSQL with healthchecks):
+To launch the multi-worker application with PostgreSQL using Docker:
 ```bash
 docker compose up -d --build
 ```
-Check health:
+Health checks:
 ```bash
 curl http://localhost:8000/health
 curl http://localhost:8000/ready
 ```
 
-### Option B: Cloud Hosting (Render, Railway, Fly.io, AWS ECS, Heroku)
-The project includes a production-ready `Procfile` and `Dockerfile`:
-1. Set the environment variables in your cloud dashboard according to `.env.example`.
-2. Ensure `APP_ENV=production` and `WEBHOOK_VERIFY_SIGNATURE_STRICT=True`.
-3. Set your Meta webhook callback to `https://your-domain.com/webhook`.
-4. Point your cloud health check monitor to `https://your-domain.com/health`.
+---
 
-### ⚡ Sub-Second Latency & Affordability Architecture
-- **Inference Speed**: Powered by Groq's high-speed LPU inference engine (`qwen/qwen3.8-27b`) delivering ~0.4s LLM turnaround time.
-- **Zero-Cost Fast Path**: High-frequency queries (greetings, course menu 1-6, registration links, and common FAQ inquiries) resolve instantly in under 5ms at $0.00 token cost.
-- **In-Memory Configuration Caching**: Dynamic system prompts and tone configurations are cached in-memory with automatic cache invalidation on updates, eliminating per-message database overhead.
-- **Immediate Webhook Delivery**: WhatsApp webhooks return HTTP 200 immediately to Meta, completely preventing webhook retries or timeouts.
-- **Hardened Security**: Includes `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and HMAC SHA-256 Meta webhook signature validation.
+## 🧪 Automated Testing
+
+The platform includes 64 comprehensive automated tests covering webhook security, pricing accuracy, email campaigns, scheduling, and agent tool execution.
+
+```bash
+pytest tests/ -v
+```
+
+Output:
+```
+======================== 64 passed in 95.24s ========================
+```
 
 ---
 
-## 🏛️ Project Architecture
+## 📖 Operational Documentation
 
-```
-WhatsApp Agent v1/
-├── app/
-│   ├── main.py                  # FastAPI app entrypoint & db seed
-│   ├── config.py                # Pydantic configuration & env vars
-│   ├── database.py              # Async SQLAlchemy engine (Supabase/Postgres/SQLite)
-│   ├── models.py                # Database models (Lead, Conversation, Message, Course, FAQ)
-│   ├── schemas.py               # Pydantic schemas
-│   ├── whatsapp.py              # Meta WhatsApp Business Cloud API client
-│   ├── webhook.py               # Webhook verification & incoming payload router
-│   ├── agent.py                 # LangChain ChatGroq agent setup & prompt engine
-│   ├── tools.py                 # TekTutors sales tools (course search, lead capture, FAQ, advisor call)
-│   ├── data.py                  # Default TekTutors course & FAQ seed dataset
-│   └── dashboard_routes.py      # Control Panel & Simulator REST endpoints
-├── templates/
-│   └── dashboard.html           # Sleek Web Admin Dashboard & Simulator UI
-├── static/
-│   ├── css/dashboard.css        # Premium dark glassmorphism styling
-│   └── js/dashboard.js          # Live chat polling, human handoff toggle & simulator logic
-├── tests/                       # Pytest test suite
-├── requirements.txt             # Dependency list
-└── README.md                    # Project documentation
-```
+For complete production deployment, Meta WhatsApp Cloud API credentials setup, Gmail App Password creation, and administrative procedures, refer to:
+
+- **[HANDOVER.md](HANDOVER.md)**: Full operator manual, API guide, and troubleshooting runbook.
+- **[RAILWAY_DEPLOYMENT_GUIDE.md](RAILWAY_DEPLOYMENT_GUIDE.md)**: Step-by-step instructions for Railway cloud deployment.
