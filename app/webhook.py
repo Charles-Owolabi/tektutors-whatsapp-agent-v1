@@ -87,12 +87,14 @@ async def process_webhook_message_in_background(conversation_id: int, phone: str
             user_locks[phone] = asyncio.Lock()
 
         async with user_locks[phone]:
+            # Step 1: Fast, isolated DB read to fetch conversation state and message history
             async with AsyncSessionLocal() as db:
                 stmt = select(Conversation).where(Conversation.id == conversation_id)
                 res = await db.execute(stmt)
                 conv = res.scalar_one_or_none()
                 if not conv:
                     return
+                ai_is_active = conv.ai_active
 
                 # Fetch recent messages (excluding the last user message to avoid duplication in LLM prompt context)
                 history_stmt = select(Message).where(Message.conversation_id == conv.id).order_by(Message.id.desc()).limit(10)
@@ -103,20 +105,22 @@ async def process_webhook_message_in_background(conversation_id: int, phone: str
                 if formatted_hist and formatted_hist[-1]["sender"] == "user" and formatted_hist[-1]["body"] == user_text:
                     formatted_hist = formatted_hist[:-1]
 
-                ai_result = await agent_manager.process_user_message(
-                    phone=phone,
-                    user_text=user_text,
-                    chat_history_messages=formatted_hist
-                )
+            # Step 2: Run AI agent outside any DB session to prevent connection starvation
+            ai_result = await agent_manager.process_user_message(
+                phone=phone,
+                user_text=user_text,
+                chat_history_messages=formatted_hist
+            )
 
-                ai_reply = ai_result.get("response")
-                webhook_diagnostics["last_agent_response"] = {
-                    "phone": phone,
-                    "reply": ai_reply[:140] if ai_reply else None,
-                    "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                }
+            ai_reply = ai_result.get("response")
+            webhook_diagnostics["last_agent_response"] = {
+                "phone": phone,
+                "reply": ai_reply[:140] if ai_reply else None,
+                "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
 
-                # Refetch conversation state to avoid dirty writes
+            # Step 3: Short write session to persist the message and update state
+            async with AsyncSessionLocal() as db:
                 stmt = select(Conversation).where(Conversation.id == conversation_id)
                 res = await db.execute(stmt)
                 conv = res.scalar_one_or_none()

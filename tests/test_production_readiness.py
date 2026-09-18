@@ -48,8 +48,8 @@ async def test_security_headers_present():
 
 @pytest.mark.asyncio
 async def test_groq_model_configuration_and_cascade():
-    """Verify primary model is qwen/qwen3.8-27b and cascade includes groq/compound-mini."""
-    assert SUPPORTED_GROQ_MODELS[0] == "qwen/qwen3.8-27b"
+    """Verify primary model is llama-3.3-70b-versatile and cascade includes fallback models."""
+    assert SUPPORTED_GROQ_MODELS[0] == "openai/gpt-oss-120b"
     assert "groq/compound-mini" in SUPPORTED_GROQ_MODELS
     assert "allam-2-7b" in SUPPORTED_GROQ_MODELS
 

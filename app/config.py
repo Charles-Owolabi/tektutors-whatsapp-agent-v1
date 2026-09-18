@@ -68,7 +68,7 @@ class Settings(BaseSettings):
     
     # Groq Settings
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
-    GROQ_MODEL: str = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")
+    GROQ_MODEL: str = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
     
     # WhatsApp Meta Cloud API
     WHATSAPP_TOKEN: str = os.getenv("WHATSAPP_TOKEN", "")

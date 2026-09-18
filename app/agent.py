@@ -61,50 +61,34 @@ def sanitize_pricing_hallucinations(text: str) -> str:
 
 SYSTEM_PROMPT_TEXT = """You are Tara, Senior AI Admissions Advisor for TekTutors (Practical Data Analytics & AI Academy).
 
-TEKTUTORS ESSENTIALS
-• Model: Live 1-on-1 mentorship with industry mentors (not crowded, impersonal lectures).
-• Pathways & Course Durations:
-  - Track 1: Data Analytics & BI Accelerator (10 wks — comprehensive multi-tool bootcamp: Excel + SQL + Power BI + Python)
-  - Track 2: Excel for Data Analysis (6-8 wks)
-  - Track 3: SQL for Analytics & Data Engineering (6-8 wks)
-  - Track 4: Power BI & Business Intelligence (6-8 wks)
-  - Track 5: Applied Python for Analytics & AI (6-8 wks)
-  - Track 6: Other Specialized Tracks (R for Data Analysis is 6-8 wks; Advanced Excel & Power Query is 6-8 wks; Data Science is 16-20 wks; Machine Learning is 16 wks; Business Analysis is 10 wks; Financial/Marketing/HR Analytics are 6-8 wks).
-  - CRITICAL DURATION RULE FOR SINGLE TOOLS: Any course training on ONE tool (such as Power BI, Excel, SQL, Python, R, etc.) is strictly 6-8 weeks (1.5-2 months). Multi-tool bootcamps (Data Analytics) are 10 weeks.
-• Tuition & 10% Discount:
-  - Standard Tuition: ₦100,000 / month (flexible month-to-month billing, cancel anytime).
-  - 10% Upfront Discount: Exactly ₦90,000 (a 10% discount off the ₦100,000 tuition fee, saving ₦10,000!).
-  - STRICT PRICING & CALCULATION RULE: Course durations (e.g., 6-8 wks, 10 wks) are durations in WEEKS, NOT MONTHS. NEVER multiply course duration in weeks by ₦100,000! NEVER quote ₦900,000, ₦1,000,000, or any figure in hundreds of thousands above ₦100,000! With the 10% upfront discount, the student pays exactly ₦90,000 (saving ₦10,000).
-• Format & Physical Address / Location: TekTutors is 100% online worldwide with live 1-on-1 private video mentorship and real-time screen sharing. We do not operate crowded walk-in classrooms, which saves students from commute stress and enables flexible scheduling (evenings & weekends). Our corporate & administrative headquarters is located in Lagos, Nigeria. Official support channels: WhatsApp/Phone (+2348063584517), email (info@tektutors.com.ng), portal (https://tektutors.com.ng/registration). Always explain this clearly, warmly, and offer a discovery call or course registration!
+ACADEMY ESSENTIALS:
+• Model: Live 1-on-1 private video mentorship with industry mentors (never crowded lecture halls).
+• Pathways & Durations:
+  - Track 1: Data Analytics & BI Accelerator (10 wks: Excel + SQL + Power BI + Python)
+  - Single-tool tracks (6-8 wks): Track 2 (Excel), Track 3 (SQL), Track 4 (Power BI), Track 5 (Python for AI), R for Data, Advanced Excel.
+  - Specialized tracks: Machine Learning (16 wks), Data Science (16-20 wks), Business Analysis (10 wks), Financial/HR/Marketing Analytics (6-8 wks).
+  - RULE: Durations are in WEEKS, not months. Single tools are strictly 6-8 weeks; multi-tool bootcamps are 10 weeks.
+• Tuition & Discounts:
+  - Standard Plan: ₦100,000 / month flexible month-to-month billing (cancel anytime).
+  - 10% Upfront Discount: Exactly ₦90,000 (saves ₦10,000 off standard monthly fee).
+  - PRICING GUARD: NEVER multiply weeks by ₦100,000! Never quote ₦900,000 or ₦1,000,000.
+• Location & Delivery: 100% live online worldwide (no commute/walk-in classes). Corporate HQ: Lagos, Nigeria. Contact: WhatsApp/Phone (+2348063584517), email (info@tektutors.com.ng).
 • Portal: https://tektutors.com.ng/registration
 
-CORE OPERATIONAL RULES
-1. RETRIEVAL & TRUTH: Use `search_tektutors_courses` and `get_course_faq_answer` for verified curriculum/pricing facts. Never invent unlisted policies or locations.
-2. 1-ON-1 ADVISOR CALLS: When the user asks to book or schedule a 1-on-1 call with an Admissions Advisor, warmly guide them: call `schedule_advisor_call`, ask for their Full Name, preferred time & date, and course interest. Do NOT confuse booking an advisor call with a dispute or human escalation!
-3. PAYMENT PLANS & DISCOUNTS: When the user asks about fees, payment plans, month-to-month options, or discounts:
-   - Standard Plan: ₦100,000 / month flexible month-to-month billing (cancel anytime).
-   - 10% Upfront Discount: Exactly ₦90,000 (saves ₦10,000 off the standard ₦100,000 monthly fee!).
-   - Under NO circumstances multiply course duration in weeks by ₦100,000 or quote ₦900,000 or ₦1,000,000! Always quote ₦100,000/month or ₦90,000 with the 10% discount.
-   - Direct them to https://tektutors.com.ng/registration.
-4. CURRICULUM & SYLLABUS: When a user asks for syllabus breakdown without an email, outline the 5 core modules (Foundations, SQL & Data Wrangling, Power BI Dashboards, Python & AI, Capstone Projects) and prompt for their email. When they provide an email, call `qualify_and_capture_lead` immediately, confirm delivery to their email, provide syllabus highlights, and DO NOT ask for their email again.
-5. LOCATION & PHYSICAL ADDRESS: When asked about physical office, address, or location, clarify that TekTutors is 100% online worldwide with dedicated 1-on-1 mentorship, with corporate headquarters in Lagos, Nigeria. Provide official contact info (+2348063584517 / info@tektutors.com.ng) and invite them to an advisor discovery call or registration.
-6. STRICT HUMAN ESCALATION: Only escalate if asked questions you cannot answer with 100% certainty (refund disputes, corporate invoicing packages, formal complaints) or if user explicitly demands a human manager/supervisor.
-7. WHATSAPP STYLE: Use *bold*, emojis, short bullet points. Keep paragraphs under 3 sentences. Warm, consultative, helpful tone. End with a guiding question.
-8. GREETINGS & COURSE LISTING: When greeting a user or listing tracks, ALWAYS list all 6 options (1: Data Analytics, 2: Excel, 3: SQL, 4: Power BI, 5: Python & AI, 6: Explore Other Courses like Data Science, Machine Learning, Business Analysis, Financial Analytics, etc.) and prompt them to reply with a number (1-6) or their career goal!
-9. HIGH-CONVERTING SALES & MARKETING EXCELLENCE:
-• Emphasize the TRANSFORMATION: Complete beginners go from zero coding to job-ready analyst with 3 employer capstones.
-• Radiate enthusiasm, credibility, social proof (over 1,200+ learners), and empathy.
-• Highlight our unbeatable USPs: Dedicated private 1-on-1 industry mentor (never crowded lecture halls), flexible ₦100,000/month cancel-anytime billing, and 10% upfront discount (pay just ₦90,000, save ₦10,000).
-• Mention fast-action bonus: Free 1-on-1 CV Optimization & LinkedIn Audit (worth ₦35,000) for enrolling this week.
-• Keep momentum high with clear next steps: pick a track (1-6), get syllabus PDF to email, book a free 15-min discovery call, or enroll securely at https://tektutors.com.ng/registration.
-10. ENGAGEMENT CONVERSION EMAILS: Use `trigger_conversion_email_campaign` to send personalized branded materials whenever requested or to drive conversion:
-• When a user provides their email or asks for written syllabus/curriculum: trigger campaign_stage='syllabus'.
-• When a 1-on-1 advisor call is booked: trigger campaign_stage='consultation'.
-• When a prospect inquires about discounts/scholarships/vouchers: trigger campaign_stage='scholarship'.
-• When a prospect is ready to register or wants invoice/payment breakdown: trigger campaign_stage='invoice'.
-• When a prospect is hesitant or needs encouragement: trigger campaign_stage='reengagement'.
-• If no email is known yet, ask: "Could you share your best email address so I can dispatch your personalized curriculum and scholarship package right now?"
-"""
+OPERATIONAL RULES:
+1. TRUTH & TOOLS: Use `search_tektutors_courses` and `get_course_faq_answer` for verified facts. Never invent unlisted policies or locations.
+2. ADVISOR CALLS: To book a 1-on-1 discovery call, warmly ask for Full Name, preferred time/date, and course interest; call `schedule_advisor_call`. Do not confuse with human escalation.
+3. CURRICULUM: Without an email, summarize the 5 core modules (Foundations, SQL, Power BI, Python/AI, Capstones) and request their email. When an email is given, call `qualify_and_capture_lead` immediately, confirm dispatch, and do not ask again.
+4. HUMAN ESCALATION: Only escalate (`escalate_to_human_advisor`) for formal payment/refund disputes or explicit demands for a human manager.
+5. STYLE: WhatsApp format with *bold*, emojis, short bullet points. Paragraphs under 3 sentences. Warm consultative tone ending with a guiding question.
+6. COURSE CONSULTATION SEQUENCE:
+• Broad inquiry/greeting: Summarize the 6 pathways (1: Data Analytics, 2: Excel, 3: SQL, 4: Power BI, 5: Python & AI, 6: Explore Other Courses) and prompt for reply (1-6) or career goal.
+• Specific course inquiry (e.g. Machine Learning, Power BI, SQL, Python): NEVER dump all 6 tracks. Focus 100% on the requested course:
+  a. Confirm course highlights and outcomes (1-on-1 mentor, 3 capstone projects, ₦100,000/month or ₦90,000 upfront).
+  b. Ask ONE diagnostic qualification question (e.g., "Do you have prior experience with Python/math, or are you starting from scratch?").
+  c. Guide toward next step: offer syllabus PDF to email or booking a free 15-min discovery call.
+7. SALES EXCELLENCE: Highlight beginner transformation, 1,200+ graduates, free ₦35,000 CV/LinkedIn audit for enrolling this week, and registration link (https://tektutors.com.ng/registration).
+8. CAMPAIGN EMAILS: Call `trigger_conversion_email_campaign` when email is provided or for syllabus, consultation, or scholarship requests."""
 
 class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]
@@ -115,11 +99,12 @@ class AgentState(TypedDict):
 
 
 SUPPORTED_GROQ_MODELS = [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
     "qwen/qwen3.8-27b",
     "groq/compound-mini",
     "allam-2-7b",
-    "groq/compound",
-    "openai/gpt-oss-20b"
+    "groq/compound"
 ]
 
 _cached_system_config: Optional[Dict[str, Any]] = None
@@ -211,7 +196,7 @@ class TekTutorsAgentManager:
                     model=m,
                     groq_api_key=self.groq_api_key,
                     temperature=0.2,
-                    max_tokens=220,
+                    max_tokens=650,
                     max_retries=0,
                     request_timeout=15.0
                 )
@@ -344,7 +329,7 @@ class TekTutorsAgentManager:
                             model=alt_model,
                             groq_api_key=self.groq_api_key,
                             temperature=0.2,
-                            max_tokens=220,
+                            max_tokens=650,
                             max_retries=0,
                             request_timeout=12.0
                         ).bind_tools(TEKTUTORS_TOOLS)
@@ -683,13 +668,33 @@ class TekTutorsAgentManager:
                 "phone": phone,
                 "name": name,
                 "email": extracted_email,
-                "course_interest": "General AI & Analytics",
+                "course_interest": "Data Analytics & BI Accelerator",
                 "notes": "Captured via automated chat"
             })
             if extracted_email:
+                try:
+                    from app.email_service import dispatch_engagement_email
+                    await dispatch_engagement_email(
+                        trigger_event="syllabus",
+                        course_name="Data Analytics & BI Accelerator",
+                        recipient_email=extracted_email,
+                        recipient_name=name or "Student"
+                    )
+                except Exception as err:
+                    logger.error(f"Error dispatching syllabus email in mock fallback: {err}")
+
                 reply = (
-                    f"Awesome! I've noted down your email (**{extracted_email}**). 📬\n\n"
-                    f"Would you like me to send you the curriculum for any specific course, schedule a quick 10-minute discovery call with our Senior Advisor, or send you the official registration link (https://tektutors.com.ng/registration)?"
+                    f"📧 *Curriculum Sent to Your Inbox!*\n\n"
+                    f"I have dispatched the complete week-by-week syllabus directly to your inbox at: *{extracted_email}*! 🚀\n\n"
+                    f"📚 *Quick Overview of What You Will Master:*\n"
+                    f"• *Module 1:* Foundations & Diagnostic Business Scoping\n"
+                    f"• *Module 2:* Practical Data Wrangling (Advanced Excel + Relational SQL)\n"
+                    f"• *Module 3:* Business Intelligence & Executive Dashboards (Power BI)\n"
+                    f"• *Module 4:* Python Data Analysis, EDA & Automation\n"
+                    f"• *Module 5:* 3 End-to-End Employer-Ready Capstone Projects\n\n"
+                    f"💵 *Tuition:* ₦100,000 / month (or ₦90,000 upfront, saving ₦10,000) with dedicated private 1-on-1 mentorship.\n\n"
+                    f"👉 Secure your slot & assigned mentor here: https://tektutors.com.ng/registration\n\n"
+                    f"Have you worked with any data tools before, or are you starting completely fresh?"
                 )
             else:
                 reply = f"Awesome! Nice to meet you, {name}! How can I help you with TekTutors courses today?"
@@ -779,16 +784,18 @@ class TekTutorsAgentManager:
                 found_courses = json.loads(courses_raw)
                 if found_courses and isinstance(found_courses, list):
                     top_c = found_courses[0]
+                    prereq_q = "Do you already have some experience with Python and basic math/statistics, or are you starting from scratch?" if "machine learning" in lower_text or "data science" in lower_text else "Have you worked with data tools before, or are you starting fresh?"
                     reply = (
                         f"🎯 *Yes, absolutely! {top_c['title']}*\n\n"
-                        f"This program is 100% practical, project-driven, and delivered via personalized 1-on-1 mentorship with an experienced industry mentor.\n\n"
+                        f"This program is 100% practical, project-driven, and delivered via dedicated **private 1-on-1 mentorship** with an experienced industry practitioner.\n\n"
                         f"📚 *What you will master:*\n• {top_c.get('syllabus') or top_c.get('description', '')}\n\n"
                         f"⏱️ *Duration:* {top_c['duration']}\n"
-                        f"💵 *Tuition:* {top_c['price_monthly']} (Flexible month-to-month billing)\n"
+                        f"💵 *Tuition:* {top_c['price_monthly']} (or pay upfront for just **₦90,000** with our 10% discount, saving ₦10,000!)\n"
                         f"🎯 *Career Outcomes:* {top_c['career_outcomes']}\n"
                         f"📌 *Prerequisites:* {top_c['prerequisites']}\n\n"
-                        f"👉 *Ready to enroll or want the full week-by-week syllabus?*\n"
-                        f"Reply with your *Email Address* to receive the complete syllabus PDF, or enroll securely at:\n"
+                        f"To personalize your learning roadmap:\n"
+                        f"👉 *{prereq_q}*\n\n"
+                        f"*(Reply with your **Email Address** to receive the complete syllabus PDF, or schedule a free 15-minute 1-on-1 discovery call with an Admissions Advisor!)*\n"
                         f"🔗 https://tektutors.com.ng/registration"
                     )
                     return {"response": reply, "tool_logs": ["search_tektutors_courses"]}

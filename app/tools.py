@@ -1,6 +1,7 @@
 import json
+import time
 import logging
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from langchain.tools import tool
 from sqlalchemy import select, or_, desc
 from app.database import AsyncSessionLocal
@@ -8,55 +9,134 @@ from app.models import Course, FAQ, Lead, Appointment, Conversation
 
 logger = logging.getLogger(__name__)
 
+# In-memory TTL cache to eliminate redundant DB reads during active chats
+_COURSES_CACHE: Optional[List[Dict[str, Any]]] = None
+_COURSES_CACHE_EXPIRY: float = 0.0
+_FAQS_CACHE: Optional[List[Dict[str, Any]]] = None
+_FAQS_CACHE_EXPIRY: float = 0.0
+_TOOL_CACHE_TTL_SECONDS: float = 300.0  # 5 minutes
+
+
+def invalidate_tool_caches() -> None:
+    """Clear in-memory caches when admin modifies courses or FAQs."""
+    global _COURSES_CACHE, _COURSES_CACHE_EXPIRY, _FAQS_CACHE, _FAQS_CACHE_EXPIRY
+    _COURSES_CACHE = None
+    _COURSES_CACHE_EXPIRY = 0.0
+    _FAQS_CACHE = None
+    _FAQS_CACHE_EXPIRY = 0.0
+
+
+async def _get_cached_courses() -> List[Dict[str, Any]]:
+    """Retrieve active courses from cache or database."""
+    global _COURSES_CACHE, _COURSES_CACHE_EXPIRY
+    now = time.time()
+    if _COURSES_CACHE is not None and now < _COURSES_CACHE_EXPIRY:
+        return _COURSES_CACHE
+
+    async with AsyncSessionLocal() as db:
+        res = await db.execute(select(Course).where(Course.is_active == True))
+        db_courses = res.scalars().all()
+        _COURSES_CACHE = [
+            {
+                "id": c.id,
+                "title": c.title,
+                "description": c.description or "",
+                "syllabus": c.syllabus or "",
+                "duration_weeks": c.duration_weeks,
+                "price": int(c.price) if c.price else 100000,
+                "career_outcomes": c.career_outcomes or "",
+                "prerequisites": c.prerequisites or ""
+            }
+            for c in db_courses
+        ]
+        _COURSES_CACHE_EXPIRY = now + _TOOL_CACHE_TTL_SECONDS
+    return _COURSES_CACHE
+
+
+async def _get_cached_faqs() -> List[Dict[str, Any]]:
+    """Retrieve FAQs from cache or database."""
+    global _FAQS_CACHE, _FAQS_CACHE_EXPIRY
+    now = time.time()
+    if _FAQS_CACHE is not None and now < _FAQS_CACHE_EXPIRY:
+        return _FAQS_CACHE
+
+    async with AsyncSessionLocal() as db:
+        res = await db.execute(select(FAQ))
+        db_faqs = res.scalars().all()
+        _FAQS_CACHE = [
+            {
+                "id": f.id,
+                "category": f.category or "",
+                "question": f.question or "",
+                "answer": f.answer or ""
+            }
+            for f in db_faqs
+        ]
+        _FAQS_CACHE_EXPIRY = now + _TOOL_CACHE_TTL_SECONDS
+    return _FAQS_CACHE
+
+
 @tool
 async def search_tektutors_courses(query: str) -> str:
     """
     Search TekTutors course catalog, prices, syllabus, prerequisites, and duration.
     Use this tool whenever a customer asks about courses, prices, bootcamps, or learning topics.
     """
-    async with AsyncSessionLocal() as db:
-        stmt = select(Course).where(Course.is_active == True)
-        matched_specific = False
-        if query:
-            keywords = [kw.strip() for kw in query.replace(",", " ").replace("?", " ").replace(".", " ").split() if len(kw.strip()) > 2]
-            if keywords:
-                conditions = []
+    all_courses = await _get_cached_courses()
+    matched_specific = False
+    matched_courses = []
+
+    if query:
+        keywords = [kw.strip().lower() for kw in query.replace(",", " ").replace("?", " ").replace(".", " ").split() if len(kw.strip()) > 2]
+        if keywords:
+            for c in all_courses:
+                title_lower = c["title"].lower()
+                desc_lower = c["description"].lower()
+                syl_lower = c["syllabus"].lower()
+
+                score = 0
                 for kw in keywords:
-                    pat = f"%{kw}%"
-                    conditions.append(Course.title.ilike(pat))
-                    conditions.append(Course.description.ilike(pat))
-                    conditions.append(Course.syllabus.ilike(pat))
-                stmt = stmt.where(or_(*conditions))
+                    if kw in title_lower:
+                        score += 10
+                    elif kw in desc_lower:
+                        score += 3
+                    elif kw in syl_lower:
+                        score += 2
+
+                if score > 0:
+                    matched_courses.append((score, c))
+
+            if matched_courses:
+                matched_courses.sort(key=lambda x: x[0], reverse=True)
+                matched_courses = [c for _, c in matched_courses]
                 matched_specific = True
 
-        result = await db.execute(stmt)
-        courses = result.scalars().all()
+    if not matched_courses:
+        # Provide top 3 foundational tracks if no specific match
+        matched_courses = all_courses[:3]
+        matched_specific = False
 
-        if not courses:
-            # Fallback to all active courses
-            all_result = await db.execute(select(Course).where(Course.is_active == True))
-            courses = all_result.scalars().all()
-            matched_specific = False
+    # Cap to top 3 matches to prevent multi-thousand token context bloat
+    selected = matched_courses[:3]
+    courses_data = []
+    for c in selected:
+        item = {
+            "title": c["title"],
+            "price_monthly": f"₦{c['price']:,}",
+            "duration": f"{c['duration_weeks']} Weeks",
+            "career_outcomes": c["career_outcomes"],
+            "prerequisites": c["prerequisites"]
+        }
+        if matched_specific or len(selected) <= 2:
+            item["syllabus"] = c["syllabus"]
+            item["description"] = c["description"]
+        else:
+            item["summary"] = c["description"][:120] + "..." if len(c["description"]) > 120 else c["description"]
+        courses_data.append(item)
 
-        courses_data = []
-        # If specific match, provide detailed fields; if broad, provide concise token-saving summaries
-        for c in courses:
-            item = {
-                "title": c.title,
-                "price_monthly": f"₦{int(c.price):,}",
-                "duration": f"{c.duration_weeks} Weeks",
-                "career_outcomes": c.career_outcomes,
-                "prerequisites": c.prerequisites
-            }
-            if matched_specific or len(courses) <= 2:
-                item["syllabus"] = c.syllabus
-                item["description"] = c.description
-            else:
-                item["summary"] = c.description[:120] + "..." if len(c.description) > 120 else c.description
-            courses_data.append(item)
+    # Minified JSON serialization saves 45-60% whitespace/indent tokens
+    return json.dumps(courses_data, separators=(',', ':'))
 
-        # Minified JSON serialization saves 45-60% whitespace/indent tokens
-        return json.dumps(courses_data, separators=(',', ':'))
 
 FAQ_STOPWORDS = {
     "the", "and", "for", "with", "can", "what", "how", "why", "when", "where", "who", "which",
@@ -66,66 +146,54 @@ FAQ_STOPWORDS = {
     "know", "like", "would", "could", "should", "please", "need"
 }
 
+
 @tool
 async def get_course_faq_answer(question_or_topic: str) -> str:
     """
     Search TekTutors FAQ knowledge base regarding payment installment options, beginner prerequisites, live weekend schedule, certificates, and job placement assistance.
     """
-    async with AsyncSessionLocal() as db:
-        stmt = select(FAQ)
-        keywords = []
-        if question_or_topic:
-            raw_tokens = [kw.strip().lower() for kw in question_or_topic.replace(",", " ").replace("?", " ").replace(".", " ").split() if kw.strip()]
-            keywords = [w for w in raw_tokens if len(w) > 2 and w not in FAQ_STOPWORDS]
-            if not keywords and raw_tokens:
-                keywords = [w for w in raw_tokens if len(w) > 2]
+    all_faqs = await _get_cached_faqs()
+    keywords = []
 
-            if keywords:
-                conditions = []
-                for kw in keywords:
-                    pat = f"%{kw}%"
-                    conditions.append(FAQ.question.ilike(pat))
-                    conditions.append(FAQ.answer.ilike(pat))
-                    conditions.append(FAQ.category.ilike(pat))
-                stmt = stmt.where(or_(*conditions))
+    if question_or_topic:
+        raw_tokens = [kw.strip().lower() for kw in question_or_topic.replace(",", " ").replace("?", " ").replace(".", " ").split() if kw.strip()]
+        keywords = [w for w in raw_tokens if len(w) > 2 and w not in FAQ_STOPWORDS]
+        if not keywords and raw_tokens:
+            keywords = [w for w in raw_tokens if len(w) > 2]
 
-        result = await db.execute(stmt)
-        faqs = list(result.scalars().all())
+    scored_faqs = []
+    if keywords and all_faqs:
+        for f in all_faqs:
+            q_text = f["question"].lower()
+            a_text = f["answer"].lower()
+            c_text = f["category"].lower()
+            score = 0
+            for kw in keywords:
+                if kw in q_text:
+                    score += 10
+                if kw in a_text:
+                    score += 3
+                if kw in c_text:
+                    score += 1
+            if score > 0:
+                scored_faqs.append((score, f))
 
-        if keywords and faqs:
-            def score_faq(f):
-                score = 0
-                q_text = (f.question or "").lower()
-                a_text = (f.answer or "").lower()
-                c_text = (f.category or "").lower()
-                has_content_match = False
-                for kw in keywords:
-                    if kw in q_text:
-                        score += 10
-                        has_content_match = True
-                    if kw in a_text:
-                        score += 3
-                        has_content_match = True
-                    if kw in c_text and has_content_match:
-                        score += 1
-                # Heavily prioritize exact keyword match in question title
-                return score if has_content_match else 0
+        scored_faqs.sort(key=lambda x: x[0], reverse=True)
+        faqs = [f for _, f in scored_faqs]
+    else:
+        faqs = all_faqs
 
-            faqs.sort(key=score_faq, reverse=True)
-            faqs = [f for f in faqs if score_faq(f) > 0]
+    if not faqs and not (question_or_topic and question_or_topic.strip()):
+        faqs = all_faqs[:3]
+    elif not faqs:
+        return json.dumps({
+            "found": False,
+            "message": "No matching FAQ in knowledge base. Escalate this question to a human advisor."
+        }, separators=(',', ':'))
 
-        if not faqs and not (question_or_topic and question_or_topic.strip()):
-            all_result = await db.execute(select(FAQ).limit(5))
-            faqs = list(all_result.scalars().all())
-        elif not faqs:
-            return json.dumps({
-                "found": False,
-                "message": "No matching FAQ in knowledge base. Escalate this question to a human advisor."
-            }, separators=(',', ':'))
-
-        # Limit to top 3 matched FAQs and serialize compactly
-        faq_list = [{"category": f.category, "question": f.question, "answer": f.answer} for f in faqs[:3]]
-        return json.dumps(faq_list, separators=(',', ':'))
+    # Limit to top 2-3 matched FAQs and serialize compactly
+    faq_list = [{"category": f["category"], "question": f["question"], "answer": f["answer"]} for f in faqs[:3]]
+    return json.dumps(faq_list, separators=(',', ':'))
 
 @tool
 async def qualify_and_capture_lead(
@@ -208,17 +276,17 @@ async def qualify_and_capture_lead(
         # Automatically trigger personalized syllabus & roadmap email when email is captured
         if lead.email and "@" in lead.email:
             try:
-                import asyncio
                 from app.email_service import dispatch_engagement_email
-                asyncio.create_task(dispatch_engagement_email(
+                await dispatch_engagement_email(
                     lead_id=lead.id,
                     trigger_event="syllabus",
                     course_name=lead.course_interest or course_interest or "Data Analytics & BI Accelerator",
                     recipient_email=lead.email,
                     recipient_name=lead.name or "Student"
-                ))
+                )
+                logger.info(f"Syllabus email successfully dispatched for lead #{lead.id} to {lead.email}")
             except Exception as e:
-                logger.warning(f"Note: Background syllabus email dispatch skipped: {e}")
+                logger.error(f"Error during lead syllabus email dispatch for {lead.email}: {e}")
 
         return f"Lead captured successfully! ID: {lead.id}, Name: {lead.name}, Score: {lead.lead_score}, Status: {lead.status}"
 
@@ -477,7 +545,8 @@ async def trigger_conversion_email_campaign(
     phone: str,
     campaign_stage: str,
     course_name: Optional[str] = None,
-    custom_note: Optional[str] = None
+    custom_note: Optional[str] = None,
+    email: Optional[str] = None
 ) -> str:
     """
     Dispatch a targeted, branded email campaign directly to a student's inbox to drive conversion.
@@ -498,11 +567,30 @@ async def trigger_conversion_email_campaign(
         res = await db.execute(stmt)
         lead = res.scalars().first()
 
-        if not lead or not lead.email or "@" not in lead.email:
+        target_email = email.strip() if (email and "@" in email) else (lead.email if lead and lead.email else None)
+
+        if not target_email or "@" not in target_email:
             return (
                 f"Prospect does not have an email address on file yet. "
                 f"Please ask them: 'Could you please share your email address so I can dispatch your personalized {campaign_stage} package right away?'"
             )
+
+        if lead:
+            if email and "@" in email:
+                lead.email = email.strip()
+                await db.commit()
+                await db.refresh(lead)
+        else:
+            lead = Lead(
+                phone=clean_phone,
+                email=target_email,
+                course_interest=course_name or "Data Analytics & BI Accelerator",
+                status="qualified",
+                lead_score=70
+            )
+            db.add(lead)
+            await db.commit()
+            await db.refresh(lead)
 
         target_course = course_name or lead.course_interest or "Data Analytics & BI Accelerator"
         target_name = lead.name or "Student"
@@ -511,13 +599,13 @@ async def trigger_conversion_email_campaign(
             lead_id=lead.id,
             trigger_event=campaign_stage.lower().strip(),
             course_name=target_course,
-            recipient_email=lead.email,
+            recipient_email=target_email,
             recipient_name=target_name,
             custom_notes=custom_note
         )
 
         return (
-            f"✅ Dispatched '{campaign_stage}' conversion email to {lead.email}! "
+            f"✅ Dispatched '{campaign_stage}' conversion email to {target_email}! "
             f"Subject: '{result.get('subject')}'. Delivery Status: {result.get('status')}."
         )
 

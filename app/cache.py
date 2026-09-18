@@ -119,11 +119,12 @@ CAREER_BACKGROUND_PATTERNS = [
 ]
 
 HARDWARE_SPECS_PATTERNS = [
-    r"\b(laptop|computer|system\s+requirements?|pc\s+specs?|mac(book)?|ram|laptop\s+specs?)\b"
+    r"\b(laptop|computer|system\s+requirements?|pc\s+specs?|mac(book)?|ram|laptop\s+specs?)\b",
+    r"\b(can\s+i\s+(use|learn\s+with)\s+(my\s+)?(phone|mobile)|is\s+laptop\s+compulsory|do\s+i\s+need\s+a\s+(laptop|computer|pc))\b"
 ]
 
 SCHEDULE_PATTERNS = [
-    r"\b(schedule|weekend(\s+classes?)?|working\s+professionals?|time\s+of\s+class|when\s+are\s+classes|class\s+hours|miss\s+a\s+class|flexible\s+time)\b"
+    r"\b(schedule|weekend(\s+classes?)?|working\s+professionals?|time\s+of\s+class|when\s+are\s+classes|class\s+hours|miss\s+a\s+class|flexible\s+time|after\s+work|evening\s+classes?|night\s+classes?)\b"
 ]
 
 INTERNATIONAL_PAYMENT_PATTERNS = [
@@ -131,7 +132,8 @@ INTERNATIONAL_PAYMENT_PATTERNS = [
 ]
 
 CERTIFICATION_PATTERNS = [
-    r"\b(certificate|certification|accredited|job\s+support|job\s+placement|internship|resume\s+review|portfolio\s+review)\b"
+    r"\b(certificate|certification|accredited|job\s+support|job\s+placement|internship|resume\s+review|portfolio\s+review)\b",
+    r"\b(guarantee(\s+a)?\s+job|will\s+i\s+get\s+a\s+job|job\s+guarantee|employment\s+support)\b"
 ]
 
 DISCOUNT_PROMO_PATTERNS = [
@@ -155,7 +157,7 @@ COURSE_QUERY_PATTERNS = [
     (r"\b(sql|postgres|database\s+analytics?)\b", 3),
     (r"\b(power\s*bi|dax|interactive\s+dashboards?)\b", 4),
     (r"\b(applied\s+python|python\s+for\s+data|pandas\s+course)\b", 5),
-    (r"\b(machine\s+learning|data\s+science|business\s+analysis|business\s+analytics|financial\s+analytic|marketing\s+analytic|hr\s+analytic|people\s+analytic|data\s+governance)\b", 6)
+    (r"\b(other\s+courses?|more\s+courses?|specialized\s+tracks?|additional\s+courses?|explore\s+other|what\s+else\s+do\s+you\s+offer)\b", 6)
 ]
 
 # In-memory query response cache for sub-millisecond repeated queries
@@ -190,26 +192,32 @@ async def log_cost_savings(
     latency_ms: float,
     model_used: Optional[str] = None
 ):
-    """Log telemetry regarding saved tokens and fast-path execution to DB."""
+    """Log telemetry regarding saved tokens and fast-path execution to DB asynchronously."""
+    async def _persist():
+        try:
+            estimated_savings = (tokens_saved / 1_000_000) * 0.60
+            async with AsyncSessionLocal() as db:
+                telemetry = CostTelemetry(
+                    phone=phone,
+                    query_type=query_type,
+                    model_used=model_used,
+                    input_tokens=0 if "fast_path" in query_type else tokens_saved,
+                    output_tokens=0,
+                    tokens_saved=tokens_saved,
+                    estimated_cost_usd=0.0 if "fast_path" in query_type else estimated_savings,
+                    estimated_savings_usd=estimated_savings if "fast_path" in query_type else 0.0,
+                    latency_ms=latency_ms
+                )
+                db.add(telemetry)
+                await db.commit()
+        except Exception as e:
+            logger.debug(f"Telemetry logging non-critical error: {e}")
+
     try:
-        # Benchmark rate: ~$0.60 per 1M tokens on standard commercial models
-        estimated_savings = (tokens_saved / 1_000_000) * 0.60
-        async with AsyncSessionLocal() as db:
-            telemetry = CostTelemetry(
-                phone=phone,
-                query_type=query_type,
-                model_used=model_used,
-                input_tokens=0 if "fast_path" in query_type else tokens_saved,
-                output_tokens=0,
-                tokens_saved=tokens_saved,
-                estimated_cost_usd=0.0 if "fast_path" in query_type else estimated_savings,
-                estimated_savings_usd=estimated_savings if "fast_path" in query_type else 0.0,
-                latency_ms=latency_ms
-            )
-            db.add(telemetry)
-            await db.commit()
-    except Exception as e:
-        logger.debug(f"Telemetry logging non-critical error: {e}")
+        loop = asyncio.get_running_loop()
+        loop.create_task(_persist())
+    except Exception:
+        await _persist()
 
 async def check_fast_path(phone: str, user_text: str) -> Optional[Dict[str, Any]]:
     """
@@ -358,31 +366,50 @@ async def check_fast_path(phone: str, user_text: str) -> Optional[Dict[str, Any]
 
     # 3. Direct Curriculum / Syllabus Email Capture Fast Path
     email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text_clean)
-    if email_match and any(kw in lower_text for kw in ["curriculum", "syllabus", "brochure", "outline", "send", "email"]):
+    email_trigger_keywords = [
+        "curriculum", "syllabus", "brochure", "outline", "send", "email",
+        "mail", "forward", "dispatch", "deliver", "share", "drop", "info", "course"
+    ]
+    is_standalone_email = bool(email_match and len(lower_text.split()) <= 6)
+    if email_match and (any(kw in lower_text for kw in email_trigger_keywords) or is_standalone_email):
         extracted_email = email_match.group(0)
         from app.tools import qualify_and_capture_lead
         
         # Detect target course if specified
         detected_course = None
-        for track_num, track in TRACK_INFO.items():
-            if track["title"].lower() in lower_text or str(track_num) in lower_text:
-                detected_course = track["title"]
-                break
+        if "machine learning" in lower_text or "ml" in lower_text:
+            detected_course = "Machine Learning with Python"
+        elif "data science" in lower_text:
+            detected_course = "Data Science with Python"
+        elif "power bi" in lower_text or "powerbi" in lower_text:
+            detected_course = "Power BI & Business Intelligence"
+        elif "sql" in lower_text or "database" in lower_text:
+            detected_course = "SQL & Enterprise Database Analytics"
+        elif "excel" in lower_text:
+            detected_course = "Excel for Data Analysis & Business Modeling"
+        elif "python" in lower_text:
+            detected_course = "Applied Python for Data Analysis & AI"
+        elif "business analysis" in lower_text or "business analyst" in lower_text:
+            detected_course = "Business Analysis"
+        else:
+            for track_num, track in TRACK_INFO.items():
+                if track["title"].lower() in lower_text or str(track_num) in lower_text:
+                    detected_course = track["title"]
+                    break
+
+        course_label = detected_course if detected_course else "Data Analytics & BI Accelerator"
 
         await qualify_and_capture_lead.ainvoke({
             "phone": clean_phone,
             "email": extracted_email,
-            "course_interest": detected_course or "Data Analytics & BI",
+            "course_interest": course_label,
             "notes": f"Curriculum requested via fast path for email {extracted_email}"
         })
 
-        course_label = detected_course if detected_course else "Data Analytics & AI Pathways"
-
-        # Automatically dispatch official branded syllabus email in real-time
+        # Directly dispatch official branded syllabus email in real-time
         try:
-            import asyncio
             from app.email_service import send_email_async
-            asyncio.create_task(send_email_async(
+            await send_email_async(
                 to_email=extracted_email,
                 to_name="Student",
                 subject=f"📚 Your TekTutors {course_label} Syllabus & Learning Roadmap",
@@ -403,9 +430,10 @@ async def check_fast_path(phone: str, user_text: str) -> Optional[Dict[str, Any]
                 cta_text=f"Enroll in {course_label}",
                 cta_url="https://tektutors.com.ng/registration",
                 course_name=course_label
-            ))
+            )
+            logger.info(f"Curriculum email successfully delivered to {extracted_email} for {course_label}")
         except Exception as e:
-            logger.warning(f"Note: Real-time syllabus email dispatch skipped: {e}")
+            logger.error(f"Error during real-time syllabus email dispatch to {extracted_email}: {e}")
 
         response = (
             f"📧 *Curriculum Sent Instantly!*\n\n"
@@ -610,13 +638,15 @@ async def check_fast_path(phone: str, user_text: str) -> Optional[Dict[str, Any]
     # 7. Laptop & System Hardware Requirements Fast Path
     for pat in HARDWARE_SPECS_PATTERNS:
         if re.search(pat, lower_text):
+            phone_note = "\n\n📱 *Can I learn on my phone?*\nWhile you can attend video calls on a phone, practical hands-on exercises require a laptop or PC to run professional tools (Power BI, Python, SQL, Excel)." if any(w in lower_text for w in ["phone", "mobile"]) else ""
             response = (
                 "💻 *Laptop & System Requirements for TekTutors Training:*\n\n"
                 "You only need a standard personal laptop to get started:\n"
                 "• **Operating System:** Windows 10/11, macOS, or Linux\n"
                 "• **Memory (RAM):** 4GB minimum (8GB recommended for smooth multitasking)\n"
                 "• **Internet:** Reliable connection for live 1-on-1 video mentoring sessions\n\n"
-                "💡 *All software is free:* Tools like Power BI Desktop, VS Code, Python/Jupyter, and MySQL are completely free. Your 1-on-1 mentor will guide you step-by-step through installing everything in session 1!\n\n"
+                "💡 *All software is free:* Tools like Power BI Desktop, VS Code, Python/Jupyter, and MySQL are completely free. Your 1-on-1 mentor will guide you step-by-step through installing everything in session 1!"
+                f"{phone_note}\n\n"
                 f"Ready to begin? Complete your registration online:\n🔗 {REGISTRATION_URL}"
             )
             elapsed_ms = (time.time() - start_time) * 1000
