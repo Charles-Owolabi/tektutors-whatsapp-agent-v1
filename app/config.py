@@ -81,13 +81,13 @@ class Settings(BaseSettings):
     DATABASE_URL: str = _clean_database_url(os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./tektutors.db"))
     
     # Email & SMTP Settings
-    SMTP_HOST: str = os.getenv("SMTP_HOST", "")
-    SMTP_PORT: int = _safe_int_env("SMTP_PORT", 587)
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    SMTP_PORT: int = _safe_int_env("SMTP_PORT", 465)
     SMTP_USER: str = os.getenv("SMTP_USER", "")
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
-    SMTP_FROM_EMAIL: str = os.getenv("SMTP_FROM_EMAIL", "admissions@tektutors.com.ng")
+    SMTP_FROM_EMAIL: str = os.getenv("SMTP_FROM_EMAIL", "tektutorsng@gmail.com")
     SMTP_FROM_NAME: str = os.getenv("SMTP_FROM_NAME", "TekTutors Academy")
-    SMTP_USE_TLS: bool = _safe_bool_env("SMTP_USE_TLS", True)
+    SMTP_USE_TLS: bool = _safe_bool_env("SMTP_USE_TLS", False)
 
     # Production & Security Settings
     ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "*")

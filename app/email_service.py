@@ -1,5 +1,7 @@
 import os
 import re
+import ssl
+import socket
 import smtplib
 import asyncio
 import logging
@@ -513,8 +515,36 @@ def render_branded_email_html(
 </body>
 </html>"""
 
+def _connect_smtp_server_resilient(host: str, port: int, is_ssl: bool, timeout: int = 15):
+    """
+    Connect to SMTP server prioritizing IPv4 ('0.0.0.0' source address)
+    to completely prevent 'Network is unreachable' [Errno 101 / WinError 10051]
+    when running on networks where IPv6 is configured but not publicly routable.
+    """
+    # 1. First attempt: Force IPv4 source binding
+    try:
+        if is_ssl:
+            return smtplib.SMTP_SSL(host, port, timeout=timeout, source_address=("0.0.0.0", 0))
+        else:
+            server = smtplib.SMTP(host, port, timeout=timeout, source_address=("0.0.0.0", 0))
+            if settings.SMTP_USE_TLS or port == 587:
+                server.starttls()
+            return server
+    except (OSError, smtplib.SMTPConnectError, socket.error) as ipv4_err:
+        logger.warning(f"IPv4-bound SMTP attempt to {host}:{port} failed ({ipv4_err}). Retrying standard socket...")
+
+    # 2. Second attempt: Fallback to standard system socket
+    if is_ssl:
+        return smtplib.SMTP_SSL(host, port, timeout=timeout)
+    else:
+        server = smtplib.SMTP(host, port, timeout=timeout)
+        if settings.SMTP_USE_TLS or port == 587:
+            server.starttls()
+        return server
+
+
 def _send_smtp_email_sync(to_email: str, subject: str, html_content: str, text_content: str) -> bool:
-    """Internal helper to dispatch email over SMTP synchronously."""
+    """Internal helper to dispatch email over SMTP synchronously with resilient failover."""
     if not settings.SMTP_HOST:
         return False
 
@@ -526,20 +556,44 @@ def _send_smtp_email_sync(to_email: str, subject: str, html_content: str, text_c
     msg.attach(MIMEText(text_content, "plain"))
     msg.attach(MIMEText(html_content, "html"))
 
-    if settings.SMTP_PORT == 465:
-        server = smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15)
-    else:
-        server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15)
-        if settings.SMTP_USE_TLS:
-            server.starttls()
+    primary_port = settings.SMTP_PORT or 465
+    primary_ssl = (primary_port == 465)
+    fallback_port = 587 if primary_ssl else 465
+    fallback_ssl = not primary_ssl
 
-    if settings.SMTP_USER and settings.SMTP_PASSWORD:
-        clean_password = settings.SMTP_PASSWORD.replace(" ", "").strip()
-        server.login(settings.SMTP_USER, clean_password)
+    attempts = [
+        (primary_port, primary_ssl),
+        (fallback_port, fallback_ssl)
+    ]
 
-    server.sendmail(settings.SMTP_FROM_EMAIL, [to_email], msg.as_string())
-    server.quit()
-    return True
+    server = None
+    last_err = None
+
+    for port, is_ssl in attempts:
+        try:
+            server = _connect_smtp_server_resilient(settings.SMTP_HOST, port, is_ssl, timeout=12)
+            break
+        except Exception as e:
+            logger.warning(f"SMTP connection to {settings.SMTP_HOST}:{port} failed ({e}). Trying fallback...")
+            last_err = e
+
+    if not server:
+        raise last_err or RuntimeError(f"Could not connect to {settings.SMTP_HOST} on ports {primary_port} or {fallback_port}.")
+
+    try:
+        if settings.SMTP_USER and settings.SMTP_PASSWORD:
+            clean_password = settings.SMTP_PASSWORD.replace(" ", "").strip()
+            server.login(settings.SMTP_USER, clean_password)
+
+        server.sendmail(settings.SMTP_FROM_EMAIL, [to_email], msg.as_string())
+        server.quit()
+        return True
+    except Exception as dispatch_err:
+        try:
+            server.close()
+        except Exception:
+            pass
+        raise dispatch_err
 
 async def send_email_async(
     to_email: Optional[str] = None,
