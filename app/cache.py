@@ -76,6 +76,129 @@ TRACK_INFO = {
     }
 }
 
+COURSE_SYLLABUS_MAP = {
+    "Machine Learning with Python": {
+        "title": "Machine Learning with Python",
+        "duration": "16 Weeks (3-5 Months)",
+        "modules": [
+            "Module 1: Applied Python Programming, NumPy, Pandas, Vectorization & Linear Algebra",
+            "Module 2: Data Preprocessing, Feature Engineering, Outlier Detection & Scaling",
+            "Module 3: Supervised Learning (Linear & Logistic Regression, Decision Trees, Random Forests, XGBoost)",
+            "Module 4: Unsupervised Learning (K-Means, PCA, Hierarchical Clustering) & Model Validation",
+            "Module 5: Model Deployment (FastAPI, Docker, Streamlit) & 3 End-to-End Production Capstones"
+        ],
+        "prerequisites": "Python programming and foundational statistics."
+    },
+    "Data Science with Python": {
+        "title": "Data Science with Python",
+        "duration": "16-20 Weeks (4-6 Months)",
+        "modules": [
+            "Module 1: Python Programming, Data Structures, NumPy, Pandas & Exploratory Data Analysis (EDA)",
+            "Module 2: Applied Statistics, Probability Distributions & Hypothesis Testing (A/B Testing)",
+            "Module 3: Feature Engineering, Pipeline Design & Predictive Modeling",
+            "Module 4: Machine Learning Algorithms & Model Evaluation",
+            "Module 5: End-to-End Capstone Projects, Portfolio Walkthroughs & Model APIs"
+        ],
+        "prerequisites": "Computer literacy and willingness to practice."
+    },
+    "Power BI & Business Intelligence": {
+        "title": "Power BI & Business Intelligence",
+        "duration": "6-8 Weeks (1.5-2 Months)",
+        "modules": [
+            "Module 1: Data Ingestion, Cleaning & Transformation with Power Query",
+            "Module 2: Relational Data Modeling, Cardinality & Star Schema Architecture",
+            "Module 3: DAX Calculations (Calculated Columns, Measures, Time Intelligence)",
+            "Module 4: Interactive Visual Storytelling, Drill-Through & Mobile Layouts",
+            "Module 5: Power BI Service, Scheduled Refresh, Row-Level Security & Capstones"
+        ],
+        "prerequisites": "None. Complete beginners welcome."
+    },
+    "SQL & Enterprise Database Analytics": {
+        "title": "SQL & Enterprise Database Analytics",
+        "duration": "6-8 Weeks (1.5-2 Months)",
+        "modules": [
+            "Module 1: Relational Database Architecture & SQL Fundamentals",
+            "Module 2: Filtering, Sorting, Aggregations & Grouping",
+            "Module 3: Complex Joins (INNER, LEFT, RIGHT, FULL) & Multi-Table Queries",
+            "Module 4: Subqueries, Common Table Expressions (CTEs) & Window Functions",
+            "Module 5: Query Optimization, Views & Real-World Business Analytics Capstones"
+        ],
+        "prerequisites": "None. Complete beginners welcome."
+    },
+    "Excel for Data Analysis & Business Modeling": {
+        "title": "Excel for Data Analysis & Business Modeling",
+        "duration": "6-8 Weeks (1.5-2 Months)",
+        "modules": [
+            "Module 1: Advanced Formulas, Functions & Dynamic Arrays (XLOOKUP, INDEX/MATCH)",
+            "Module 2: Data Cleaning & Transformation with Power Query",
+            "Module 3: PivotTables, Slicers & Calculated Fields",
+            "Module 4: Interactive Executive KPI Dashboards & Visual Design",
+            "Module 5: Financial & Business Analysis Capstone Projects"
+        ],
+        "prerequisites": "Basic computer skills."
+    },
+    "Applied Python for Data Analysis & AI": {
+        "title": "Applied Python for Data Analysis & AI",
+        "duration": "6-8 Weeks (1.5-2 Months)",
+        "modules": [
+            "Module 1: Python Syntax, Data Types, Control Flow & Functions",
+            "Module 2: NumPy & Pandas for High-Performance Data Manipulation",
+            "Module 3: Data Cleaning, Missing Data Handling & Transformation",
+            "Module 4: Exploratory Data Analysis & Visualization (Matplotlib, Seaborn)",
+            "Module 5: Real-World Business Analytics Capstone Projects"
+        ],
+        "prerequisites": "Basic computer skills."
+    },
+    "Business Analysis": {
+        "title": "Business Analysis",
+        "duration": "10 Weeks (2.5 Months)",
+        "modules": [
+            "Module 1: Business Analysis Foundations & Stakeholder Management",
+            "Module 2: Elicitation Techniques, Requirements Engineering & User Stories",
+            "Module 3: Process Mapping, Flowcharts, BPMN & Gap Analysis",
+            "Module 4: Business Data Analytics, KPIs & Metrics Definition",
+            "Module 5: Business Requirement Documents (BRD), Agile/Scrum & Capstone Projects"
+        ],
+        "prerequisites": "None. Ideal for career switchers."
+    },
+    "Data Analytics & BI Accelerator": {
+        "title": "Data Analytics & BI Accelerator",
+        "duration": "10 Weeks (2.5 Months)",
+        "modules": [
+            "Module 1: Foundations & Business Metrics (Problem Scoping & Diagnostic Analytics)",
+            "Module 2: Data Wrangling & Database Mastery (Advanced Excel & Relational SQL Queries)",
+            "Module 3: Business Intelligence & Dashboards (Power BI Modeling & DAX)",
+            "Module 4: Advanced Analytics & AI (Python Data Analysis, Pandas & EDA)",
+            "Module 5: Capstone Projects & Career Portfolio (3 Employer-Ready Projects)"
+        ],
+        "prerequisites": "None. Complete beginners welcome."
+    }
+}
+
+
+def detect_target_course(text: str) -> Optional[str]:
+    """Identify which specific course is being discussed or requested."""
+    lower = text.lower()
+    if "machine learning" in lower or "machine-learning" in lower or re.search(r'\bml\b', lower):
+        return "Machine Learning with Python"
+    if "data science" in lower or re.search(r'\bds\b', lower):
+        return "Data Science with Python"
+    if "power bi" in lower or "powerbi" in lower:
+        return "Power BI & Business Intelligence"
+    if "sql" in lower or "database" in lower:
+        return "SQL & Enterprise Database Analytics"
+    if "excel" in lower:
+        return "Excel for Data Analysis & Business Modeling"
+    if "applied python" in lower or "python for data" in lower or (re.search(r'\bpython\b', lower) and "machine" not in lower and "data science" not in lower):
+        return "Applied Python for Data Analysis & AI"
+    if "business analysis" in lower or "business analyst" in lower or re.search(r'\bba\b', lower):
+        return "Business Analysis"
+    for track_num, track in TRACK_INFO.items():
+        if track["title"].lower() in lower or str(track_num) in lower:
+            return track["title"]
+    return None
+
+
 GREETING_PATTERNS = [
     r"^(hi|hello|hey|good\s+morning|good\s+afternoon|good\s+day|good\s+evening|how\s+far|yo|start|menu|options)\b"
 ]
@@ -103,8 +226,8 @@ PAYMENT_PLAN_PATTERNS = [
 ]
 
 SYLLABUS_OVERVIEW_PATTERNS = [
-    r"(send|share|view|download|get|full)\s+(course\s+)?syllabus(\s+breakdown)?",
-    r"(send|share|view|download|get|full)\s+(course\s+)?curriculum(\s+breakdown)?",
+    r"\b(syllabus|curriculum|course outline|learning roadmap|module breakdown)\b",
+    r"(send|share|view|download|get|full).*(syllabus|curriculum|outline)",
     r"(syllabus\s+breakdown|curriculum\s+breakdown|course\s+syllabus|course\s+curriculum)",
     r"(course\s+outline|detailed\s+syllabus|complete\s+syllabus)"
 ]
@@ -374,30 +497,34 @@ async def check_fast_path(phone: str, user_text: str) -> Optional[Dict[str, Any]
     if email_match and (any(kw in lower_text for kw in email_trigger_keywords) or is_standalone_email):
         extracted_email = email_match.group(0)
         from app.tools import qualify_and_capture_lead
-        
-        # Detect target course if specified
-        detected_course = None
-        if "machine learning" in lower_text or "ml" in lower_text:
-            detected_course = "Machine Learning with Python"
-        elif "data science" in lower_text:
-            detected_course = "Data Science with Python"
-        elif "power bi" in lower_text or "powerbi" in lower_text:
-            detected_course = "Power BI & Business Intelligence"
-        elif "sql" in lower_text or "database" in lower_text:
-            detected_course = "SQL & Enterprise Database Analytics"
-        elif "excel" in lower_text:
-            detected_course = "Excel for Data Analysis & Business Modeling"
-        elif "python" in lower_text:
-            detected_course = "Applied Python for Data Analysis & AI"
-        elif "business analysis" in lower_text or "business analyst" in lower_text:
-            detected_course = "Business Analysis"
-        else:
-            for track_num, track in TRACK_INFO.items():
-                if track["title"].lower() in lower_text or str(track_num) in lower_text:
-                    detected_course = track["title"]
-                    break
+        # 1. Detect target course from current text
+        detected_course = detect_target_course(lower_text)
+
+        # 2. If not found in current message (e.g. user just supplied their email), look up lead's prior course_interest or recent conversation
+        if not detected_course:
+            try:
+                from app.database import AsyncSessionLocal
+                from app.models import Lead, Conversation, Message
+                from sqlalchemy import select, desc
+                async with AsyncSessionLocal() as db:
+                    lead_rec = (await db.execute(select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1))).scalars().first()
+                    if lead_rec and lead_rec.course_interest and lead_rec.course_interest not in ("General Inquiry", "Other Specialized Tracks"):
+                        detected_course = lead_rec.course_interest
+
+                    if not detected_course:
+                        conv_rec = (await db.execute(select(Conversation).where(Conversation.phone == clean_phone).limit(1))).scalars().first()
+                        if conv_rec:
+                            recent_msgs = (await db.execute(select(Message).where(Message.conversation_id == conv_rec.id).order_by(desc(Message.id)).limit(6))).scalars().all()
+                            for m in recent_msgs:
+                                c_found = detect_target_course(m.body or "")
+                                if c_found:
+                                    detected_course = c_found
+                                    break
+            except Exception:
+                pass
 
         course_label = detected_course if detected_course else "Data Analytics & BI Accelerator"
+        syllabus_data = COURSE_SYLLABUS_MAP.get(course_label, COURSE_SYLLABUS_MAP["Data Analytics & BI Accelerator"])
 
         await qualify_and_capture_lead.ainvoke({
             "phone": clean_phone,
@@ -405,6 +532,8 @@ async def check_fast_path(phone: str, user_text: str) -> Optional[Dict[str, Any]
             "course_interest": course_label,
             "notes": f"Curriculum requested via fast path for email {extracted_email}"
         })
+
+        module_list_text = "\n".join([f"• **{m.split(':')[0]}:** {':'.join(m.split(':')[1:]) if ':' in m else m}" for m in syllabus_data["modules"]])
 
         # Directly dispatch official branded syllabus email in real-time
         try:
@@ -416,12 +545,9 @@ async def check_fast_path(phone: str, user_text: str) -> Optional[Dict[str, Any]
                 body_markdown=(
                     f"Hi there,\n\n"
                     f"Thank you for requesting the official curriculum roadmap for **{course_label}** at TekTutors Academy!\n\n"
-                    f"### Curriculum Architecture:\n"
-                    f"• **Module 1: Foundations & Analytical Metrics** — Diagnostic problem scoping & core workflows.\n"
-                    f"• **Module 2: Practical Data Wrangling** — Advanced Excel (Power Query) and relational SQL queries.\n"
-                    f"• **Module 3: Business Intelligence & Dashboards** — Data modeling, DAX measures & Power BI reports.\n"
-                    f"• **Module 4: Advanced Analytics & AI** — Python data analysis, EDA, and predictive automation.\n"
-                    f"• **Module 5: Capstone Projects & Career Portfolio** — 3 end-to-end employer-ready projects.\n\n"
+                    f"### Curriculum Architecture ({syllabus_data['duration']}):\n"
+                    f"{module_list_text}\n\n"
+                    f"💡 **Prerequisites:** {syllabus_data['prerequisites']}\n\n"
                     f"Every learner receives **live 1-on-1 industry mentorship** with flexible **₦100,000/month** tuition (month-to-month, cancel anytime).\n\n"
                     f"Ready to get started? Complete your registration online:\n"
                     f"👉 https://tektutors.com.ng/registration"
@@ -456,7 +582,7 @@ async def check_fast_path(phone: str, user_text: str) -> Optional[Dict[str, Any]
             f"• Tuition: {STANDARD_MONTHLY_FEE} / month (Flexible month-to-month billing)\n\n"
             f"When you are ready to secure your slot and lock in your mentor, enroll here:\n"
             f"👉 {REGISTRATION_URL}\n\n"
-            "Have you worked with data tools before, or are you starting completely fresh?"
+            "Do you have any questions about prerequisites or scheduling, or would you like to book an intro call with an advisor?"
         )
         elapsed_ms = (time.time() - start_time) * 1000
         await log_cost_savings(clean_phone, "fast_path_curriculum", tokens_saved=1200, latency_ms=elapsed_ms)
@@ -471,18 +597,48 @@ async def check_fast_path(phone: str, user_text: str) -> Optional[Dict[str, Any]
     for pat in SYLLABUS_OVERVIEW_PATTERNS:
         if re.search(pat, lower_text) and not email_match:
             from app.tools import qualify_and_capture_lead
+
+            # Detect if a specific course was requested
+            detected_course = detect_target_course(lower_text)
+            if not detected_course:
+                try:
+                    from app.database import AsyncSessionLocal
+                    from app.models import Lead, Conversation, Message
+                    from sqlalchemy import select, desc
+                    async with AsyncSessionLocal() as db:
+                        lead_rec = (await db.execute(select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1))).scalars().first()
+                        if lead_rec and lead_rec.course_interest and lead_rec.course_interest not in ("General Inquiry", "Other Specialized Tracks"):
+                            detected_course = lead_rec.course_interest
+
+                        if not detected_course:
+                            conv_rec = (await db.execute(select(Conversation).where(Conversation.phone == clean_phone).limit(1))).scalars().first()
+                            if conv_rec:
+                                recent_msgs = (await db.execute(select(Message).where(Message.conversation_id == conv_rec.id).order_by(desc(Message.id)).limit(6))).scalars().all()
+                                for m in recent_msgs:
+                                    c_found = detect_target_course(m.body or "")
+                                    if c_found:
+                                        detected_course = c_found
+                                        break
+                except Exception:
+                    pass
+
+            target_course = detected_course if detected_course else "Data Analytics & BI Accelerator"
+            syllabus_data = COURSE_SYLLABUS_MAP.get(target_course, COURSE_SYLLABUS_MAP["Data Analytics & BI Accelerator"])
+
             await qualify_and_capture_lead.ainvoke({
                 "phone": clean_phone,
-                "notes": "Requested course syllabus breakdown via fast path"
+                "course_interest": target_course,
+                "notes": f"Requested course syllabus breakdown for {target_course} via fast path"
             })
+
+            module_bullets = "\n".join([f"🔹 *{m}*" for m in syllabus_data["modules"]])
+
             response = (
-                "📚 *TekTutors Practical Curriculum & Syllabus Breakdown*\n\n"
-                "All TekTutors pathways are 100% practical, project-based, and taught through live 1-on-1 mentorship. Here is our core syllabus architecture:\n\n"
-                "🔹 *Module 1: Foundations & Business Metrics* — Problem scoping, data collection, and diagnostic analytics.\n"
-                "🔹 *Module 2: Data Wrangling & Database Mastery* — Advanced Excel (Power Query, Dynamic Arrays) + Relational SQL (Joins, Window Functions, Subqueries).\n"
-                "🔹 *Module 3: Business Intelligence & Dashboards* — Power BI data modeling, DAX measures, and interactive executive reporting.\n"
-                "🔹 *Module 4: Advanced Analytics & AI Automation* — Python programming, Pandas data analysis, EDA, and predictive modeling.\n"
-                "🔹 *Module 5: Capstone Projects & Career Portfolio* — 3 real-world portfolio projects built to impress hiring managers.\n\n"
+                f"📚 *TekTutors Practical Curriculum & Syllabus Breakdown ({target_course})*\n\n"
+                f"Our **{target_course}** program ({syllabus_data['duration']}) is 100% practical, project-based, and taught through live 1-on-1 mentorship. Here is your curriculum architecture:\n\n"
+                f"{module_bullets}\n\n"
+                f"💡 *Prerequisites:* {syllabus_data['prerequisites']}\n"
+                f"💰 *Tuition:* {STANDARD_MONTHLY_FEE} / month (or ₦90,000 upfront discount)\n\n"
                 "📧 *Want the complete week-by-week PDF brochure?*\n"
                 "👉 Reply with your *Email Address* (e.g., name@gmail.com) and our admissions team will send the full syllabus straight to your inbox!\n\n"
                 f"Or complete your registration directly here:\n🔗 {REGISTRATION_URL}"
