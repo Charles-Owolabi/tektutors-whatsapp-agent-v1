@@ -132,48 +132,8 @@ async def init_db_and_seed():
             except Exception as e:
                 logger.warning(f"Note: SystemConfig sync skipped: {e}")
 
-            # Seed Sample Email Logs if empty
-            try:
-                email_res = await db.execute(select(EmailLog).limit(1))
-                existing_email = email_res.scalar_one_or_none()
-                if not existing_email:
-                    from datetime import datetime, timezone
-                    logger.info("Seeding initial TekTutors sample email logs...")
-                    db.add_all([
-                        EmailLog(
-                            lead_id=None,
-                            recipient_email="adebayo.consult@example.com",
-                            recipient_name="Adebayo Ogunlesi",
-                            campaign_type="follow_up",
-                            subject="Following Up: Your TekTutors AI & Data Analytics Roadmap",
-                            body_html="<p>Hi Adebayo, following up on your consultation inquiry.</p>",
-                            status="delivered",
-                            sent_at=datetime.now(timezone.utc).replace(tzinfo=None)
-                        ),
-                        EmailLog(
-                            lead_id=None,
-                            recipient_email="chinwe.analytics@example.com",
-                            recipient_name="Chinwe Eze",
-                            campaign_type="marketing",
-                            subject="🎓 TekTutors Next Cohort Kickoff: Secure Your 1-on-1 Mentorship Seat",
-                            body_html="<p>Hi Chinwe, our upcoming cohort commences on the 1st of next month.</p>",
-                            status="delivered",
-                            sent_at=datetime.now(timezone.utc).replace(tzinfo=None)
-                        ),
-                        EmailLog(
-                            lead_id=None,
-                            recipient_email="emeka.tech@example.com",
-                            recipient_name="Emeka Okafor",
-                            campaign_type="promotional",
-                            subject="⚡ Flash 20% Tuition Voucher: Unlock Your Tech Career",
-                            body_html="<p>Hi Emeka, save 20% on your first month tuition with code TEK20.</p>",
-                            status="delivered",
-                            sent_at=datetime.now(timezone.utc).replace(tzinfo=None)
-                        )
-                    ])
-                    await db.commit()
-            except Exception as e:
-                logger.warning(f"Note: EmailLog seeding skipped: {e}")
+            # Note: Email logs start pristine in production and record actual email activity.
+            pass
 
     except Exception as e:
         logger.error(f"Error seeding database: {e}", exc_info=True)

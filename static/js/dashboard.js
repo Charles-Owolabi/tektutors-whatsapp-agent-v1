@@ -2508,4 +2508,36 @@ async function processScheduledEmailsNow() {
     }
 }
 
+async function triggerCleanSlate() {
+    const confirmed = confirm(
+        "⚠️ RESET DATABASE TO CLEAN SLATE?\n\n" +
+        "This will permanently delete all demo leads, test conversations, messages, appointments, and email queues.\n\n" +
+        "Your Course Catalog (28 courses) and FAQ Knowledge Base (44 FAQs) will NOT be deleted.\n\n" +
+        "Are you sure you want to proceed?"
+    );
+    if (!confirmed) return;
+
+    showToast('Resetting database to clean slate...', 'info');
+    try {
+        const res = await fetch('/api/system/clean-slate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ confirm: true })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showToast('✅ Database successfully reset to clean slate!', 'success');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1200);
+        } else {
+            showToast(data.detail || 'Failed to reset database', 'error');
+        }
+    } catch (err) {
+        console.error('Error resetting database:', err);
+        showToast('Network error while resetting database', 'error');
+    }
+}
+
+
 

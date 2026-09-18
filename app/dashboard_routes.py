@@ -4,7 +4,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, Body
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import datetime
@@ -1190,6 +1190,36 @@ async def update_settings(payload: SystemConfigUpdate, db: AsyncSession = Depend
         pass
 
     return config
+
+
+@router.post("/api/system/clean-slate")
+async def clean_slate_database(payload: dict = Body(...), db: AsyncSession = Depends(get_db)):
+    """
+    Wipe demo/test transactional records (leads, appointments, conversations, messages, emails)
+    while strictly preserving Courses catalog, FAQs knowledge base, and SystemConfig.
+    """
+    if not payload.get("confirm"):
+        raise HTTPException(status_code=400, detail="Confirmation required. Pass {'confirm': True}.")
+
+    try:
+        await db.execute(delete(ScheduledEmail))
+        await db.execute(delete(EmailLog))
+        await db.execute(delete(Appointment))
+        await db.execute(delete(Message))
+        await db.execute(delete(Conversation))
+        await db.execute(delete(Lead))
+        await db.commit()
+
+        logger.info("Admin clean slate executed: demo transactional data wiped.")
+        return {
+            "success": True,
+            "message": "All demo leads, conversations, messages, appointments, and email queues have been purged. Courses and FAQs preserved."
+        }
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error resetting database to clean slate: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Database clean slate error: {str(e)}")
+
 
 # =========================================================================
 # Email Marketing & Follow-up Campaign Routes
