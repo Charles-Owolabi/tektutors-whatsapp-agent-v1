@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import datetime
 from app.database import get_db
-from app.models import Conversation, Message, Lead, Course, FAQ, Appointment, SystemConfig, CostTelemetry, EmailLog
+from app.models import Conversation, Message, Lead, Course, FAQ, Appointment, SystemConfig, CostTelemetry, EmailLog, ScheduledEmail
 from app.schemas import (
     SimulatorChatRequest, HumanMessageRequest, HandoffToggleRequest, 
     LeadCreate, CourseCreate, CourseUpdate, FAQCreate, FAQUpdate, 
@@ -1478,5 +1478,155 @@ async def send_broadcast_email(payload: BroadcastEmailSendRequest, db: AsyncSess
         "message": f"Broadcast campaign completed: {success_count} sent successfully, {failed_count} failed.",
         "results": dispatch_results
     }
+
+
+# =========================================================================
+# Scheduled Email Queue & Drip Campaign Endpoints
+# =========================================================================
+
+@router.get("/api/emails/scheduled")
+async def get_scheduled_emails(
+    status: Optional[str] = None,
+    limit: int = 50,
+    db: AsyncSession = Depends(get_db)
+):
+    """Retrieve scheduled email queue items with optional status filtering."""
+    stmt = select(ScheduledEmail).order_by(ScheduledEmail.scheduled_for.asc())
+    if status and status.lower() != "all":
+        stmt = stmt.where(ScheduledEmail.status == status.lower().strip())
+    stmt = stmt.limit(limit)
+
+    res = await db.execute(stmt)
+    records = res.scalars().all()
+
+    now = datetime.datetime.now()
+    output = []
+    for r in records:
+        time_until = (r.scheduled_for - now).total_seconds() if r.scheduled_for else 0
+        output.append({
+            "id": r.id,
+            "lead_id": r.lead_id,
+            "recipient_email": r.recipient_email,
+            "recipient_name": r.recipient_name,
+            "sequence_day": r.sequence_day,
+            "subject": r.subject,
+            "body_markdown": r.body_markdown[:180] + "..." if len(r.body_markdown) > 180 else r.body_markdown,
+            "campaign_type": r.campaign_type,
+            "course_name": r.course_name,
+            "scheduled_for": r.scheduled_for.strftime("%Y-%m-%d %H:%M:%S") if r.scheduled_for else "",
+            "scheduled_for_formatted": r.scheduled_for.strftime("%a, %b %d • %I:%M %p") if r.scheduled_for else "",
+            "status": r.status,
+            "is_due": r.status == "pending" and time_until <= 0,
+            "seconds_until_delivery": max(0, int(time_until)),
+            "created_at": r.created_at.strftime("%Y-%m-%d %H:%M:%S") if r.created_at else "",
+            "sent_at": r.sent_at.strftime("%Y-%m-%d %H:%M:%S") if r.sent_at else None,
+            "error_message": r.error_message
+        })
+
+    return {
+        "total": len(output),
+        "scheduled_emails": output
+    }
+
+
+@router.post("/api/emails/schedule")
+async def schedule_custom_email(payload: dict = Body(...)):
+    """Schedule a custom or templated email to dispatch at a specified future date/time."""
+    to_email = payload.get("recipient_email", "").strip()
+    if not to_email or "@" not in to_email:
+        raise HTTPException(status_code=400, detail="A valid recipient email address is required.")
+
+    subject = payload.get("subject", "").strip()
+    if not subject:
+        raise HTTPException(status_code=400, detail="Subject is required.")
+
+    body = payload.get("body", "").strip()
+    if not body:
+        raise HTTPException(status_code=400, detail="Email body markdown is required.")
+
+    scheduled_for_raw = payload.get("scheduled_for", "")
+    if not scheduled_for_raw:
+        raise HTTPException(status_code=400, detail="scheduled_for datetime or delay string is required.")
+
+    from app.email_service import schedule_email_async, parse_schedule_time
+    target_dt = parse_schedule_time(scheduled_for_raw)
+
+    result = await schedule_email_async(
+        to_email=to_email,
+        subject=subject,
+        body_markdown=body,
+        scheduled_for=target_dt,
+        to_name=payload.get("recipient_name", "Student"),
+        campaign_type=payload.get("campaign_type", "scheduled_custom"),
+        lead_id=payload.get("lead_id"),
+        course_name=payload.get("course_name", "Data Analytics & BI Accelerator"),
+        cta_text=payload.get("cta_text", "Register Online"),
+        cta_url=payload.get("cta_url", "https://tektutors.com.ng/registration")
+    )
+
+    return {
+        "success": True,
+        "message": f"Email successfully scheduled for delivery at {target_dt.strftime('%a, %b %d at %I:%M %p')}!",
+        "result": result
+    }
+
+
+@router.post("/api/emails/enroll-drip")
+async def enroll_lead_drip(payload: dict = Body(...), db: AsyncSession = Depends(get_db)):
+    """Enroll a specific lead into the 5-day daily follow-up nurture drip sequence."""
+    lead_id = payload.get("lead_id")
+    email = payload.get("recipient_email") or payload.get("email")
+    name = payload.get("recipient_name") or payload.get("name")
+    course_name = payload.get("course_name")
+
+    if lead_id:
+        stmt = select(Lead).where(Lead.id == lead_id)
+        res = await db.execute(stmt)
+        lead = res.scalar_one_or_none()
+        if not lead:
+            raise HTTPException(status_code=404, detail="Lead not found")
+        email = email or lead.email
+        name = name or lead.name
+        course_name = course_name or lead.course_interest
+
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="A valid email address is required to enroll in the drip sequence.")
+
+    from app.email_service import enroll_lead_in_daily_drip_sequence
+    result = await enroll_lead_in_daily_drip_sequence(
+        lead_id=lead_id,
+        email=email,
+        name=name or "Student",
+        course_name=course_name or "Data Analytics & BI Accelerator"
+    )
+
+    return {
+        "success": True,
+        "message": f"Successfully enrolled {email} in 5-day daily follow-up drip sequence!",
+        "result": result
+    }
+
+
+@router.post("/api/emails/scheduled/{scheduled_id}/cancel")
+async def cancel_scheduled_email_endpoint(scheduled_id: int):
+    """Cancel a pending scheduled email."""
+    from app.email_service import cancel_scheduled_email
+    success = await cancel_scheduled_email(scheduled_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Scheduled email not found or already processed/cancelled.")
+    return {"success": True, "message": f"Scheduled email #{scheduled_id} cancelled successfully."}
+
+
+@router.post("/api/emails/scheduled/process-now")
+async def process_scheduled_emails_now():
+    """Immediately trigger dispatch of any due scheduled emails in queue."""
+    from app.email_service import process_due_scheduled_emails
+    results = await process_due_scheduled_emails()
+    return {
+        "success": True,
+        "processed_count": len(results),
+        "results": results
+    }
+
 
 

@@ -21,7 +21,7 @@ from sqlalchemy import select
 
 from app.config import settings
 from app.database import engine, Base, AsyncSessionLocal
-from app.models import Course, FAQ, SystemConfig, EmailLog, Lead
+from app.models import Course, FAQ, SystemConfig, EmailLog, Lead, ScheduledEmail
 from app.data import SEED_COURSES, SEED_FAQS
 from app.webhook import router as webhook_router
 from app.dashboard_routes import router as dashboard_router
@@ -185,7 +185,13 @@ async def lifespan(app: FastAPI):
         await init_db_and_seed()
     except Exception as e:
         logger.error(f"Error during startup init_db_and_seed: {e}", exc_info=True)
+
+    from app.email_service import start_scheduled_email_worker, stop_scheduled_email_worker
+    start_scheduled_email_worker()
+
     yield
+
+    stop_scheduled_email_worker()
     logger.info("Shutting down TekTutors Server...")
 
 START_TIME = time.time()

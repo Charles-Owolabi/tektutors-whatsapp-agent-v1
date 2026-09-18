@@ -126,3 +126,23 @@ class EmailLog(Base):
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     sent_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now())
 
+class ScheduledEmail(Base):
+    __tablename__ = "scheduled_emails"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    lead_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("leads.id"), nullable=True)
+    recipient_email: Mapped[str] = mapped_column(String(120), index=True, nullable=False)
+    recipient_name: Mapped[str] = mapped_column(String(100), default="Student")
+    sequence_day: Mapped[int] = mapped_column(Integer, default=0)  # 0 to 5
+    subject: Mapped[str] = mapped_column(String(255), nullable=False)
+    body_markdown: Mapped[str] = mapped_column(Text, nullable=False)
+    campaign_type: Mapped[str] = mapped_column(String(50), default="drip_follow_up")
+    course_name: Mapped[Optional[str]] = mapped_column(String(150), default="Data Analytics & BI Accelerator")
+    cta_text: Mapped[Optional[str]] = mapped_column(String(100), default="Register Online")
+    cta_url: Mapped[Optional[str]] = mapped_column(String(255), default="https://tektutors.com.ng/registration")
+    scheduled_for: Mapped[datetime.datetime] = mapped_column(DateTime, index=True, nullable=False)
+    status: Mapped[str] = mapped_column(String(30), default="pending", index=True)  # pending, sent, failed, cancelled
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now())
+    sent_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, nullable=True)
+

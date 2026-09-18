@@ -842,6 +842,40 @@
                         </div>
                     </div>
 
+                    <!-- Scheduled Follow-Up Email Queue & Nurture Drip -->
+                    <div style="margin-top: 2rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                            <div>
+                                <h3 style="font-size: 1rem; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fa-solid fa-calendar-check" style="color: #22c55e;"></i> Scheduled Follow-Up Queue &amp; Daily Nurture Drip
+                                </h3>
+                                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">Pending future emails queued for automatic dispatch (Days 1–5 drip campaigns and scheduled advisor messages).</p>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-sm btn-secondary" onclick="loadScheduledEmails()"><i class="fa-solid fa-arrows-rotate"></i> Refresh Queue</button>
+                                <button class="btn btn-sm btn-secondary" style="background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3);" onclick="processScheduledEmailsNow()"><i class="fa-solid fa-play"></i> Dispatch Due Emails Now</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Recipient</th>
+                                        <th>Sequence / Type</th>
+                                        <th>Subject</th>
+                                        <th>Scheduled Delivery</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="scheduled-emails-table-body">
+                                    <tr><td colspan="7" class="text-center">Loading scheduled queue...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <!-- Dispatched Email Audit Trail & History -->
                     <div style="margin-top: 2rem;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
@@ -1315,6 +1349,21 @@
                         <div class="form-group" style="margin: 0;">
                             <label for="composer-cta-url" style="font-size: 0.75rem; font-weight: 600; color: #fff;">Button URL</label>
                             <input type="url" id="composer-cta-url" class="form-control" value="https://tektutors.com.ng/registration" oninput="updateEmailLivePreviewDebounced()">
+                        </div>
+                    </div>
+
+                    <!-- Optional Scheduling Controls -->
+                    <div id="composer-schedule-box" style="background: rgba(34,197,94,0.06); padding: 0.6rem; border-radius: 8px; border: 1px solid rgba(34,197,94,0.25);">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <label style="font-size: 0.75rem; font-weight: 700; color: #4ade80; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; margin: 0;">
+                                <input type="checkbox" id="composer-schedule-checkbox" onchange="toggleComposerScheduleControls(this.checked)" style="accent-color: #22c55e;">
+                                <i class="fa-solid fa-clock"></i> Schedule for Later Delivery
+                            </label>
+                            <span style="font-size: 0.68rem; color: var(--text-muted);">Leave unchecked to send now</span>
+                        </div>
+                        <div id="composer-schedule-datetime-container" style="display: none; margin-top: 0.5rem;">
+                            <label for="composer-scheduled-for" style="font-size: 0.72rem; color: #fff; font-weight: 600;">Delivery Date &amp; Time</label>
+                            <input type="datetime-local" id="composer-scheduled-for" class="form-control" style="font-size: 0.8rem; margin-top: 0.2rem;">
                         </div>
                     </div>
                 </form>

@@ -11,7 +11,7 @@ from sqlalchemy import select
 
 from app.config import settings
 from app.database import AsyncSessionLocal
-from app.models import EmailLog, Lead
+from app.models import EmailLog, Lead, ScheduledEmail
 
 logger = logging.getLogger(__name__)
 
@@ -703,3 +703,413 @@ async def dispatch_engagement_email(
         cta_url=tpl.get("cta_url", "https://tektutors.com.ng/registration"),
         course_name=target_course
     )
+
+
+# =========================================================================
+# 4. DAILY AUTOMATED FOLLOW-UP DRIP SEQUENCE (DAYS 1-5)
+# =========================================================================
+DAILY_DRIP_SEQUENCE = [
+    {
+        "day": 1,
+        "title": "What Makes TekTutors Different: 100% Live 1-on-1 Mentorship",
+        "subject": "Why 1-on-1 Screen Sharing Changes Everything ({{course}})",
+        "body": (
+            "Hi {{name}},\n\n"
+            "Yesterday, we shared your curriculum roadmap for **{{course}}**.\n\n"
+            "Today, we want to talk honestly about why 90% of students drop out of typical online courses — and how TekTutors solves it completely.\n\n"
+            "### ❌ The Old Bootcamp Trap:\n"
+            "You get dumped into a 50-person Zoom call with a lecturer talking non-stop for 2 hours. If your SQL script errors out or your Power BI model breaks, nobody stops to help. You're left stranded and frustrated.\n\n"
+            "### ✅ The TekTutors 1-on-1 Advantage:\n"
+            "• **100% Private Screen Shares:** Every single session is just you and a Senior Industry Practitioner working directly on your code.\n"
+            "• **Zero Embarrassment:** Ask every question as many times as you need without peer pressure.\n"
+            "• **Custom Learning Pace:** Fast-track areas you understand quickly, and spend extra time mastering difficult concepts.\n"
+            "• **Flexible Scheduling:** Sessions fit your working lifestyle on weekday evenings or weekends.\n\n"
+            "You don't need a computer science background. You just need a patient, world-class mentor dedicated to your career.\n\n"
+            "Ready to meet your assigned mentor?"
+        ),
+        "cta_text": "Meet Your Mentor & Enroll",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "day": 2,
+        "title": "Our Irresistible Offer: ₦100,000/Month or ₦90,000 Upfront + Free Bonus",
+        "subject": "Our Flexible Tuition Plan & Free ₦35,000 Career Bonus ({{course}})",
+        "body": (
+            "Hi {{name}},\n\n"
+            "We believe that acquiring high-demand tech skills should never put you into crushing debt.\n\n"
+            "That's why TekTutors offers the most flexible, learner-first tuition model in the market:\n\n"
+            "### 💳 1. Flexible Month-to-Month Tuition:\n"
+            "Invest just **₦100,000 / month** as you learn. No lock-in contracts. You can pause or cancel anytime if your schedule changes.\n\n"
+            "### 🎁 2. Upfront 10% Cash Rebate (Save ₦10,000):\n"
+            "Pay your full tuition upfront and pay just **₦90,000** today (save ₦10,000 immediately at checkout).\n\n"
+            "### 🌟 Fast-Action Bonus (Valued at ₦35,000):\n"
+            "Enroll this week and unlock a **Free 1-on-1 CV Optimization & LinkedIn Makeover** with our Senior Hiring Consultant to get you noticed by tech recruiters.\n\n"
+            "Claim your discount and lock in your mentor today:"
+        ),
+        "cta_text": "Claim Tuition Discount & Enroll",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "day": 3,
+        "title": "Market Relevance & High ROI: The Math Behind Your Investment",
+        "subject": "The Hiring Math: Why {{course}} Pays for Itself in Under 3 Weeks",
+        "body": (
+            "Hi {{name}},\n\n"
+            "When considering advancing your skills, the most important question is: *\"What is my true return on investment?\"*\n\n"
+            "Here is the transparent market reality for data and AI practitioners today:\n\n"
+            "### 📊 The Hiring Numbers:\n"
+            "• **Junior to Mid Data Analyst (Nigeria):** ₦350,000 – ₦750,000 / month.\n"
+            "• **Senior Analyst / BI Lead (Nigeria):** ₦800,000 – ₦1,500,000+ / month.\n"
+            "• **Global Remote Roles (UK, US, Canada, EU):** $1,500 – $3,500 / month (₦2,250,000+).\n"
+            "• **Payback Period:** Under **3 weeks** of your first month's salary completely covers your entire training investment.\n\n"
+            "Companies across banking, fintech, telecom, e-commerce, and logistics are drowning in raw data. They desperately need people who can turn numbers into actionable executive insights.\n\n"
+            "By investing in **{{course}}**, you are building recession-proof earning power for the rest of your career."
+        ),
+        "cta_text": "Invest in High-Income Skills",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "day": 4,
+        "title": "Our Competitive Advantages: 3 Employer-Grade Portfolio Projects",
+        "subject": "Certificates Don't Get You Hired — These 3 Projects Will ({{course}})",
+        "body": (
+            "Hi {{name}},\n\n"
+            "A certificate of completion looks nice on a wall, but here is what actually convinces hiring managers in interviews:\n\n"
+            "**Proof of practical execution.**\n\n"
+            "At TekTutors, you graduate with **3 enterprise-grade capstone portfolio projects** hosted directly on your GitHub and LinkedIn:\n\n"
+            "1. **Enterprise Data Pipeline & Diagnostic Scoping:** Ingest, clean, and validate messy real-world transaction data using SQL and Python.\n"
+            "2. **Interactive Executive C-Suite Dashboard:** Automated KPI dashboard built in Power BI with dynamic DAX metrics, drill-throughs, and mobile layout.\n"
+            "3. **Predictive Analytics or Machine Learning Solution:** End-to-end model solving a real business problem (customer churn, sales forecasting, or sentiment classification).\n\n"
+            "When recruiters ask: *\"Can you show me what you've built?\"*, you won't just talk about theory — you will screen-share live, working systems you created 1-on-1 with your mentor.\n\n"
+            "Ready to build an unbeatable tech portfolio?"
+        ),
+        "cta_text": "Build Your Portfolio with a Mentor",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "day": 5,
+        "title": "Limited Mentor Capacity: Reserving Your Weekend Onboarding Slot",
+        "subject": "Final Notice: Your Reserved Mentor Slot is Expiring, {{name}}",
+        "body": (
+            "Hi {{name}},\n\n"
+            "Because our model requires **dedicated 1-on-1 private video mentorship**, our senior mentors can only accept a maximum of 4 new learners per month.\n\n"
+            "We have held an onboarding slot for you in **{{course}}** this week, but our admissions system is scheduled to release unconfirmed seats to our waiting list tomorrow morning.\n\n"
+            "### Everything Included in Your Onboarding:\n"
+            "✅ Live 1-on-1 private mentorship with an active industry practitioner\n"
+            "✅ 3 portfolio capstone projects for your resume and LinkedIn\n"
+            "✅ Free ₦35,000 1-on-1 CV Optimization & Tech Interview Coaching\n"
+            "✅ Flexible ₦100,000/month or ₦90,000 upfront (save ₦10,000)\n\n"
+            "Click below to secure your mentor and confirm your weekend onboarding before your reservation expires:"
+        ),
+        "cta_text": "Lock In Your Mentor Slot Now",
+        "cta_url": "https://tektutors.com.ng/registration"
+    }
+]
+
+
+def parse_schedule_time(delay_or_time_str: str) -> datetime.datetime:
+    """
+    Parse a user or API time string into a concrete future datetime.
+    Supports relative offsets ('in 2 hours', 'tomorrow', '24h', '3 days')
+    as well as ISO timestamps ('2026-09-19T10:00:00').
+    """
+    now = datetime.datetime.now()
+    if not delay_or_time_str or not isinstance(delay_or_time_str, str):
+        return now + datetime.timedelta(hours=24)
+
+    clean_str = delay_or_time_str.strip().lower()
+
+    # Relative shortcuts
+    if "tomorrow morning" in clean_str:
+        tomorrow = now + datetime.timedelta(days=1)
+        return tomorrow.replace(hour=9, minute=0, second=0, microsecond=0)
+    elif "tomorrow evening" in clean_str:
+        tomorrow = now + datetime.timedelta(days=1)
+        return tomorrow.replace(hour=18, minute=0, second=0, microsecond=0)
+    elif "tomorrow" in clean_str or "next day" in clean_str:
+        tomorrow = now + datetime.timedelta(days=1)
+        return tomorrow.replace(hour=10, minute=0, second=0, microsecond=0)
+
+    # Regex for relative hours: 'in 2 hours', '2 hrs', '2h'
+    hour_match = re.search(r'(\d+)\s*(?:hour|hr|h)', clean_str)
+    if hour_match:
+        hours = int(hour_match.group(1))
+        return now + datetime.timedelta(hours=hours)
+
+    # Regex for relative days: 'in 3 days', '3d', '3 days'
+    day_match = re.search(r'(\d+)\s*(?:day|d)', clean_str)
+    if day_match:
+        days = int(day_match.group(1))
+        return now + datetime.timedelta(days=days)
+
+    # Regex for relative minutes: 'in 30 mins', '30m'
+    min_match = re.search(r'(\d+)\s*(?:minute|min|m)', clean_str)
+    if min_match:
+        mins = int(min_match.group(1))
+        return now + datetime.timedelta(minutes=mins)
+
+    # Try ISO parsing
+    for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+        try:
+            return datetime.datetime.strptime(delay_or_time_str.strip(), fmt)
+        except ValueError:
+            continue
+
+    # Default fallback to 24 hours
+    return now + datetime.timedelta(hours=24)
+
+
+async def schedule_email_async(
+    to_email: str,
+    subject: str,
+    body_markdown: str,
+    scheduled_for: datetime.datetime,
+    to_name: Optional[str] = "Student",
+    campaign_type: str = "scheduled_followup",
+    lead_id: Optional[int] = None,
+    course_name: Optional[str] = "Data Analytics & BI Accelerator",
+    cta_text: str = "Register Online",
+    cta_url: str = "https://tektutors.com.ng/registration",
+    sequence_day: int = 0
+) -> Dict[str, Any]:
+    """Persist a future email into the ScheduledEmail queue."""
+    clean_email = to_email.strip().lower()
+    clean_name = to_name.strip() if to_name else "Student"
+
+    async with AsyncSessionLocal() as db:
+        scheduled_rec = ScheduledEmail(
+            lead_id=lead_id,
+            recipient_email=clean_email,
+            recipient_name=clean_name,
+            sequence_day=sequence_day,
+            subject=subject,
+            body_markdown=body_markdown,
+            campaign_type=campaign_type,
+            course_name=course_name,
+            cta_text=cta_text,
+            cta_url=cta_url,
+            scheduled_for=scheduled_for,
+            status="pending"
+        )
+        db.add(scheduled_rec)
+        await db.commit()
+        await db.refresh(scheduled_rec)
+
+    logger.info(f"Queued scheduled email #{scheduled_rec.id} for {clean_email} at {scheduled_for} (Subject: {subject})")
+    return {
+        "scheduled_id": scheduled_rec.id,
+        "recipient_email": clean_email,
+        "recipient_name": clean_name,
+        "subject": subject,
+        "scheduled_for": scheduled_for.strftime("%Y-%m-%d %H:%M:%S"),
+        "status": "pending",
+        "sequence_day": sequence_day
+    }
+
+
+async def enroll_lead_in_daily_drip_sequence(
+    lead_id: Optional[int],
+    email: str,
+    name: Optional[str] = "Student",
+    course_name: Optional[str] = "Data Analytics & BI Accelerator"
+) -> Dict[str, Any]:
+    """
+    Enroll a prospective student into the 5-day daily follow-up nurture drip.
+    Day 0 (Syllabus) is dispatched immediately if not already sent.
+    Days 1 through 5 are scheduled in ScheduledEmail with +1, +2, +3, +4, +5 day intervals.
+    """
+    clean_email = email.strip().lower()
+    clean_name = name.strip() if name and name.lower() not in ("prospect", "student", "") else "Student"
+    target_course = course_name or "Data Analytics & BI Accelerator"
+    now = datetime.datetime.now()
+
+    # Guard against duplicate active drip enrollments for the same lead/email
+    async with AsyncSessionLocal() as db:
+        stmt = select(ScheduledEmail).where(
+            ScheduledEmail.recipient_email == clean_email,
+            ScheduledEmail.status == "pending",
+            ScheduledEmail.campaign_type == "daily_drip_nurture"
+        )
+        res = await db.execute(stmt)
+        existing = res.scalars().all()
+        if existing:
+            logger.info(f"Lead {clean_email} already has {len(existing)} pending drip emails queued. Skipping re-enrollment.")
+            return {
+                "status": "already_enrolled",
+                "pending_count": len(existing),
+                "recipient_email": clean_email
+            }
+
+    scheduled_records = []
+    # Schedule Days 1 through 5
+    for item in DAILY_DRIP_SEQUENCE:
+        day_num = item["day"]
+        delivery_time = now + datetime.timedelta(days=day_num)
+        # Set morning delivery (e.g. 10:00 AM) for natural engagement
+        delivery_time = delivery_time.replace(hour=10, minute=0, second=0, microsecond=0)
+
+        # Personalize
+        p_subject = item["subject"].replace("{{name}}", clean_name).replace("{{course}}", target_course)
+        p_body = item["body"].replace("{{name}}", clean_name).replace("{{course}}", target_course)
+
+        rec = await schedule_email_async(
+            to_email=clean_email,
+            subject=p_subject,
+            body_markdown=p_body,
+            scheduled_for=delivery_time,
+            to_name=clean_name,
+            campaign_type="daily_drip_nurture",
+            lead_id=lead_id,
+            course_name=target_course,
+            cta_text=item.get("cta_text", "Register Online"),
+            cta_url=item.get("cta_url", "https://tektutors.com.ng/registration"),
+            sequence_day=day_num
+        )
+        scheduled_records.append(rec)
+
+    logger.info(f"Successfully enrolled {clean_email} into 5-day daily follow-up drip sequence ({len(scheduled_records)} emails scheduled).")
+    return {
+        "status": "enrolled",
+        "recipient_email": clean_email,
+        "course": target_course,
+        "scheduled_emails_count": len(scheduled_records),
+        "schedule": scheduled_records
+    }
+
+
+async def process_due_scheduled_emails() -> List[Dict[str, Any]]:
+    """
+    Periodic job worker: fetch and dispatch all pending emails whose scheduled_for <= now.
+    """
+    now = datetime.datetime.now()
+    due_records = []
+
+    async with AsyncSessionLocal() as db:
+        stmt = select(ScheduledEmail).where(
+            ScheduledEmail.status == "pending",
+            ScheduledEmail.scheduled_for <= now
+        ).order_by(ScheduledEmail.scheduled_for.asc()).limit(20)
+        res = await db.execute(stmt)
+        due_records = res.scalars().all()
+
+    if not due_records:
+        return []
+
+    logger.info(f"Processing {len(due_records)} due scheduled email(s)...")
+    results = []
+
+    for item in due_records:
+        # Check if parent lead enrolled in the meantime; if so, cancel drip
+        should_skip = False
+        if item.lead_id:
+            async with AsyncSessionLocal() as db:
+                l_res = await db.execute(select(Lead).where(Lead.id == item.lead_id))
+                lead = l_res.scalar_one_or_none()
+                if lead and lead.status == "enrolled":
+                    should_skip = True
+
+        if should_skip:
+            async with AsyncSessionLocal() as db:
+                rec_stmt = select(ScheduledEmail).where(ScheduledEmail.id == item.id)
+                rec = (await db.execute(rec_stmt)).scalar_one_or_none()
+                if rec:
+                    rec.status = "cancelled"
+                    rec.error_message = "Lead already enrolled; remaining drip cancelled."
+                    await db.commit()
+            results.append({"id": item.id, "status": "cancelled", "reason": "already_enrolled"})
+            continue
+
+        # Send email via core engine
+        send_res = await send_email_async(
+            recipient_email=item.recipient_email,
+            recipient_name=item.recipient_name,
+            subject=item.subject,
+            body_markdown=item.body_markdown,
+            campaign_type=item.campaign_type,
+            lead_id=item.lead_id,
+            cta_text=item.cta_text or "Register Online",
+            cta_url=item.cta_url or "https://tektutors.com.ng/registration",
+            course_name=item.course_name or "Data Analytics & BI Accelerator"
+        )
+
+        new_status = send_res.get("status", "failed")
+        async with AsyncSessionLocal() as db:
+            rec_stmt = select(ScheduledEmail).where(ScheduledEmail.id == item.id)
+            rec = (await db.execute(rec_stmt)).scalar_one_or_none()
+            if rec:
+                rec.status = new_status
+                rec.sent_at = datetime.datetime.now()
+                rec.error_message = send_res.get("error_message")
+                await db.commit()
+
+        results.append({
+            "id": item.id,
+            "recipient_email": item.recipient_email,
+            "subject": item.subject,
+            "status": new_status,
+            "error": send_res.get("error_message")
+        })
+
+    return results
+
+
+async def cancel_scheduled_email(scheduled_id: int) -> bool:
+    """Cancel a pending scheduled email."""
+    async with AsyncSessionLocal() as db:
+        stmt = select(ScheduledEmail).where(ScheduledEmail.id == scheduled_id)
+        res = await db.execute(stmt)
+        item = res.scalar_one_or_none()
+        if item and item.status == "pending":
+            item.status = "cancelled"
+            await db.commit()
+            return True
+        return False
+
+
+async def cancel_scheduled_emails_for_lead(lead_id: int) -> int:
+    """Cancel all future pending scheduled emails for a lead."""
+    async with AsyncSessionLocal() as db:
+        stmt = select(ScheduledEmail).where(
+            ScheduledEmail.lead_id == lead_id,
+            ScheduledEmail.status == "pending"
+        )
+        res = await db.execute(stmt)
+        items = res.scalars().all()
+        for it in items:
+            it.status = "cancelled"
+        await db.commit()
+        return len(items)
+
+
+# Background Worker Task
+_worker_task: Optional[asyncio.Task] = None
+_worker_running: bool = False
+
+async def _scheduled_email_worker_loop():
+    logger.info("📅 Scheduled Email Background Dispatcher started (Polling every 30s)...")
+    while _worker_running:
+        try:
+            await process_due_scheduled_emails()
+        except Exception as e:
+            logger.error(f"Error in scheduled email worker loop: {e}")
+        try:
+            await asyncio.sleep(30)
+        except (asyncio.CancelledError, GeneratorExit):
+            break
+
+def start_scheduled_email_worker():
+    global _worker_task, _worker_running
+    import sys
+    if os.getenv("PYTEST_CURRENT_TEST") or "pytest" in sys.modules:
+        return
+    if not _worker_running:
+        _worker_running = True
+        _worker_task = asyncio.create_task(_scheduled_email_worker_loop())
+
+def stop_scheduled_email_worker():
+    global _worker_task, _worker_running
+    _worker_running = False
+    if _worker_task and not _worker_task.done():
+        _worker_task.cancel()
+
+

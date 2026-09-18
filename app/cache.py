@@ -432,6 +432,18 @@ async def check_fast_path(phone: str, user_text: str) -> Optional[Dict[str, Any]
                 course_name=course_label
             )
             logger.info(f"Curriculum email successfully delivered to {extracted_email} for {course_label}")
+
+            # Automatically enroll prospect into 5-day daily follow-up drip sequence
+            try:
+                from app.email_service import enroll_lead_in_daily_drip_sequence
+                await enroll_lead_in_daily_drip_sequence(
+                    lead_id=None,
+                    email=extracted_email,
+                    name="Student",
+                    course_name=course_label
+                )
+            except Exception as ex:
+                logger.warning(f"Fast path drip enrollment notice: {ex}")
         except Exception as e:
             logger.error(f"Error during real-time syllabus email dispatch to {extracted_email}: {e}")
 

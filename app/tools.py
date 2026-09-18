@@ -276,7 +276,7 @@ async def qualify_and_capture_lead(
         # Automatically trigger personalized syllabus & roadmap email when email is captured
         if lead.email and "@" in lead.email:
             try:
-                from app.email_service import dispatch_engagement_email
+                from app.email_service import dispatch_engagement_email, enroll_lead_in_daily_drip_sequence
                 await dispatch_engagement_email(
                     lead_id=lead.id,
                     trigger_event="syllabus",
@@ -285,8 +285,16 @@ async def qualify_and_capture_lead(
                     recipient_name=lead.name or "Student"
                 )
                 logger.info(f"Syllabus email successfully dispatched for lead #{lead.id} to {lead.email}")
+
+                # Automatically enroll lead in 5-day daily follow-up drip sequence
+                await enroll_lead_in_daily_drip_sequence(
+                    lead_id=lead.id,
+                    email=lead.email,
+                    name=lead.name or "Student",
+                    course_name=lead.course_interest or course_interest or "Data Analytics & BI Accelerator"
+                )
             except Exception as e:
-                logger.error(f"Error during lead syllabus email dispatch for {lead.email}: {e}")
+                logger.error(f"Error during lead syllabus email or drip sequence dispatch for {lead.email}: {e}")
 
         return f"Lead captured successfully! ID: {lead.id}, Name: {lead.name}, Score: {lead.lead_score}, Status: {lead.status}"
 
@@ -609,6 +617,104 @@ async def trigger_conversion_email_campaign(
             f"Subject: '{result.get('subject')}'. Delivery Status: {result.get('status')}."
         )
 
+@tool
+async def schedule_followup_email(
+    phone: str,
+    delay_or_datetime: str,
+    campaign_stage: str = "syllabus",
+    email: Optional[str] = None,
+    course_name: Optional[str] = None,
+    custom_note: Optional[str] = None
+) -> str:
+    """
+    Schedule a personalized follow-up email to be dispatched automatically at a future date or time.
+    Use this tool when a student or customer says:
+    - "Can you email me the syllabus tomorrow?"
+    - "Send it to me in 2 hours"
+    - "Follow up with me next Monday"
+    - "Email me tomorrow morning at 9am"
+
+    Allowed campaign_stage values:
+    - 'syllabus': Complete week-by-week curriculum roadmap & project breakdown.
+    - 'consultation': 1-on-1 advisor discovery call confirmation, agenda, and meeting prep.
+    - 'scholarship': 20% Fast-Action Scholarship voucher code & 10% upfront discount.
+    - 'invoice': Official registration link & invoice checkout.
+    - 'reengagement': Student transformation case study & reserved mentor reminder.
+
+    delay_or_datetime examples:
+    - "in 2 hours", "2h", "tomorrow", "tomorrow morning", "in 24 hours", "2026-09-19 10:00"
+    """
+    clean_phone = phone.strip().replace("+", "")
+    from app.email_service import schedule_email_async, parse_schedule_time, PREBUILT_EMAIL_TEMPLATES
+
+    async with AsyncSessionLocal() as db:
+        stmt = select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1)
+        res = await db.execute(stmt)
+        lead = res.scalars().first()
+
+        target_email = email.strip() if (email and "@" in email) else (lead.email if lead and lead.email else None)
+
+        if not target_email or "@" not in target_email:
+            return (
+                f"Prospect does not have an email address on file yet. "
+                f"Please ask them: 'Could you please share your email address so I can schedule your {campaign_stage} email?'"
+            )
+
+        if lead:
+            if email and "@" in email:
+                lead.email = email.strip()
+                await db.commit()
+                await db.refresh(lead)
+        else:
+            lead = Lead(
+                phone=clean_phone,
+                email=target_email,
+                course_interest=course_name or "Data Analytics & BI Accelerator",
+                status="qualified",
+                lead_score=70
+            )
+            db.add(lead)
+            await db.commit()
+            await db.refresh(lead)
+
+        target_course = course_name or lead.course_interest or "Data Analytics & BI Accelerator"
+        target_name = lead.name or "Student"
+        scheduled_dt = parse_schedule_time(delay_or_datetime)
+
+        template_map = {
+            "syllabus": "syllabus_delivery_followup",
+            "consultation": "consultation_booking_confirmation",
+            "scholarship": "scholarship_voucher_activation",
+            "invoice": "checkout_invoice_delivery",
+            "reengagement": "incomplete_application_followup"
+        }
+        tpl_id = template_map.get(campaign_stage.lower().strip(), "syllabus_delivery_followup")
+        tpl = next((t for t in PREBUILT_EMAIL_TEMPLATES if t["id"] == tpl_id), PREBUILT_EMAIL_TEMPLATES[1])
+
+        p_subject = tpl["subject"].replace("{{name}}", target_name).replace("{{course}}", target_course)
+        p_body = tpl["body"].replace("{{name}}", target_name).replace("{{course}}", target_course)
+        if custom_note:
+            p_body += f"\n\n**Advisor's Note:**\n{custom_note}"
+
+        schedule_res = await schedule_email_async(
+            to_email=target_email,
+            to_name=target_name,
+            subject=p_subject,
+            body_markdown=p_body,
+            scheduled_for=scheduled_dt,
+            campaign_type=f"scheduled_{campaign_stage}",
+            lead_id=lead.id,
+            course_name=target_course,
+            cta_text=tpl.get("cta_text", "Register Online"),
+            cta_url=tpl.get("cta_url", "https://tektutors.com.ng/registration")
+        )
+
+        formatted_time = scheduled_dt.strftime("%A, %b %d at %I:%M %p")
+        return (
+            f"📅 Successfully scheduled '{campaign_stage}' email for {target_name} ({target_email})! "
+            f"Scheduled Delivery Time: {formatted_time} (Queue ID #{schedule_res['scheduled_id']})."
+        )
+
 TEKTUTORS_TOOLS = [
     search_tektutors_courses,
     get_course_faq_answer,
@@ -618,5 +724,6 @@ TEKTUTORS_TOOLS = [
     generate_enrollment_checkout,
     calculate_career_roi,
     check_scholarship_and_discounts,
-    trigger_conversion_email_campaign
+    trigger_conversion_email_campaign,
+    schedule_followup_email
 ]

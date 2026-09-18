@@ -22,7 +22,8 @@ from app.tools import (
     generate_enrollment_checkout,
     calculate_career_roi,
     check_scholarship_and_discounts,
-    trigger_conversion_email_campaign
+    trigger_conversion_email_campaign,
+    schedule_followup_email
 )
 
 logger = logging.getLogger(__name__)
@@ -88,7 +89,8 @@ OPERATIONAL RULES:
   b. Ask ONE diagnostic qualification question (e.g., "Do you have prior experience with Python/math, or are you starting from scratch?").
   c. Guide toward next step: offer syllabus PDF to email or booking a free 15-min discovery call.
 7. SALES EXCELLENCE: Highlight beginner transformation, 1,200+ graduates, free ₦35,000 CV/LinkedIn audit for enrolling this week, and registration link (https://tektutors.com.ng/registration).
-8. CAMPAIGN EMAILS: Call `trigger_conversion_email_campaign` when email is provided or for syllabus, consultation, or scholarship requests."""
+8. CAMPAIGN EMAILS: Call `trigger_conversion_email_campaign` when email is provided or for syllabus, consultation, or scholarship requests.
+9. SCHEDULED EMAILS: If a prospect asks to receive an email later (e.g. "tomorrow", "in 2 hours", "next week"), call `schedule_followup_email` with the specified delay/time and warmly confirm scheduled delivery."""
 
 class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]

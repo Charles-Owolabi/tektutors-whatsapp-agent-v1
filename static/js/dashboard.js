@@ -1840,7 +1840,8 @@ async function loadEmailHub() {
     await Promise.all([
         fetchEmailStats(),
         fetchEmailTemplates(),
-        fetchEmailLogs()
+        fetchEmailLogs(),
+        loadScheduledEmails()
     ]);
 }
 
@@ -2228,27 +2229,46 @@ async function submitEmailDispatch() {
                 return;
             }
 
-            const res = await fetch('/api/emails/send-single', {
+            const isScheduled = document.getElementById('composer-schedule-checkbox')?.checked;
+            const scheduledForVal = document.getElementById('composer-scheduled-for')?.value;
+
+            if (isScheduled && !scheduledForVal) {
+                showToast('Please select a scheduled delivery date and time.', 'error');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-clock"></i> Schedule Email';
+                }
+                return;
+            }
+
+            const endpoint = isScheduled ? '/api/emails/schedule' : '/api/emails/send-single';
+            const payload = {
+                recipient_email: recipientEmail,
+                recipient_name: recipientName,
+                subject: subject,
+                body: body,
+                campaign_type: campaignType,
+                lead_id: leadId,
+                course_name: document.getElementById('composer-course-name')?.value,
+                cta_text: ctaText,
+                cta_url: ctaUrl
+            };
+            if (isScheduled) {
+                payload.scheduled_for = scheduledForVal;
+            }
+
+            const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    recipient_email: recipientEmail,
-                    recipient_name: recipientName,
-                    subject: subject,
-                    body: body,
-                    campaign_type: campaignType,
-                    lead_id: leadId,
-                    cta_text: ctaText,
-                    cta_url: ctaUrl
-                })
+                body: JSON.stringify(payload)
             });
             const data = await res.json();
             if (res.ok && data.success) {
-                showToast(`📧 Email dispatched to ${recipientEmail}`);
+                showToast(isScheduled ? `📅 ${data.message}` : `📧 Email dispatched to ${recipientEmail}`);
                 closeEmailComposer();
                 loadEmailHub();
             } else {
-                showToast(data.detail || 'Failed to send email', 'error');
+                showToast(data.detail || 'Failed to process email', 'error');
             }
         }
     } catch (err) {
@@ -2364,4 +2384,128 @@ async function executeConversionFollowup(triggerEvent) {
         showToast('Network error while dispatching follow-up', 'error');
     }
 }
+
+function toggleComposerScheduleControls(checked) {
+    const container = document.getElementById('composer-schedule-datetime-container');
+    const submitBtn = document.getElementById('btn-submit-email');
+    if (container) container.style.display = checked ? 'block' : 'none';
+    if (submitBtn) {
+        if (checked) {
+            submitBtn.innerHTML = '<i class="fa-solid fa-clock"></i> Schedule Email';
+            const dateInput = document.getElementById('composer-scheduled-for');
+            if (dateInput && !dateInput.value) {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                tomorrow.setHours(10, 0, 0, 0);
+                const pad = n => String(n).padStart(2, '0');
+                dateInput.value = `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth()+1)}-${pad(tomorrow.getDate())}T10:00`;
+            }
+        } else {
+            submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Email Now';
+        }
+    }
+}
+
+async function loadScheduledEmails() {
+    const tbody = document.getElementById('scheduled-emails-table-body');
+    if (!tbody) return;
+
+    try {
+        const res = await fetch('/api/emails/scheduled');
+        if (!res.ok) return;
+        const data = await res.json();
+        const items = data.scheduled_emails || [];
+
+        if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="color: var(--text-muted); padding: 1.5rem;">No upcoming scheduled emails in queue. Emails scheduled from chat or composer will appear here.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = items.map(item => {
+            let statusBadge = '<span class="badge" style="background: rgba(234,179,8,0.15); color: #eab308;"><i class="fa-solid fa-clock"></i> Pending</span>';
+            if (item.status === 'sent') {
+                statusBadge = '<span class="badge" style="background: rgba(34,197,94,0.15); color: #22c55e;"><i class="fa-solid fa-check"></i> Sent</span>';
+            } else if (item.status === 'cancelled') {
+                statusBadge = '<span class="badge" style="background: rgba(148,163,184,0.15); color: #94a3b8;"><i class="fa-solid fa-ban"></i> Cancelled</span>';
+            } else if (item.status === 'failed') {
+                statusBadge = `<span class="badge" style="background: rgba(239,68,68,0.15); color: #ef4444;" title="${escapeHtml(item.error_message || '')}"><i class="fa-solid fa-triangle-exclamation"></i> Failed</span>`;
+            }
+
+            const dayBadge = item.sequence_day > 0 
+                ? `<span class="badge" style="background: rgba(168,85,247,0.15); color: #c084fc; font-size: 0.68rem;">Day ${item.sequence_day} Drip</span>`
+                : `<span class="badge" style="background: rgba(56,189,248,0.15); color: #38bdf8; font-size: 0.68rem;">Custom</span>`;
+
+            let actions = '';
+            if (item.status === 'pending') {
+                actions = `
+                    <button class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3);" onclick="cancelScheduledEmail(${item.id})">
+                        <i class="fa-solid fa-xmark"></i> Cancel
+                    </button>
+                `;
+            } else {
+                actions = `<span style="font-size: 0.72rem; color: var(--text-muted);">—</span>`;
+            }
+
+            return `
+                <tr>
+                    <td style="font-weight: 600; color: #38bdf8;">#${item.id}</td>
+                    <td>
+                        <div style="font-weight: 600; color: #fff;">${escapeHtml(item.recipient_email)}</div>
+                        <div style="font-size: 0.72rem; color: var(--text-muted);">${escapeHtml(item.recipient_name || 'Student')}</div>
+                    </td>
+                    <td>${dayBadge}</td>
+                    <td style="max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(item.subject)}">
+                        ${escapeHtml(item.subject)}
+                    </td>
+                    <td style="font-size: 0.78rem;">
+                        <div style="color: #4ade80; font-weight: 600;"><i class="fa-regular fa-clock"></i> ${escapeHtml(item.scheduled_for_formatted || item.scheduled_for)}</div>
+                    </td>
+                    <td>${statusBadge}</td>
+                    <td>${actions}</td>
+                </tr>
+            `;
+        }).join('');
+    } catch (err) {
+        console.error('Error loading scheduled emails:', err);
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="color: #ef4444;">Failed to load scheduled queue.</td></tr>';
+    }
+}
+
+async function cancelScheduledEmail(scheduledId) {
+    if (!confirm(`Are you sure you want to cancel scheduled email #${scheduledId}?`)) return;
+
+    try {
+        const res = await fetch(`/api/emails/scheduled/${scheduledId}/cancel`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showToast('Scheduled email cancelled.');
+            loadScheduledEmails();
+        } else {
+            showToast(data.detail || 'Could not cancel scheduled email', 'error');
+        }
+    } catch (err) {
+        console.error('Error cancelling scheduled email:', err);
+        showToast('Network error while cancelling email', 'error');
+    }
+}
+
+async function processScheduledEmailsNow() {
+    showToast('Checking and dispatching due scheduled emails...');
+    try {
+        const res = await fetch('/api/emails/scheduled/process-now', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showToast(`Processed ${data.processed_count} due email(s)!`);
+            loadScheduledEmails();
+            fetchEmailStats();
+            fetchEmailLogs();
+        } else {
+            showToast('Failed to process scheduled emails', 'error');
+        }
+    } catch (err) {
+        console.error('Error triggering scheduled emails:', err);
+        showToast('Network error', 'error');
+    }
+}
+
 
