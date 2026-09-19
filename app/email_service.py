@@ -640,6 +640,60 @@ def _send_smtp_email_sync(to_email: str, subject: str, html_content: str, text_c
             pass
         raise dispatch_err
 
+async def _send_resend_email_async(to_email: str, subject: str, html_content: str, text_content: str) -> bool:
+    """Dispatch email via Resend HTTPS API (Port 443) - immune to cloud host SMTP port blocks."""
+    import httpx
+    url = "https://api.resend.com/emails"
+    headers = {
+        "Authorization": f"Bearer {settings.RESEND_API_KEY.strip()}",
+        "Content-Type": "application/json"
+    }
+    from_email = settings.SMTP_FROM_EMAIL or "onboarding@resend.dev"
+    if "@gmail.com" in from_email.lower():
+        from_header = f"{settings.SMTP_FROM_NAME} <onboarding@resend.dev>"
+    else:
+        from_header = f"{settings.SMTP_FROM_NAME} <{from_email}>"
+
+    payload = {
+        "from": from_header,
+        "to": [to_email],
+        "subject": subject,
+        "html": html_content,
+        "text": text_content
+    }
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        resp = await client.post(url, headers=headers, json=payload)
+        if resp.status_code in (200, 201):
+            logger.info(f"Resend HTTPS dispatch succeeded to {to_email}")
+            return True
+        else:
+            raise RuntimeError(f"Resend API error {resp.status_code}: {resp.text}")
+
+
+async def _send_brevo_email_async(to_email: str, subject: str, html_content: str, text_content: str) -> bool:
+    """Dispatch email via Brevo HTTPS API (Port 443) - immune to cloud host SMTP port blocks."""
+    import httpx
+    url = "https://api.brevo.com/v3/smtp/email"
+    headers = {
+        "api-key": settings.BREVO_API_KEY.strip(),
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "sender": {"name": settings.SMTP_FROM_NAME, "email": settings.SMTP_FROM_EMAIL},
+        "to": [{"email": to_email}],
+        "subject": subject,
+        "htmlContent": html_content,
+        "textContent": text_content
+    }
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        resp = await client.post(url, headers=headers, json=payload)
+        if resp.status_code in (200, 201):
+            logger.info(f"Brevo HTTPS dispatch succeeded to {to_email}")
+            return True
+        else:
+            raise RuntimeError(f"Brevo API error {resp.status_code}: {resp.text}")
+
+
 async def send_email_async(
     to_email: Optional[str] = None,
     to_name: Optional[str] = None,
@@ -655,7 +709,7 @@ async def send_email_async(
 ) -> Dict[str, Any]:
     """
     Send personalized follow-up, marketing, or promotional email.
-    Substitutes tokens, renders branded HTML, dispatches via SMTP (or simulated mode),
+    Substitutes tokens, renders branded HTML, dispatches via HTTPS API / SMTP (or simulated mode),
     and records an audit log in EmailLog.
     """
     target_email = to_email or recipient_email or ""
@@ -679,8 +733,28 @@ async def send_email_async(
     status = "sent"
     error_message = None
 
-    # 3. Dispatch via SMTP if configured, else graceful simulation
-    if settings.SMTP_HOST:
+    # 3. Multi-tier Dispatch Engine:
+    #    Tier 1: Resend HTTPS API (Port 443) - never blocked by cloud firewalls
+    #    Tier 2: Brevo HTTPS API (Port 443)
+    #    Tier 3: Resilient IPv4 Direct SMTP (Port 465 / 587)
+    #    Tier 4: Local preview simulation mode
+    if settings.RESEND_API_KEY:
+        try:
+            await _send_resend_email_async(clean_email, personalized_subject, html_content, personalized_body)
+            logger.info(f"Successfully sent live email via Resend HTTPS API to {clean_email}")
+        except Exception as e:
+            logger.error(f"Resend API error delivering to {clean_email}: {e}")
+            status = "failed"
+            error_message = str(e)
+    elif settings.BREVO_API_KEY:
+        try:
+            await _send_brevo_email_async(clean_email, personalized_subject, html_content, personalized_body)
+            logger.info(f"Successfully sent live email via Brevo HTTPS API to {clean_email}")
+        except Exception as e:
+            logger.error(f"Brevo API error delivering to {clean_email}: {e}")
+            status = "failed"
+            error_message = str(e)
+    elif settings.SMTP_HOST and settings.SMTP_USER and settings.SMTP_PASSWORD:
         try:
             await asyncio.to_thread(
                 _send_smtp_email_sync,
@@ -691,9 +765,17 @@ async def send_email_async(
             )
             logger.info(f"Successfully sent live SMTP email to {clean_email} (Subject: {personalized_subject})")
         except Exception as e:
-            logger.error(f"SMTP Error delivering to {clean_email}: {e}")
+            err_str = str(e)
+            if "unreachable" in err_str.lower() or "timeout" in err_str.lower() or "errno 101" in err_str.lower() or "10051" in err_str:
+                err_str += " (Cloud Firewall Block: Raw outbound SMTP ports 25/465/587 are blocked on Railway Hobby/Trial plans. Configure RESEND_API_KEY to dispatch over HTTPS Port 443 or upgrade to Railway Pro)."
+            logger.error(f"SMTP Error delivering to {clean_email}: {err_str}")
             status = "failed"
-            error_message = str(e)
+            error_message = err_str
+    elif settings.SMTP_HOST:
+        err_msg = "SMTP_USER or SMTP_PASSWORD is not configured in environment variables."
+        logger.error(err_msg)
+        status = "failed"
+        error_message = err_msg
     else:
         # Simulated mode for development/preview
         logger.info(f"[Email Simulation] Dispatched '{campaign_type}' email to {clean_email} ({personalized_subject})")

@@ -12,7 +12,8 @@ def _sanitize_placeholder_env_vars() -> None:
         "WEBHOOK_VERIFY_SIGNATURE_STRICT", "DATABASE_URL", "APP_ENV",
         "GROQ_API_KEY", "WHATSAPP_TOKEN", "WHATSAPP_PHONE_NUMBER_ID",
         "WHATSAPP_VERIFY_TOKEN", "WHATSAPP_APP_SECRET", "SMTP_HOST",
-        "SMTP_USER", "SMTP_PASSWORD", "SMTP_FROM_EMAIL", "SMTP_FROM_NAME"
+        "SMTP_USER", "SMTP_PASSWORD", "SMTP_FROM_EMAIL", "SMTP_FROM_NAME",
+        "RESEND_API_KEY", "BREVO_API_KEY"
     ]
     for name in placeholder_names:
         value = os.getenv(name)
@@ -88,6 +89,8 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: str = os.getenv("SMTP_FROM_EMAIL", "tektutorsng@gmail.com")
     SMTP_FROM_NAME: str = os.getenv("SMTP_FROM_NAME", "TekTutors Academy")
     SMTP_USE_TLS: bool = _safe_bool_env("SMTP_USE_TLS", False)
+    RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
+    BREVO_API_KEY: str = os.getenv("BREVO_API_KEY", "")
 
     # Production & Security Settings
     ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "*")
