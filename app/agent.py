@@ -29,25 +29,54 @@ from app.tools import (
 logger = logging.getLogger(__name__)
 
 
-def strip_asterisks(text: str) -> str:
+def format_whatsapp_markdown(text: str) -> str:
     """
-    Remove all asterisks (*) from WhatsApp messages to ensure a clean, professional,
-    and elegant presentation without distracting asterisks showing to customers.
-    Also transforms any markdown bullet asterisks ('* ') to clean bullets ('• ').
+    Format text for professional WhatsApp presentation with clean, eye-catching bolding:
+    1. Converts markdown list bullets (* item or - item) into clean unicode bullets (• item)
+       so they never interfere with bold formatting tags.
+    2. Converts markdown bold (**text** or ***text***) to standard WhatsApp single-asterisk bold (*text*).
+       WhatsApp mobile and web only support single asterisks; double asterisks cause broken asterisks to display.
+    3. Normalizes any inner spacing (* bold * -> *bold*) so WhatsApp correctly activates bold rendering.
+    4. Cleans up duplicate asterisks and fixes any stray unpaired asterisks.
     """
     if not text or not isinstance(text, str):
         return text
-    # Convert markdown list bullets (* item) to clean bullets (• item)
-    text = re.sub(r'(?m)^\s*\*\s+', '• ', text)
-    # Remove all remaining asterisks
-    text = text.replace('*', '')
+
+    # Step 1: Convert markdown list bullets (* item or - item at line start) to clean bullets (• item)
+    text = re.sub(r'(?m)^\s*[\*\-]\s+', '• ', text)
+
+    # Step 2: Convert triple asterisks (***text***) to single asterisk (*text*)
+    text = re.sub(r'\*{3,}([^*\n]+?)\*{3,}', r'*\1*', text)
+
+    # Step 3: Convert double asterisks (**text**) to single asterisk (*text*)
+    text = re.sub(r'\*{2}([^*\n]+?)\*{2}', r'*\1*', text)
+
+    # Step 4: Ensure no leading/trailing spaces inside bold tags (* bold * -> *bold*)
+    text = re.sub(r'\*[ \t]+([^*\n]+?)\*', r'*\1*', text)
+    text = re.sub(r'\*([^*\n]+?)[ \t]+\*', r'*\1*', text)
+
+    # Step 5: Clean up any remaining multiple asterisks
+    text = re.sub(r'\*{2,}', '*', text)
+
+    # Step 6: Fix stray/unpaired asterisks if an odd count exists
+    asterisk_count = text.count('*')
+    if asterisk_count % 2 != 0:
+        last_idx = text.rfind('*')
+        if last_idx != -1:
+            text = text[:last_idx] + text[last_idx + 1:]
+
     return text
+
+
+def strip_asterisks(text: str) -> str:
+    """Backwards-compatible alias for format_whatsapp_markdown."""
+    return format_whatsapp_markdown(text)
 
 
 def convert_markdown_tables_to_whatsapp(text: str) -> str:
     """
-    Detect markdown tables in text and convert them into clean, mobile-friendly WhatsApp bullet cards.
-    WhatsApp mobile does NOT render markdown tables; raw tables display as broken, unreadable walls of pipe symbols.
+    Detect markdown tables in text and convert them into clean, mobile-friendly WhatsApp bullet cards
+    with attention-grabbing bold titles and key highlights.
     """
     if not text or "|" not in text:
         return text
@@ -106,18 +135,18 @@ def convert_markdown_tables_to_whatsapp(text: str) -> str:
                 header_dur_label = headers[2] if len(headers) > 2 else "Duration"
                 header_det_label = headers[3] if len(headers) > 3 else "What You'll Master"
 
-                card_lines.append(f"{badge} {clean_title}")
+                card_lines.append(f"{badge} *{clean_title}*")
                 if clean_duration:
-                    card_lines.append(f"   ⏱️ {header_dur_label}: {clean_duration}")
+                    card_lines.append(f"   ⏱️ *{header_dur_label}:* {clean_duration}")
                 if clean_details:
-                    card_lines.append(f"   💡 {header_det_label}: {clean_details}")
+                    card_lines.append(f"   💡 *{header_det_label}:* {clean_details}")
             else:
                 clean_first = re.sub(r'[*_`]', '', raw_first).strip()
-                card_lines.append(f"🔹 {clean_first}")
+                card_lines.append(f"🔹 *{clean_first}*")
                 for h, val in zip(headers[1:], row[1:]):
                     val_str = re.sub(r'[*_`]', '', val).strip()
                     if val_str:
-                        card_lines.append(f"   • {h}: {val_str}")
+                        card_lines.append(f"   • *{h}:* {val_str}")
 
             cards.append("\n".join(card_lines))
 
@@ -176,15 +205,15 @@ def sanitize_pricing_hallucinations(text: str) -> str:
 def sanitize_whatsapp_message(text: str) -> str:
     """
     Apply comprehensive WhatsApp message formatting:
-    1. Converts any markdown tables into clean, mobile-friendly WhatsApp cards.
+    1. Converts any markdown tables into clean, mobile-friendly WhatsApp cards with bold emphasis.
     2. Enforces correct pricing guardrails against hallucinations.
-    3. Strips all markdown asterisks (*) so customers never see raw asterisk symbols.
+    3. Normalizes all markdown bolding (**word**) to WhatsApp single-asterisk bold (*word*).
     """
     if not text or not isinstance(text, str):
         return text
     text = convert_markdown_tables_to_whatsapp(text)
     text = sanitize_pricing_hallucinations(text)
-    text = strip_asterisks(text)
+    text = format_whatsapp_markdown(text)
     return text
 
 
@@ -209,42 +238,42 @@ OPERATIONAL RULES:
 2. ADVISOR CALLS: To book a 1-on-1 discovery call, warmly ask for Full Name, preferred time/date, and course interest; call `schedule_advisor_call`. Do not confuse with human escalation.
 3. CURRICULUM: For a specific course (e.g. Machine Learning, Data Science, Power BI, SQL, Python), summarize THAT exact course's modules and syllabus. NEVER mention Data Analytics, Excel, or Power BI when the prospect specifically asks for Machine Learning or Data Science! Without an email, summarize the specific modules for their chosen course and offer the syllabus PDF to their email. When an email is given, call `qualify_and_capture_lead` immediately with their specific `course_interest`, confirm dispatch, and do not ask again.
 4. HUMAN ESCALATION: Only escalate (`escalate_to_human_advisor`) for formal payment/refund disputes or explicit demands for a human manager.
-5. WHATSAPP PRESENTATION & STYLE (ZERO-ASTERISK POLICY):
-   - CRITICAL ZERO-ASTERISK RULE: NEVER use asterisks (*) anywhere in your message. Do NOT use *bold* or **bold**.
-     Asterisks appear as raw symbols on WhatsApp Web and mobile devices, looking messy and unprofessional.
-   - For emphasis and section headers, use clean emojis (1️⃣, 2️⃣, 3️⃣, 🔹, 📌, 👉, 💡, ⏱️, 💵, 🎯, 🌟), natural capitalization, or clean spacing.
+5. WHATSAPP PRESENTATION & BOLD FORMATTING:
+   - Use WhatsApp bold formatting (*word*) strategically to capture attention on key details: course names, tuition, savings, step numbers, and important calls to action.
+   - ALWAYS use standard WhatsApp single-asterisk bold (*word*). NEVER use markdown double-asterisks (**word**) because double-asterisks cause ugly extra asterisks to display on WhatsApp!
+   - Ensure NO spaces inside asterisks: always write *word*, never * word *.
    - For bullet points, use clean dots (•) or emoji bullets (🔹, 👉), NEVER asterisks (*).
-   - NEVER USE MARKDOWN TABLES (| # | Track | Duration |). WhatsApp mobile app cannot render tables.
+   - NEVER USE MARKDOWN TABLES (| # | Track | Duration |). WhatsApp mobile cannot render tables. Use clean, emoji-badged mobile cards instead.
    - Keep paragraphs under 3 sentences. Warm consultative tone ending with a guiding question.
 6. COURSE PRESENTATION & CONSULTATION SEQUENCE:
 • Broad inquiry/greeting or when asked what courses are offered:
-  Present the pathways using this clean, mobile-optimized card layout with NO asterisks:
+  Present the pathways using this clean, bold-emphasized mobile card layout:
 
-  🎓 TekTutors Practical Tech Pathways (1-on-1 Mentorship)
+  🎓 *TekTutors Practical Tech Pathways (1-on-1 Mentorship)*
 
-  1️⃣ Data Analytics & BI Accelerator (⏱️ 10 wks)
-     💡 What You'll Master: Excel, SQL, Power BI, Python + 3 real capstone projects
+  1️⃣ *Data Analytics & BI Accelerator* (⏱️ 10 wks)
+     💡 *What You'll Master:* Excel, SQL, Power BI, Python + 3 real capstone projects
      ⭐ Our #1 Most Popular Track!
 
-  2️⃣ Excel for Data Analysis (⏱️ 6-8 wks)
-     💡 What You'll Master: Advanced formulas, Power Query, automated reporting & dashboards
+  2️⃣ *Excel for Data Analysis* (⏱️ 6-8 wks)
+     💡 *What You'll Master:* Advanced formulas, Power Query, automated reporting & dashboards
 
-  3️⃣ SQL for Analytics & Data Engineering (⏱️ 6-8 wks)
-     💡 What You'll Master: Relational databases, complex queries, joins, CTEs & ETL
+  3️⃣ *SQL for Analytics & Data Engineering* (⏱️ 6-8 wks)
+     💡 *What You'll Master:* Relational databases, complex queries, joins, CTEs & ETL
 
-  4️⃣ Power BI & Business Intelligence (⏱️ 6-8 wks)
-     💡 What You'll Master: Data modeling, DAX measures, interactive KPI dashboards & publishing
+  4️⃣ *Power BI & Business Intelligence* (⏱️ 6-8 wks)
+     💡 *What You'll Master:* Data modeling, DAX measures, interactive KPI dashboards & publishing
 
-  5️⃣ Applied Python for Analytics & AI (⏱️ 6-8 wks)
-     💡 What You'll Master: Python basics, Pandas, NumPy, visualization & intro to AI/ML
+  5️⃣ *Applied Python for Analytics & AI* (⏱️ 6-8 wks)
+     💡 *What You'll Master:* Python basics, Pandas, NumPy, visualization & intro to AI/ML
 
-  6️⃣ Explore Other Specialized Tracks (⏱️ 6-20 wks)
-     💡 Tracks Available: Data Science, Machine Learning, Business Analysis, Financial/HR Analytics
+  6️⃣ *Explore Other Specialized Tracks* (⏱️ 6-20 wks)
+     💡 *Tracks Available:* Data Science, Machine Learning, Business Analysis, Financial/HR Analytics
 
-  💰 Flexible Tuition: ₦100,000 / month (or ₦90,000 upfront with 10% discount).
-  🎁 Fast-Action Perk: Free ₦35,000 CV Optimization & LinkedIn Audit included!
+  💰 *Flexible Tuition:* ₦100,000 / month (or *₦90,000 upfront* with 10% discount).
+  🎁 *Fast-Action Perk:* Free ₦35,000 CV Optimization & LinkedIn Audit included!
 
-  👉 Please reply with the number of your choice (1-6) OR type the name of the track you'd like to explore!
+  👉 *Please reply with the number of your choice (1-6) OR type the name of the track you'd like to explore!*
 
 • Specific course inquiry (e.g. Machine Learning, Power BI, SQL, Python): NEVER dump all 6 tracks. Focus 100% on the requested course:
   a. Confirm course highlights and outcomes (1-on-1 mentor, 3 capstone projects, ₦100,000/month or ₦90,000 upfront).

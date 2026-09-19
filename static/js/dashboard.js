@@ -736,14 +736,14 @@ function formatWhatsAppText(rawText) {
                         const title = (row[1] || '').replace(/[*_`]/g, '').trim();
                         const dur = (row[2] || '').replace(/[*_`]/g, '').trim();
                         const details = (row[3] || '').replace(/[*_`]/g, '').trim();
-                        let c = `${badge} ${title}`;
-                        if (dur) c += `\n   ⏱️ ${headers[2] || 'Duration'}: ${dur}`;
-                        if (details) c += `\n   💡 ${headers[3] || 'Master'}: ${details}`;
+                        let c = `${badge} *${title}*`;
+                        if (dur) c += `\n   ⏱️ *${headers[2] || 'Duration'}:* ${dur}`;
+                        if (details) c += `\n   💡 *${headers[3] || 'Master'}:* ${details}`;
                         return c;
                     } else {
-                        let c = `🔹 ${(row[0] || '').replace(/[*_`]/g, '').trim()}`;
+                        let c = `🔹 *${(row[0] || '').replace(/[*_`]/g, '').trim()}*`;
                         headers.slice(1).forEach((h, idx) => {
-                            if (row[idx + 1]) c += `\n   • ${h}: ${(row[idx + 1] || '').replace(/[*_`]/g, '').trim()}`;
+                            if (row[idx + 1]) c += `\n   • *${h}:* ${(row[idx + 1] || '').replace(/[*_`]/g, '').trim()}`;
                         });
                         return c;
                     }
@@ -754,7 +754,11 @@ function formatWhatsAppText(rawText) {
         }
     }
 
-    formatted = formatted.replace(/\*([^\*]+)\*/g, '$1');
+    // Convert markdown bold to HTML strong tags
+    formatted = formatted.replace(/\*{3}([^\*]+?)\*{3}/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/\*{2}([^\*]+?)\*{2}/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/\*([^\*\n]+?)\*/g, '<strong>$1</strong>');
+    // Clean up any stray single asterisks
     formatted = formatted.replace(/\*/g, '');
     formatted = formatted.replace(/_([^_]+)_/g, '<em>$1</em>');
     formatted = formatted.replace(/~([^~]+)~/g, '<del>$1</del>');

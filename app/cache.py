@@ -294,11 +294,24 @@ def _normalize_key(text: str) -> str:
 
 
 def strip_asterisks(text: str) -> str:
-    """Remove all asterisks from text for clean WhatsApp presentation."""
+    """
+    Format text for professional WhatsApp presentation with clean, eye-catching bolding:
+    Converts list bullets, normalizes markdown **bold** to WhatsApp *bold*, and trims inner spaces.
+    """
     if not text or not isinstance(text, str):
         return text
-    text = re.sub(r'(?m)^\s*\*\s+', '• ', text)
-    return text.replace('*', '')
+    text = re.sub(r'(?m)^\s*[\*\-]\s+', '• ', text)
+    text = re.sub(r'\*{3,}([^*\n]+?)\*{3,}', r'*\1*', text)
+    text = re.sub(r'\*{2}([^*\n]+?)\*{2}', r'*\1*', text)
+    text = re.sub(r'\*[ \t]+([^*\n]+?)\*', r'*\1*', text)
+    text = re.sub(r'\*([^*\n]+?)[ \t]+\*', r'*\1*', text)
+    text = re.sub(r'\*{2,}', '*', text)
+    asterisk_count = text.count('*')
+    if asterisk_count % 2 != 0:
+        last_idx = text.rfind('*')
+        if last_idx != -1:
+            text = text[:last_idx] + text[last_idx + 1:]
+    return text
 
 
 def cache_query_response(normalized_key: str, data: Dict[str, Any]):
