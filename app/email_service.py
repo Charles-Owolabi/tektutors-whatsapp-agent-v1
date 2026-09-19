@@ -643,16 +643,21 @@ def _send_smtp_email_sync(to_email: str, subject: str, html_content: str, text_c
 async def _send_resend_email_async(to_email: str, subject: str, html_content: str, text_content: str) -> bool:
     """Dispatch email via Resend HTTPS API (Port 443) - immune to cloud host SMTP port blocks."""
     import httpx
+    api_key = (os.getenv("RESEND_API_KEY") or settings.RESEND_API_KEY or "").strip().strip('"').strip("'")
+    if not api_key:
+        raise ValueError("RESEND_API_KEY is not configured.")
+
     url = "https://api.resend.com/emails"
     headers = {
-        "Authorization": f"Bearer {settings.RESEND_API_KEY.strip()}",
+        "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
     }
-    from_email = settings.SMTP_FROM_EMAIL or "onboarding@resend.dev"
+    from_email = (os.getenv("SMTP_FROM_EMAIL") or settings.SMTP_FROM_EMAIL or "onboarding@resend.dev").strip()
+    from_name = (os.getenv("SMTP_FROM_NAME") or settings.SMTP_FROM_NAME or "TekTutors").strip()
     if "@gmail.com" in from_email.lower():
-        from_header = f"{settings.SMTP_FROM_NAME} <onboarding@resend.dev>"
+        from_header = f"{from_name} <onboarding@resend.dev>"
     else:
-        from_header = f"{settings.SMTP_FROM_NAME} <{from_email}>"
+        from_header = f"{from_name} <{from_email}>"
 
     payload = {
         "from": from_header,
@@ -666,6 +671,13 @@ async def _send_resend_email_async(to_email: str, subject: str, html_content: st
         if resp.status_code in (200, 201):
             logger.info(f"Resend HTTPS dispatch succeeded to {to_email}")
             return True
+        elif resp.status_code == 403 and "verify a domain" in resp.text.lower():
+            err_msg = (
+                "Resend Sandbox Restriction: Testing emails with 'onboarding@resend.dev' can only be sent to your "
+                "registered Resend account email. To send to student/lead emails, verify your domain at https://resend.com/domains."
+            )
+            logger.error(err_msg)
+            raise RuntimeError(err_msg)
         else:
             raise RuntimeError(f"Resend API error {resp.status_code}: {resp.text}")
 
@@ -738,7 +750,10 @@ async def send_email_async(
     #    Tier 2: Brevo HTTPS API (Port 443)
     #    Tier 3: Resilient IPv4 Direct SMTP (Port 465 / 587)
     #    Tier 4: Local preview simulation mode
-    if settings.RESEND_API_KEY:
+    active_resend_key = (os.getenv("RESEND_API_KEY") or settings.RESEND_API_KEY or "").strip()
+    active_brevo_key = (os.getenv("BREVO_API_KEY") or settings.BREVO_API_KEY or "").strip()
+
+    if active_resend_key:
         try:
             await _send_resend_email_async(clean_email, personalized_subject, html_content, personalized_body)
             logger.info(f"Successfully sent live email via Resend HTTPS API to {clean_email}")
@@ -746,7 +761,7 @@ async def send_email_async(
             logger.error(f"Resend API error delivering to {clean_email}: {e}")
             status = "failed"
             error_message = str(e)
-    elif settings.BREVO_API_KEY:
+    elif active_brevo_key:
         try:
             await _send_brevo_email_async(clean_email, personalized_subject, html_content, personalized_body)
             logger.info(f"Successfully sent live email via Brevo HTTPS API to {clean_email}")
