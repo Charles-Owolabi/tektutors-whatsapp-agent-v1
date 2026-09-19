@@ -671,11 +671,18 @@ async def _send_resend_email_async(to_email: str, subject: str, html_content: st
         if resp.status_code in (200, 201):
             logger.info(f"Resend HTTPS dispatch succeeded to {to_email}")
             return True
-        elif resp.status_code == 403 and "verify a domain" in resp.text.lower():
-            err_msg = (
-                "Resend Sandbox Restriction: Testing emails with 'onboarding@resend.dev' can only be sent to your "
-                "registered Resend account email. To send to student/lead emails, verify your domain at https://resend.com/domains."
-            )
+        elif resp.status_code == 403 and ("domain" in resp.text.lower() and "verify" in resp.text.lower()):
+            if "not verified" in resp.text.lower():
+                err_msg = (
+                    f"Resend Domain Verification Required: The sender domain '{from_email}' is not verified yet on Resend. "
+                    "Please add and verify your domain at https://resend.com/domains (add the DNS records in your domain manager). "
+                    "To test immediately before DNS verification, set SMTP_FROM_EMAIL=onboarding@resend.dev to send to your account email."
+                )
+            else:
+                err_msg = (
+                    "Resend Sandbox Restriction: Testing emails with 'onboarding@resend.dev' can only be sent to your "
+                    "registered Resend account email. To send to student/lead emails, verify your domain at https://resend.com/domains."
+                )
             logger.error(err_msg)
             raise RuntimeError(err_msg)
         else:
