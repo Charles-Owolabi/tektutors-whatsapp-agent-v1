@@ -281,16 +281,40 @@ def test_convert_markdown_tables_to_whatsapp():
     
     # 1. Verify no markdown table pipe symbols remain
     assert "|" not in cleaned
-    # 2. Verify numbered badges and clean titles
-    assert "1️⃣ *Data Analytics & BI Accelerator*" in cleaned
-    assert "2️⃣ *Excel for Data Analysis*" in cleaned
-    assert "3️⃣ *SQL for Analytics & Data Engineering*" in cleaned
-    assert "4️⃣ *Power BI & Business Intelligence*" in cleaned
-    assert "5️⃣ *Applied Python for Analytics & AI*" in cleaned
-    assert "6️⃣ *Explore Other Specialized Tracks*" in cleaned
-    # 3. Verify clean duration and topics labels
+    # 2. Verify zero asterisks remain
+    assert "*" not in cleaned
+    # 3. Verify numbered badges and clean titles without asterisks
+    assert "1️⃣ Data Analytics & BI Accelerator" in cleaned
+    assert "2️⃣ Excel for Data Analysis" in cleaned
+    assert "3️⃣ SQL for Analytics & Data Engineering" in cleaned
+    assert "4️⃣ Power BI & Business Intelligence" in cleaned
+    assert "5️⃣ Applied Python for Analytics & AI" in cleaned
+    assert "6️⃣ Explore Other Specialized Tracks" in cleaned
+    # 4. Verify clean duration and topics labels
     assert "⏱️" in cleaned
     assert "💡" in cleaned
     assert "10 wks" in cleaned
     assert "Excel, SQL, Power BI, Python" in cleaned
+
+
+def test_zero_asterisk_whatsapp_formatting():
+    """Verify messages with asterisks are cleaned into professional format without asterisks showing."""
+    from app.agent import sanitize_whatsapp_message
+
+    user_chat = (
+        "I've tentatively set up a *15-minute discovery call* for you.\n"
+        "To make sure we're fully prepared, could you please share:\n\n"
+        "1️⃣ *Your full name*\n"
+        "2️⃣ *Which track (1-6) or career goal* you're most interested in\n"
+        "3️⃣ *Preferred date & time* for the call (evenings or weekends work best)\n\n"
+        "Once I have those details, I'll confirm the slot and send you a calendar invite. Looking forward to chatting! 🌟"
+    )
+
+    cleaned = sanitize_whatsapp_message(user_chat)
+    assert "*" not in cleaned
+    assert "15-minute discovery call" in cleaned
+    assert "1️⃣ Your full name" in cleaned
+    assert "2️⃣ Which track (1-6) or career goal you're most interested in" in cleaned
+    assert "3️⃣ Preferred date & time for the call (evenings or weekends work best)" in cleaned
+    assert "Looking forward to chatting! 🌟" in cleaned
 

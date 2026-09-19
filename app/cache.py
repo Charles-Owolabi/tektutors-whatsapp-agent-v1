@@ -292,6 +292,15 @@ def _normalize_key(text: str) -> str:
     """Normalize user input text to canonical alphanumeric form for caching."""
     return re.sub(r'[^\w\s]', '', text.lower()).strip()
 
+
+def strip_asterisks(text: str) -> str:
+    """Remove all asterisks from text for clean WhatsApp presentation."""
+    if not text or not isinstance(text, str):
+        return text
+    text = re.sub(r'(?m)^\s*\*\s+', '• ', text)
+    return text.replace('*', '')
+
+
 def cache_query_response(normalized_key: str, data: Dict[str, Any]):
     """Store response in in-memory LRU cache."""
     if not normalized_key:
@@ -299,9 +308,10 @@ def cache_query_response(normalized_key: str, data: Dict[str, Any]):
     if len(_QUERY_RESPONSE_CACHE) >= _CACHE_MAX_SIZE:
         oldest_k = next(iter(_QUERY_RESPONSE_CACHE))
         _QUERY_RESPONSE_CACHE.pop(oldest_k, None)
+    clean_resp = strip_asterisks(data.get("response", ""))
     _QUERY_RESPONSE_CACHE[normalized_key] = {
         "data": {
-            "response": data.get("response", ""),
+            "response": clean_resp,
             "tool_logs": data.get("tool_logs", [])
         },
         "timestamp": time.time()
@@ -318,25 +328,21 @@ async def log_cost_savings(
     """Log telemetry regarding saved tokens and fast-path execution to DB asynchronously."""
     async def _persist():
         try:
-            estimated_savings = (tokens_saved / 1_000_000) * 0.60
             async with AsyncSessionLocal() as db:
-                telemetry = CostTelemetry(
+                record = CostTelemetry(
                     phone=phone,
                     query_type=query_type,
-                    model_used=model_used,
-                    input_tokens=0 if "fast_path" in query_type else tokens_saved,
-                    output_tokens=0,
                     tokens_saved=tokens_saved,
-                    estimated_cost_usd=0.0 if "fast_path" in query_type else estimated_savings,
-                    estimated_savings_usd=estimated_savings if "fast_path" in query_type else 0.0,
-                    latency_ms=latency_ms
+                    latency_ms=round(latency_ms, 2),
+                    model_used=model_used or "fast-path-rules"
                 )
-                db.add(telemetry)
+                db.add(record)
                 await db.commit()
         except Exception as e:
-            logger.debug(f"Telemetry logging non-critical error: {e}")
+            logger.warning(f"Could not persist CostTelemetry: {e}")
 
     try:
+        import asyncio
         loop = asyncio.get_running_loop()
         loop.create_task(_persist())
     except Exception:
@@ -345,9 +351,16 @@ async def log_cost_savings(
 async def check_fast_path(phone: str, user_text: str) -> Optional[Dict[str, Any]]:
     """
     Evaluate user message against verified deterministic fast-path patterns.
-    Returns:
-        Dict with response, tool_logs, tokens_saved, etc. if resolved at $0.00 cost.
-        None if query requires LLM reasoning.
+    Guarantees zero asterisks in any returned response.
+    """
+    res = await _raw_check_fast_path(phone, user_text)
+    if isinstance(res, dict) and "response" in res and isinstance(res["response"], str):
+        res["response"] = strip_asterisks(res["response"])
+    return res
+
+async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str, Any]]:
+    """
+    Internal implementation of deterministic fast-path patterns.
     """
     clean_phone = phone.strip().replace("+", "")
     text_clean = user_text.strip()

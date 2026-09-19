@@ -732,18 +732,18 @@ function formatWhatsAppText(rawText) {
                 const cards = data.map(row => {
                     const firstNum = (row[0] || '').replace(/[^\d]/g, '');
                     if (firstNum && row.length >= 3) {
-                        const badge = numBadges[firstNum] || `*${firstNum}.*`;
+                        const badge = numBadges[firstNum] || `${firstNum}.`;
                         const title = (row[1] || '').replace(/[*_`]/g, '').trim();
                         const dur = (row[2] || '').replace(/[*_`]/g, '').trim();
-                        const details = (row[3] || '').trim();
-                        let c = `${badge} *${title}*`;
-                        if (dur) c += `\n   ⏱️ *${headers[2] || 'Duration'}:* ${dur}`;
-                        if (details) c += `\n   💡 *${headers[3] || 'Master'}:* ${details}`;
+                        const details = (row[3] || '').replace(/[*_`]/g, '').trim();
+                        let c = `${badge} ${title}`;
+                        if (dur) c += `\n   ⏱️ ${headers[2] || 'Duration'}: ${dur}`;
+                        if (details) c += `\n   💡 ${headers[3] || 'Master'}: ${details}`;
                         return c;
                     } else {
-                        let c = `🔹 *${(row[0] || '').replace(/[*_`]/g, '').trim()}*`;
+                        let c = `🔹 ${(row[0] || '').replace(/[*_`]/g, '').trim()}`;
                         headers.slice(1).forEach((h, idx) => {
-                            if (row[idx + 1]) c += `\n   • *${h}:* ${row[idx + 1]}`;
+                            if (row[idx + 1]) c += `\n   • ${h}: ${(row[idx + 1] || '').replace(/[*_`]/g, '').trim()}`;
                         });
                         return c;
                     }
@@ -754,7 +754,8 @@ function formatWhatsAppText(rawText) {
         }
     }
 
-    formatted = formatted.replace(/\*([^\*]+)\*/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/\*([^\*]+)\*/g, '$1');
+    formatted = formatted.replace(/\*/g, '');
     formatted = formatted.replace(/_([^_]+)_/g, '<em>$1</em>');
     formatted = formatted.replace(/~([^~]+)~/g, '<del>$1</del>');
     formatted = formatted.replace(/```([^`]+)```/g, '<code>$1</code>');
