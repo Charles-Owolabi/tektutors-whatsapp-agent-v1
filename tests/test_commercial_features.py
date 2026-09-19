@@ -23,11 +23,28 @@ async def test_campaigns_broadcast_api():
         campaigns = res.json()["campaigns"]
         assert len(campaigns) >= 4
         assert any(c["id"] == "scholarship_flash" for c in campaigns)
+        first_c = next(c for c in campaigns if c["id"] == "scholarship_flash")
+        assert "template_body_original" in first_c
 
-        # 2. Dispatch a broadcast campaign to leads
+        # 2. Edit a campaign template via PUT /api/campaigns/{id}
+        edit_res = client.put("/api/campaigns/scholarship_flash", json={
+            "template_body": "Hello {{name}}, this is a custom edited campaign for {{course}}! Enroll today and save ₦10,000."
+        })
+        assert edit_res.status_code == 200
+        edit_data = edit_res.json()
+        assert edit_data["status"] == "success"
+        assert "custom edited campaign" in edit_data["template_body"]
+
+        # Verify edited campaign is reflected in list
+        res_updated = client.get("/api/campaigns")
+        updated_c = next(c for c in res_updated.json()["campaigns"] if c["id"] == "scholarship_flash")
+        assert "custom edited campaign" in updated_c["template_body"]
+
+        # 3. Dispatch broadcast with custom edited message
         send_res = client.post("/api/campaigns/send", json={
             "campaign_id": "scholarship_flash",
-            "target_audience": "all"
+            "target_audience": "all",
+            "custom_message": "Special flash announcement: Hi {{name}}, your custom slot for {{course}} is ready!"
         })
         assert send_res.status_code == 200
         data = send_res.json()

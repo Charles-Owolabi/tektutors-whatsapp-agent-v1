@@ -25,3 +25,4 @@ tektutors.db
 Thumbs.db
 *.log
 scratch/
+campaign_overrides.json

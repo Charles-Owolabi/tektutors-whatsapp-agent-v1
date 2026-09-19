@@ -1365,7 +1365,93 @@ function selectCampaign(id) {
     if (audienceSelect && audienceSelect.value !== 'custom') {
         audienceSelect.value = campaign.target_audience || 'all';
     }
+
+    const editor = document.getElementById('broadcast-message-editor');
+    if (editor) {
+        editor.value = campaign.template_body || '';
+    }
+    const indicator = document.getElementById('campaign-edit-indicator');
+    if (indicator) {
+        indicator.innerHTML = '<i class="fa-solid fa-check"></i> Ready';
+        indicator.style.color = '#10b981';
+    }
+
     handleBroadcastAudienceChange();
+}
+
+function handleCampaignMessageInput() {
+    const indicator = document.getElementById('campaign-edit-indicator');
+    if (indicator) {
+        indicator.innerHTML = '<i class="fa-solid fa-pen"></i> Custom';
+        indicator.style.color = '#ff8c3a';
+    }
+    updateBroadcastPreview();
+}
+
+function insertCampaignPlaceholder(placeholder) {
+    const editor = document.getElementById('broadcast-message-editor');
+    if (!editor) return;
+    const start = editor.selectionStart || 0;
+    const end = editor.selectionEnd || 0;
+    const val = editor.value;
+    editor.value = val.substring(0, start) + placeholder + val.substring(end);
+    editor.selectionStart = editor.selectionEnd = start + placeholder.length;
+    editor.focus();
+    handleCampaignMessageInput();
+}
+
+function resetCampaignMessage() {
+    const campaign = window.campaignsData.find(c => c.id === window.selectedCampaignId);
+    if (!campaign) return;
+    const editor = document.getElementById('broadcast-message-editor');
+    if (editor) {
+        editor.value = campaign.template_body_original || campaign.template_body || '';
+    }
+    const indicator = document.getElementById('campaign-edit-indicator');
+    if (indicator) {
+        indicator.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Reset';
+        indicator.style.color = '#38bdf8';
+    }
+    updateBroadcastPreview();
+    showToast('Message reset to original template text', 'info');
+}
+
+async function saveCampaignTemplateEdits() {
+    if (!window.selectedCampaignId) return;
+    const campaign = window.campaignsData.find(c => c.id === window.selectedCampaignId);
+    if (!campaign) return;
+    const editor = document.getElementById('broadcast-message-editor');
+    const updatedBody = editor ? editor.value.trim() : '';
+    if (!updatedBody) {
+        showToast('Cannot save an empty campaign message', 'warning');
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/campaigns/${window.selectedCampaignId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                template_body: updatedBody
+            })
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            campaign.template_body = data.template_body || updatedBody;
+            const indicator = document.getElementById('campaign-edit-indicator');
+            if (indicator) {
+                indicator.innerHTML = '<i class="fa-solid fa-check-double"></i> Saved';
+                indicator.style.color = '#10b981';
+            }
+            renderCampaignTemplates();
+            showToast('✅ Campaign template saved as default!');
+        } else {
+            showToast(data.detail || 'Could not save campaign template', 'warning');
+        }
+    } catch (err) {
+        console.error('Error saving campaign template:', err);
+        showToast('Network error while saving campaign template', 'error');
+    }
 }
 
 function handleBroadcastAudienceChange() {
@@ -1397,25 +1483,34 @@ function updateBroadcastPreview() {
 
     const sampleName = 'Alex';
     const sampleCourse = 'Data Analytics';
-    let text = campaign.template_body.replace('{{name}}', sampleName).replace('{{course}}', sampleCourse);
+    const editor = document.getElementById('broadcast-message-editor');
+    const rawTemplate = (editor && editor.value !== '') ? editor.value : (campaign.template_body || '');
+    let text = rawTemplate.replace(/\{\{name\}\}/g, sampleName).replace(/\{\{course\}\}/g, sampleCourse);
 
-    document.getElementById('broadcast-preview-message').innerHTML = formatWhatsAppText(text);
+    const previewEl = document.getElementById('broadcast-preview-message');
+    if (previewEl) {
+        previewEl.innerHTML = formatWhatsAppText(text);
+    }
 
     const actionsContainer = document.getElementById('broadcast-preview-actions');
-    actionsContainer.innerHTML = (campaign.suggested_actions || []).map(act => `
-        <div style="background: #111b21; border: 1px solid #202c33; color: #00a884; font-size: 0.75rem; padding: 0.4rem; border-radius: 6px; text-align: center; font-weight: 600;">
-            🔘 [ ${escapeHtml(act)} ]
-        </div>
-    `).join('');
+    if (actionsContainer) {
+        actionsContainer.innerHTML = (campaign.suggested_actions || []).map(act => `
+            <div style="background: #111b21; border: 1px solid #202c33; color: #00a884; font-size: 0.75rem; padding: 0.4rem; border-radius: 6px; text-align: center; font-weight: 600;">
+                🔘 [ ${escapeHtml(act)} ]
+            </div>
+        `).join('');
+    }
 }
 
 async function dispatchBroadcastCampaign() {
     if (!window.selectedCampaignId) return;
     const btn = document.getElementById('btn-dispatch-campaign');
     const audience = document.getElementById('broadcast-audience-select').value;
+    const customMsg = (document.getElementById('broadcast-message-editor')?.value || '').trim();
     const payload = {
         campaign_id: window.selectedCampaignId,
-        target_audience: audience
+        target_audience: audience,
+        custom_message: customMsg || undefined
     };
 
     if (audience === 'custom') {
@@ -1460,6 +1555,7 @@ async function sendTestBroadcast() {
         return;
     }
     const testPhone = (document.getElementById('broadcast-test-phone')?.value || '2348012345678').trim();
+    const customMsg = (document.getElementById('broadcast-message-editor')?.value || '').trim();
     showToast(`Sending test template preview to +${testPhone}...`, 'info');
     try {
         const res = await fetch('/api/campaigns/send', {
@@ -1467,7 +1563,8 @@ async function sendTestBroadcast() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 campaign_id: window.selectedCampaignId,
-                target_phone: testPhone
+                target_phone: testPhone,
+                custom_message: customMsg || undefined
             })
         });
         const data = await res.json();

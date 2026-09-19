@@ -15,12 +15,12 @@ from app.schemas import (
     SimulatorChatRequest, HumanMessageRequest, HandoffToggleRequest, 
     LeadCreate, CourseCreate, CourseUpdate, FAQCreate, FAQUpdate, 
     SystemConfigResponse, SystemConfigUpdate, LeadStatusUpdate, 
-    LeadNotesUpdate, CampaignSendRequest, AppointmentStatusUpdate,
+    LeadNotesUpdate, CampaignSendRequest, CampaignUpdateRequest, AppointmentStatusUpdate,
     SingleEmailSendRequest, BroadcastEmailSendRequest,
     LeadBulkImportRequest, LeadBulkImportItem
 )
 from app.whatsapp import whatsapp_client
-from app.agent import agent_manager, SYSTEM_PROMPT_TEXT
+from app.agent import agent_manager, SYSTEM_PROMPT_TEXT, strip_asterisks
 from app.email_service import PREBUILT_EMAIL_TEMPLATES, send_email_async, render_branded_email_html
 
 logger = logging.getLogger(__name__)
@@ -950,10 +950,82 @@ PREBUILT_CAMPAIGNS = [
     }
 ]
 
+import json
+
+CAMPAIGN_OVERRIDES_FILE = BASE_DIR / "campaign_overrides.json"
+
+def _load_campaign_overrides() -> dict:
+    """Load persistent custom campaign template edits from disk."""
+    if CAMPAIGN_OVERRIDES_FILE.exists():
+        try:
+            with open(CAMPAIGN_OVERRIDES_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            logger.warning(f"Error loading campaign overrides: {e}")
+    return {}
+
+def _save_campaign_override(campaign_id: str, data: dict):
+    """Save persistent custom campaign template edits to disk."""
+    overrides = _load_campaign_overrides()
+    overrides[campaign_id] = data
+    try:
+        with open(CAMPAIGN_OVERRIDES_FILE, "w", encoding="utf-8") as f:
+            json.dump(overrides, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        logger.error(f"Error saving campaign override: {e}")
+
 @router.get("/api/campaigns")
 async def list_campaigns():
-    """List pre-built high-converting campaign templates and performance telemetry."""
-    return {"campaigns": PREBUILT_CAMPAIGNS}
+    """List pre-built high-converting campaign templates with custom edits and zero-asterisk policy applied."""
+    overrides = _load_campaign_overrides()
+    result = []
+    for c in PREBUILT_CAMPAIGNS:
+        cp = dict(c)
+        cp["template_body_original"] = strip_asterisks(c.get("template_body", ""))
+        if c["id"] in overrides:
+            ov = overrides[c["id"]]
+            if "template_body" in ov and ov["template_body"]:
+                cp["template_body"] = strip_asterisks(ov["template_body"])
+            if "title" in ov and ov["title"]:
+                cp["title"] = ov["title"]
+            if "suggested_actions" in ov and ov["suggested_actions"]:
+                cp["suggested_actions"] = ov["suggested_actions"]
+        else:
+            cp["template_body"] = strip_asterisks(cp.get("template_body", ""))
+        result.append(cp)
+    return {"campaigns": result}
+
+@router.put("/api/campaigns/{campaign_id}")
+async def update_campaign_template(campaign_id: str, payload: CampaignUpdateRequest):
+    """Update and persist custom edits to a campaign template."""
+    campaign = next((c for c in PREBUILT_CAMPAIGNS if c["id"] == campaign_id), None)
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    clean_body = strip_asterisks(payload.template_body.strip())
+    override_data = {
+        "template_body": clean_body
+    }
+    if payload.title:
+        override_data["title"] = payload.title.strip()
+    if payload.suggested_actions:
+        override_data["suggested_actions"] = payload.suggested_actions
+
+    _save_campaign_override(campaign_id, override_data)
+
+    # Also update in-memory catalog
+    campaign["template_body"] = clean_body
+    if payload.title:
+        campaign["title"] = payload.title.strip()
+    if payload.suggested_actions:
+        campaign["suggested_actions"] = payload.suggested_actions
+
+    return {
+        "status": "success",
+        "message": "Campaign template updated successfully!",
+        "campaign_id": campaign_id,
+        "template_body": clean_body
+    }
 
 def clean_phone_number(raw: str) -> str:
     """Sanitize raw phone number into standard international format without '+'."""
@@ -968,8 +1040,17 @@ def clean_phone_number(raw: str) -> str:
 @router.post("/api/campaigns/send")
 async def send_broadcast_campaign(payload: CampaignSendRequest, db: AsyncSession = Depends(get_db)):
     """Dispatch a marketing campaign broadcast to target leads in the database or custom external numbers."""
+    overrides = _load_campaign_overrides()
     campaign = next((c for c in PREBUILT_CAMPAIGNS if c["id"] == payload.campaign_id), None)
-    template_text = payload.custom_message or (campaign["template_body"] if campaign else "Hello! We have an update from TekTutors.")
+    
+    default_body = "Hello! We have an update from TekTutors."
+    if campaign:
+        if campaign["id"] in overrides and overrides[campaign["id"]].get("template_body"):
+            default_body = overrides[campaign["id"]]["template_body"]
+        else:
+            default_body = campaign.get("template_body", default_body)
+
+    template_text = strip_asterisks(payload.custom_message or default_body)
     actions = campaign["suggested_actions"] if campaign else ["Learn More", "Contact Us"]
 
     if payload.target_phone:
@@ -1058,7 +1139,7 @@ async def send_broadcast_campaign(payload: CampaignSendRequest, db: AsyncSession
         
     sent_count = 0
     for lead in leads:
-        personalized = template_text.replace("{{name}}", lead.name or "there").replace("{{course}}", lead.course_interest or "our tech programs")
+        personalized = strip_asterisks(template_text.replace("{{name}}", lead.name or "there").replace("{{course}}", lead.course_interest or "our tech programs"))
         action_buttons = "\n\n" + "\n".join([f"🔘 [{btn}]" for btn in actions])
         full_body = personalized + action_buttons
         

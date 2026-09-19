@@ -112,6 +112,11 @@ class CampaignSendRequest(BaseModel):
     custom_numbers: Optional[List[str]] = None
     custom_numbers_raw: Optional[str] = None
 
+class CampaignUpdateRequest(BaseModel):
+    template_body: str
+    title: Optional[str] = None
+    suggested_actions: Optional[List[str]] = None
+
 class LeadBulkImportItem(BaseModel):
     phone: str
     name: Optional[str] = None
