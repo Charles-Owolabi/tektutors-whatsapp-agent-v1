@@ -1388,8 +1388,11 @@ async def send_test_email(payload: dict = Body(...)):
         cta_url=cta_url,
         course_name=payload.get("course_name", "Data Analytics & BI Accelerator")
     )
+    if result.get("status") == "failed":
+        raise HTTPException(status_code=500, detail=result.get("error_message") or "Failed to dispatch test email")
+
     return {
-        "success": result.get("status") in ("sent", "delivered"),
+        "success": True,
         "message": f"Test email dispatched to {to_email}",
         "result": result
     }

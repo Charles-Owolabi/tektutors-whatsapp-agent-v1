@@ -616,7 +616,7 @@ def _send_smtp_email_sync(to_email: str, subject: str, html_content: str, text_c
 
     for port, is_ssl in attempts:
         try:
-            server = _connect_smtp_server_resilient(settings.SMTP_HOST, port, is_ssl, timeout=12)
+            server = _connect_smtp_server_resilient(settings.SMTP_HOST, port, is_ssl, timeout=6)
             break
         except Exception as e:
             logger.warning(f"SMTP connection to {settings.SMTP_HOST}:{port} failed ({e}). Trying fallback...")
