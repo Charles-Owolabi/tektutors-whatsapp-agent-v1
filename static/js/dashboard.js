@@ -1173,6 +1173,86 @@ async function updateLeadStage(leadId, newStage) {
     }
 }
 
+// --- LEADS CRM BULK IMPORT ---
+function openLeadImportModal() {
+    const modal = document.getElementById('lead-import-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        updateImportLeadCount();
+    }
+}
+
+function closeLeadImportModal() {
+    const modal = document.getElementById('lead-import-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function updateImportLeadCount() {
+    const val = document.getElementById('import-leads-textarea')?.value || '';
+    const badge = document.getElementById('import-preview-count-badge');
+    const lines = val.split(/[\n\r]+/).map(s => s.trim()).filter(s => s.length > 0 && !s.startsWith('#'));
+    if (badge) {
+        badge.innerText = `${lines.length} contact${lines.length === 1 ? '' : 's'} detected`;
+    }
+}
+
+function handleLeadCsvFileUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        const text = evt.target.result;
+        const textarea = document.getElementById('import-leads-textarea');
+        if (textarea) {
+            textarea.value = text;
+            updateImportLeadCount();
+            showToast(`Loaded ${file.name}! Review and click Import.`, 'info');
+        }
+    };
+    reader.readAsText(file);
+}
+
+async function submitLeadImport() {
+    const textarea = document.getElementById('import-leads-textarea');
+    const val = (textarea?.value || '').trim();
+    if (!val) {
+        showToast('Please paste contacts or upload a CSV file first.', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('btn-submit-lead-import');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Importing...';
+    }
+
+    try {
+        const res = await fetch('/api/crm/leads/import', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ raw_text: val })
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            showToast(`✅ ${data.message}`);
+            closeLeadImportModal();
+            if (textarea) textarea.value = '';
+            fetchLeads();
+            if (typeof fetchCRMStats === 'function') fetchCRMStats();
+        } else {
+            showToast(data.detail || data.message || 'Failed to import leads.', 'error');
+        }
+    } catch (err) {
+        console.error('Error importing leads:', err);
+        showToast('Network error while importing leads.', 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Import into CRM';
+        }
+    }
+}
+
 // --- TAB 4: BROADCASTS & CAMPAIGNS ---
 async function fetchCampaigns() {
     try {
@@ -1258,8 +1338,34 @@ function selectCampaign(id) {
     if (!campaign) return;
 
     document.getElementById('campaign-selected-badge').innerText = campaign.category;
-    document.getElementById('broadcast-audience-select').value = campaign.target_audience || 'all';
+    const audienceSelect = document.getElementById('broadcast-audience-select');
+    if (audienceSelect && audienceSelect.value !== 'custom') {
+        audienceSelect.value = campaign.target_audience || 'all';
+    }
+    handleBroadcastAudienceChange();
+}
+
+function handleBroadcastAudienceChange() {
+    const audience = document.getElementById('broadcast-audience-select')?.value;
+    const customContainer = document.getElementById('broadcast-custom-numbers-container');
+    if (customContainer) {
+        if (audience === 'custom') {
+            customContainer.style.display = 'flex';
+            updateCustomNumbersCount();
+        } else {
+            customContainer.style.display = 'none';
+        }
+    }
     updateBroadcastPreview();
+}
+
+function updateCustomNumbersCount() {
+    const val = document.getElementById('broadcast-custom-numbers')?.value || '';
+    const badge = document.getElementById('broadcast-custom-count-badge');
+    const lines = val.split(/[\n\r]+/).map(s => s.trim()).filter(s => s.length > 0 && !s.startsWith('#'));
+    if (badge) {
+        badge.innerText = `${lines.length} number${lines.length === 1 ? '' : 's'}`;
+    }
 }
 
 function updateBroadcastPreview() {
@@ -1283,29 +1389,42 @@ function updateBroadcastPreview() {
 async function dispatchBroadcastCampaign() {
     if (!window.selectedCampaignId) return;
     const btn = document.getElementById('btn-dispatch-campaign');
+    const audience = document.getElementById('broadcast-audience-select').value;
+    const payload = {
+        campaign_id: window.selectedCampaignId,
+        target_audience: audience
+    };
+
+    if (audience === 'custom') {
+        const customRaw = (document.getElementById('broadcast-custom-numbers')?.value || '').trim();
+        if (!customRaw) {
+            showToast('Please paste at least one phone number into the box.', 'warning');
+            return;
+        }
+        payload.custom_numbers_raw = customRaw;
+    }
+
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Dispatching Broadcast...';
-
-    const audience = document.getElementById('broadcast-audience-select').value;
 
     try {
         const res = await fetch('/api/campaigns/send', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                campaign_id: window.selectedCampaignId,
-                target_audience: audience
-            })
+            body: JSON.stringify(payload)
         });
         const data = await res.json();
-        if (res.ok) {
-            showToast(`🚀 Broadcast sent successfully to ${data.recipients_count} leads!`);
+        if (res.ok && data.status === 'success') {
+            showToast(`🚀 ${data.message}`);
             fetchConversations();
+            if (typeof fetchLeads === 'function') fetchLeads();
+            if (typeof fetchCRMStats === 'function') fetchCRMStats();
         } else {
-            alert('Failed to dispatch campaign.');
+            showToast(data.message || 'Failed to dispatch campaign.', 'warning');
         }
     } catch (err) {
         console.error('Error sending broadcast:', err);
+        showToast('Network error while dispatching broadcast.', 'error');
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-rocket"></i> Launch WhatsApp Broadcast';

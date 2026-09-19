@@ -1,3 +1,4 @@
+import uuid
 import pytest
 from unittest.mock import patch, AsyncMock
 from fastapi.testclient import TestClient
@@ -205,4 +206,59 @@ async def test_multi_currency_settings_and_crm_stats():
 
         # 3. Restore to NGN
         client.put("/api/settings", json={"currency": "NGN"})
+
+@pytest.mark.asyncio
+async def test_broadcast_campaign_with_custom_external_numbers():
+    """Verify dispatching a WhatsApp broadcast to external customer numbers not in DB."""
+    await init_db_and_seed()
+    tag = str(uuid.uuid4().int)[:6]
+    p1 = f"23481{tag}1"
+    p2 = f"23481{tag}2"
+    p3 = f"23481{tag}3"
+    with TestClient(app) as client:
+        raw_contacts = (
+            f"{p1}, External Student One, Data Science\n"
+            f"+234 81 {tag} 2, External Student Two\n"
+            f"081{tag}3\n"
+        )
+        send_res = client.post("/api/campaigns/send", json={
+            "campaign_id": "cart_recovery_slot_expiring",
+            "target_audience": "custom",
+            "custom_numbers_raw": raw_contacts
+        })
+        assert send_res.status_code == 200
+        data = send_res.json()
+        assert data["status"] == "success"
+        assert data["recipients_count"] == 3
+
+        # Verify leads were auto-created in the database
+        leads_res = client.get("/api/leads")
+        assert leads_res.status_code == 200
+        leads = leads_res.json()["leads"]
+        phones = [l["phone"] for l in leads]
+        assert p1 in phones
+        assert p2 in phones
+        assert p3 in phones
+
+@pytest.mark.asyncio
+async def test_bulk_import_leads_api():
+    """Verify bulk importing external customer leads into CRM via API."""
+    await init_db_and_seed()
+    tag = str(uuid.uuid4().int)[:6]
+    p1 = f"23480{tag}1"
+    p2 = f"080{tag}2"
+    with TestClient(app) as client:
+        csv_content = (
+            f"{p1}, Chidi Okeke, Python Backend, chidi.{tag}@example.com\n"
+            f"{p2}, Amina Yusuf, Full Stack\n"
+            f"{p1}, Chidi Okeke, Duplicate Should Be Skipped\n"
+        )
+        import_res = client.post("/api/crm/leads/import", json={
+            "raw_text": csv_content
+        })
+        assert import_res.status_code == 200
+        data = import_res.json()
+        assert data["status"] == "success"
+        assert data["imported"] >= 2
+        assert data["skipped"] >= 1
 

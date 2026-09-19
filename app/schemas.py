@@ -106,9 +106,23 @@ class LeadNotesUpdate(BaseModel):
 
 class CampaignSendRequest(BaseModel):
     campaign_id: str
-    target_audience: str = "all"  # all, hot, qualified, new
+    target_audience: str = "all"  # all, hot, qualified, new, custom
     custom_message: Optional[str] = None
     target_phone: Optional[str] = None
+    custom_numbers: Optional[List[str]] = None
+    custom_numbers_raw: Optional[str] = None
+
+class LeadBulkImportItem(BaseModel):
+    phone: str
+    name: Optional[str] = None
+    email: Optional[str] = None
+    course_interest: Optional[str] = None
+    status: Optional[str] = "new"
+    notes: Optional[str] = None
+
+class LeadBulkImportRequest(BaseModel):
+    leads: Optional[List[LeadBulkImportItem]] = None
+    raw_text: Optional[str] = None  # CSV or newline/comma separated text
 
 class AppointmentStatusUpdate(BaseModel):
     status: str  # scheduled, completed, cancelled

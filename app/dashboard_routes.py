@@ -7,6 +7,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import select, desc, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import re
 import datetime
 from app.database import get_db
 from app.models import Conversation, Message, Lead, Course, FAQ, Appointment, SystemConfig, CostTelemetry, EmailLog, ScheduledEmail
@@ -15,7 +16,8 @@ from app.schemas import (
     LeadCreate, CourseCreate, CourseUpdate, FAQCreate, FAQUpdate, 
     SystemConfigResponse, SystemConfigUpdate, LeadStatusUpdate, 
     LeadNotesUpdate, CampaignSendRequest, AppointmentStatusUpdate,
-    SingleEmailSendRequest, BroadcastEmailSendRequest
+    SingleEmailSendRequest, BroadcastEmailSendRequest,
+    LeadBulkImportRequest, LeadBulkImportItem
 )
 from app.whatsapp import whatsapp_client
 from app.agent import agent_manager, SYSTEM_PROMPT_TEXT
@@ -953,20 +955,82 @@ async def list_campaigns():
     """List pre-built high-converting campaign templates and performance telemetry."""
     return {"campaigns": PREBUILT_CAMPAIGNS}
 
+def clean_phone_number(raw: str) -> str:
+    """Sanitize raw phone number into standard international format without '+'."""
+    if not raw:
+        return ""
+    cleaned = re.sub(r"[^\d]", "", str(raw).strip())
+    # Convert Nigerian local prefix (e.g. 08012345678 or 0812345678) to 234...
+    if cleaned.startswith("0") and len(cleaned) in (10, 11):
+        cleaned = "234" + cleaned[1:]
+    return cleaned
+
 @router.post("/api/campaigns/send")
 async def send_broadcast_campaign(payload: CampaignSendRequest, db: AsyncSession = Depends(get_db)):
-    """Dispatch a marketing campaign broadcast to target leads in the database."""
+    """Dispatch a marketing campaign broadcast to target leads in the database or custom external numbers."""
     campaign = next((c for c in PREBUILT_CAMPAIGNS if c["id"] == payload.campaign_id), None)
     template_text = payload.custom_message or (campaign["template_body"] if campaign else "Hello! We have an update from TekTutors.")
     actions = campaign["suggested_actions"] if campaign else ["Learn More", "Contact Us"]
 
     if payload.target_phone:
-        clean_target = payload.target_phone.strip().replace("+", "").replace(" ", "").replace("-", "")
+        clean_target = clean_phone_number(payload.target_phone)
         target_res = await db.execute(select(Lead).where(Lead.phone == clean_target))
         target_lead = target_res.scalars().first()
         if not target_lead:
-            target_lead = Lead(phone=clean_target, name="Student", status="new")
+            target_lead = Lead(phone=clean_target, name="Student", status="new", notes="External test recipient")
+            db.add(target_lead)
+            await db.flush()
         leads = [target_lead]
+    elif payload.target_audience == "custom" or payload.custom_numbers or payload.custom_numbers_raw:
+        raw_items = []
+        if payload.custom_numbers:
+            raw_items.extend(payload.custom_numbers)
+        if payload.custom_numbers_raw:
+            tokens = [t.strip() for t in re.split(r"[\n\r]+", payload.custom_numbers_raw) if t.strip()]
+            raw_items.extend(tokens)
+
+        leads = []
+        seen_phones = set()
+        for item in raw_items:
+            # Check if line contains comma/tab separated details: phone, name, course
+            parts = [p.strip() for p in re.split(r"[,;\t]", item)]
+            if not parts or not parts[0]:
+                continue
+            clean_phone = clean_phone_number(parts[0])
+            if not clean_phone or len(clean_phone) < 7 or clean_phone in seen_phones:
+                continue
+            seen_phones.add(clean_phone)
+
+            parsed_name = parts[1] if len(parts) > 1 and parts[1] else None
+            parsed_course = parts[2] if len(parts) > 2 and parts[2] else None
+
+            target_res = await db.execute(select(Lead).where(Lead.phone == clean_phone))
+            target_lead = target_res.scalars().first()
+            if not target_lead:
+                target_lead = Lead(
+                    phone=clean_phone,
+                    name=parsed_name or "Student",
+                    course_interest=parsed_course or "General",
+                    status="new",
+                    notes="External campaign broadcast contact"
+                )
+                db.add(target_lead)
+                await db.flush()
+            else:
+                if parsed_name and target_lead.name in (None, "", "Student", "Unknown"):
+                    target_lead.name = parsed_name
+                if parsed_course and not target_lead.course_interest:
+                    target_lead.course_interest = parsed_course
+            leads.append(target_lead)
+
+        if not leads:
+            return {
+                "status": "warning",
+                "campaign_id": payload.campaign_id,
+                "recipients_count": 0,
+                "is_live_whatsapp": whatsapp_client.is_configured(),
+                "message": "No valid external WhatsApp phone numbers found in the provided list. Please verify the phone format."
+            }
     else:
         stmt = select(Lead)
         if payload.target_audience == "hot":
@@ -1035,7 +1099,117 @@ async def send_broadcast_campaign(payload: CampaignSendRequest, db: AsyncSession
         "campaign_id": payload.campaign_id,
         "recipients_count": sent_count,
         "is_live_whatsapp": whatsapp_client.is_configured(),
-        "message": f"Broadcast successfully dispatched to {sent_count} lead(s) via {'WhatsApp Cloud API' if whatsapp_client.is_configured() else 'Simulator'}!"
+        "message": f"Broadcast successfully dispatched to {sent_count} recipient(s) via {'WhatsApp Cloud API' if whatsapp_client.is_configured() else 'Simulator'}!"
+    }
+
+@router.post("/api/leads")
+async def create_lead(payload: LeadCreate, db: AsyncSession = Depends(get_db)):
+    """Create a new lead manually in the CRM."""
+    clean_phone = clean_phone_number(payload.phone)
+    if not clean_phone or len(clean_phone) < 7:
+        raise HTTPException(status_code=400, detail="Invalid phone number format.")
+    
+    stmt = select(Lead).where(Lead.phone == clean_phone)
+    res = await db.execute(stmt)
+    existing = res.scalars().first()
+    if existing:
+        return {"status": "exists", "lead": {"id": existing.id, "phone": existing.phone, "name": existing.name}}
+
+    lead = Lead(
+        phone=clean_phone,
+        name=payload.name or "Student",
+        email=payload.email,
+        course_interest=payload.course_interest or "General",
+        skill_level=payload.skill_level or "Not specified",
+        status=payload.status or "new",
+        notes=payload.notes or "Manually added lead"
+    )
+    db.add(lead)
+    await db.commit()
+    await db.refresh(lead)
+    return {"status": "created", "lead": {"id": lead.id, "phone": lead.phone, "name": lead.name}}
+
+@router.post("/api/crm/leads/import")
+async def bulk_import_leads(payload: LeadBulkImportRequest, db: AsyncSession = Depends(get_db)):
+    """Bulk import external customer leads into the CRM database."""
+    items = []
+    if payload.leads:
+        for item in payload.leads:
+            items.append({
+                "phone": item.phone,
+                "name": item.name,
+                "email": item.email,
+                "course_interest": item.course_interest,
+                "status": item.status or "new",
+                "notes": item.notes or "Imported contact"
+            })
+    elif payload.raw_text:
+        lines = payload.raw_text.strip().splitlines()
+        for line in lines:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = [p.strip() for p in re.split(r"[,;\t]", line)]
+            if not parts or not parts[0]:
+                continue
+            phone = parts[0]
+            name = parts[1] if len(parts) > 1 and parts[1] else None
+            course = parts[2] if len(parts) > 2 and parts[2] else None
+            email = parts[3] if len(parts) > 3 and parts[3] else None
+            items.append({
+                "phone": phone,
+                "name": name,
+                "course_interest": course,
+                "email": email,
+                "status": "new",
+                "notes": "Imported external contact"
+            })
+
+    imported_count = 0
+    updated_count = 0
+    skipped_count = 0
+    seen_phones = set()
+
+    for entry in items:
+        clean_phone = clean_phone_number(entry["phone"])
+        if not clean_phone or len(clean_phone) < 7:
+            skipped_count += 1
+            continue
+        if clean_phone in seen_phones:
+            skipped_count += 1
+            continue
+        seen_phones.add(clean_phone)
+
+        res = await db.execute(select(Lead).where(Lead.phone == clean_phone))
+        existing_lead = res.scalars().first()
+        if existing_lead:
+            if entry.get("name") and existing_lead.name in (None, "", "Student", "Unknown"):
+                existing_lead.name = entry["name"]
+            if entry.get("email") and not existing_lead.email:
+                existing_lead.email = entry["email"]
+            if entry.get("course_interest") and not existing_lead.course_interest:
+                existing_lead.course_interest = entry["course_interest"]
+            updated_count += 1
+        else:
+            new_lead = Lead(
+                phone=clean_phone,
+                name=entry.get("name") or "Student",
+                email=entry.get("email"),
+                course_interest=entry.get("course_interest") or "General",
+                status=entry.get("status") or "new",
+                notes=entry.get("notes") or "Imported external contact"
+            )
+            db.add(new_lead)
+            imported_count += 1
+
+    await db.commit()
+    return {
+        "status": "success",
+        "imported": imported_count,
+        "updated": updated_count,
+        "skipped": skipped_count,
+        "total_processed": len(items),
+        "message": f"Successfully processed {len(items)} contacts: {imported_count} new leads imported, {updated_count} existing updated."
     }
 
 @router.put("/api/crm/lead/{lead_id}/status")

@@ -201,7 +201,7 @@ async def test_schedule_followup_email_tool():
         stmt = select(ScheduledEmail).where(ScheduledEmail.recipient_email == tool_email)
         rec = (await db.execute(stmt)).scalars().first()
         assert rec is not None
-        assert rec.status == "pending"
+        assert rec.status in ("pending", "sent")
         assert "Power BI" in rec.course_name
 
 

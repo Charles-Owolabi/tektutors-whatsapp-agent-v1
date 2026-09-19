@@ -512,6 +512,7 @@
                                 <option value="enrolled">🎉 Enrolled</option>
                             </select>
                             <button class="btn btn-secondary" onclick="fetchLeads()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                            <button class="btn btn-secondary" style="background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3);" onclick="openLeadImportModal()"><i class="fa-solid fa-file-import"></i> Import Leads</button>
                             <button class="btn btn-secondary" style="background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3);" onclick="exportLeads()"><i class="fa-solid fa-file-export"></i> Export CSV</button>
                         </div>
                     </div>
@@ -729,12 +730,25 @@
 
                             <div class="form-group" style="margin: 0;">
                                 <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Target Audience</label>
-                                <select id="broadcast-audience-select" class="form-control" style="font-size: 0.85rem;" onchange="updateBroadcastPreview()">
+                                <select id="broadcast-audience-select" class="form-control" style="font-size: 0.85rem;" onchange="handleBroadcastAudienceChange()">
                                     <option value="all">👥 All Leads in Database</option>
                                     <option value="hot">🔥 Hot Prospects Only</option>
                                     <option value="qualified">✅ Qualified Leads</option>
                                     <option value="new">🆕 New Uncontacted Leads</option>
+                                    <option value="custom">📋 Custom External Numbers (Paste List / Excel)</option>
                                 </select>
+                            </div>
+
+                            <!-- Collapsible Custom Numbers Input for External Audiences -->
+                            <div id="broadcast-custom-numbers-container" style="display: none; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,140,58,0.3); border-radius: 8px; padding: 0.75rem; flex-direction: column; gap: 0.4rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <label style="font-size: 0.72rem; color: #ff8c3a; font-weight: 600; text-transform: uppercase;"><i class="fa-solid fa-list-check"></i> Paste External WhatsApp Numbers:</label>
+                                    <span id="broadcast-custom-count-badge" class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; font-size: 0.68rem;">0 numbers</span>
+                                </div>
+                                <textarea id="broadcast-custom-numbers" class="form-control" rows="4" style="font-size: 0.78rem; font-family: monospace; resize: vertical;" placeholder="Paste phone numbers (one per line or comma-separated)&#10;e.g.&#10;2348012345678&#10;2348098765432, Alex Doe, Data Analytics&#10;+234 812 345 6789" oninput="updateCustomNumbersCount()"></textarea>
+                                <div style="font-size: 0.68rem; color: var(--text-muted); line-height: 1.3;">
+                                    💡 <em>Accepts raw numbers or optional CSV format: <code>Phone, Name, Course</code>. Contacts will be auto-saved to CRM.</em>
+                                </div>
                             </div>
 
                             <div class="broadcast-preview-box" style="background: #0b141a; border-radius: 10px; padding: 1rem; border: 1px solid rgba(255,255,255,0.08);">
@@ -1499,6 +1513,54 @@
 
             <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 0.5rem; text-align: right;">
                 <button class="btn btn-secondary" onclick="closeConversionFollowup()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Lead Import Modal for External Customer Contacts -->
+    <div id="lead-import-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass-card" style="max-width: 580px; width: 92vw; display: flex; flex-direction: column; gap: 1rem;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; margin: 0;">
+                    <i class="fa-solid fa-file-import" style="color: #38bdf8;"></i> Import External Customer Contacts
+                </h3>
+                <button class="btn-icon" onclick="closeLeadImportModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
+                Paste external WhatsApp numbers or upload a spreadsheet. Contacts will be automatically sanitized, deduplicated, and saved into your Leads CRM for instant campaign broadcasts and live chats.
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Paste Contacts (One per line):</label>
+                    <span id="import-preview-count-badge" class="badge" style="background: rgba(56,189,248,0.2); color: #38bdf8; font-size: 0.68rem;">0 contacts detected</span>
+                </div>
+                <textarea id="import-leads-textarea" class="form-control" rows="6" style="font-size: 0.8rem; font-family: monospace; resize: vertical;" placeholder="Phone, Name, Course, Email&#10;e.g.&#10;2348012345678, Jane Doe, Data Analytics, jane@example.com&#10;2348098765432, Alex Smith, Full Stack&#10;08011223344, Michael Brown" oninput="updateImportLeadCount()"></textarea>
+                <div style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.4;">
+                    💡 <em>Format per line: <code>Phone</code> or <code>Phone, Name</code> or <code>Phone, Name, Course</code>. Supports Nigerian local formats (080...) and international (+234...).</em>
+                </div>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.03); border: 1px dashed var(--border-color); border-radius: 8px; padding: 0.75rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <i class="fa-solid fa-file-csv" style="font-size: 1.5rem; color: #10b981;"></i>
+                    <div>
+                        <div style="font-size: 0.8rem; font-weight: 600; color: #fff;">Upload CSV / Text File</div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">Import contacts directly from a spreadsheet</div>
+                    </div>
+                </div>
+                <input type="file" id="import-leads-file" accept=".csv,.txt" style="display: none;" onchange="handleLeadCsvFileUpload(event)">
+                <button class="btn btn-secondary" style="font-size: 0.75rem;" onclick="document.getElementById('import-leads-file').click()">
+                    <i class="fa-solid fa-upload"></i> Choose File
+                </button>
+            </div>
+
+            <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                <button class="btn btn-secondary" onclick="closeLeadImportModal()">Cancel</button>
+                <button class="btn btn-primary" id="btn-submit-lead-import" style="background: linear-gradient(135deg, #38bdf8, #0284c7); border: none;" onclick="submitLeadImport()">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Import into CRM
+                </button>
             </div>
         </div>
     </div>
