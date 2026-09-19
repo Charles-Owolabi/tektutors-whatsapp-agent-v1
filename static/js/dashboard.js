@@ -714,21 +714,43 @@ function formatWhatsAppText(rawText) {
     let text = rawText.replace(/\\n/g, '\n');
     let formatted = escapeHtml(text);
 
-    // Markdown table parser for WhatsApp simulator
-    if (formatted.includes('|') && formatted.includes('\n')) {
-        const lines = formatted.split('\n');
+    // Convert markdown tables into mobile cards for WhatsApp presentation
+    if (text.includes('|') && text.includes('\n')) {
+        const lines = text.split('\n');
         const tableLines = lines.filter(l => l.trim().startsWith('|') && l.trim().endsWith('|'));
         if (tableLines.length >= 2) {
-            let tableHtml = '<div style="overflow-x:auto; margin:0.4rem 0;"><table style="width:100%; border-collapse:collapse; font-size:0.75rem;">';
-            tableLines.forEach((tLine, idx) => {
-                if (tLine.includes('---')) return;
-                const cols = tLine.split('|').map(c => c.trim()).filter((c, i, a) => i !== 0 && i !== a.length - 1);
-                const isHeader = idx === 0;
-                tableHtml += '<tr>' + cols.map(c => `<${isHeader ? 'th' : 'td'} style="border:1px solid rgba(255,255,255,0.15); padding:4px 8px; ${isHeader ? 'background:rgba(255,255,255,0.08); font-weight:600;' : ''}">${c}</${isHeader ? 'th' : 'td'}>`).join('') + '</tr>';
+            const numBadges = {'1': '1️⃣', '2': '2️⃣', '3': '3️⃣', '4': '4️⃣', '5': '5️⃣', '6': '6️⃣'};
+            const parsed = [];
+            tableLines.forEach(l => {
+                if (l.trim().match(/^\|?[\s\-:|]+\|?$/)) return;
+                const cols = l.split('|').map(c => c.trim()).filter((c, i, a) => i !== 0 && i !== a.length - 1);
+                if (cols.length > 0) parsed.push(cols);
             });
-            tableHtml += '</table></div>';
-            const tableBlock = tableLines.join('\n');
-            formatted = formatted.replace(tableBlock, tableHtml);
+            if (parsed.length > 1) {
+                const headers = parsed[0].map(h => h.replace(/[*_`]/g, '').trim());
+                const data = parsed.slice(1);
+                const cards = data.map(row => {
+                    const firstNum = (row[0] || '').replace(/[^\d]/g, '');
+                    if (firstNum && row.length >= 3) {
+                        const badge = numBadges[firstNum] || `*${firstNum}.*`;
+                        const title = (row[1] || '').replace(/[*_`]/g, '').trim();
+                        const dur = (row[2] || '').replace(/[*_`]/g, '').trim();
+                        const details = (row[3] || '').trim();
+                        let c = `${badge} *${title}*`;
+                        if (dur) c += `\n   ⏱️ *${headers[2] || 'Duration'}:* ${dur}`;
+                        if (details) c += `\n   💡 *${headers[3] || 'Master'}:* ${details}`;
+                        return c;
+                    } else {
+                        let c = `🔹 *${(row[0] || '').replace(/[*_`]/g, '').trim()}*`;
+                        headers.slice(1).forEach((h, idx) => {
+                            if (row[idx + 1]) c += `\n   • *${h}:* ${row[idx + 1]}`;
+                        });
+                        return c;
+                    }
+                });
+                text = text.replace(tableLines.join('\n'), cards.join('\n\n'));
+                formatted = escapeHtml(text);
+            }
         }
     }
 

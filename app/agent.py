@@ -29,6 +29,103 @@ from app.tools import (
 logger = logging.getLogger(__name__)
 
 
+def convert_markdown_tables_to_whatsapp(text: str) -> str:
+    """
+    Detect markdown tables in text and convert them into clean, mobile-friendly WhatsApp bullet cards.
+    WhatsApp mobile does NOT render markdown tables; raw tables display as broken, unreadable walls of pipe symbols.
+    """
+    if not text or "|" not in text:
+        return text
+
+    number_emojis = {
+        "1": "1️⃣", "2": "2️⃣", "3": "3️⃣", "4": "4️⃣",
+        "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣", "9": "9️⃣"
+    }
+
+    lines = text.split("\n")
+    output_lines = []
+    table_lines = []
+
+    def format_table_block(tbl_lines: List[str]) -> str:
+        parsed_rows = []
+        for line in tbl_lines:
+            stripped = line.strip()
+            # Ignore divider line like |---|---|
+            if re.match(r'^\|?[\s\-:|]+\|?$', stripped):
+                continue
+            cells = [c.strip() for c in stripped.split("|")]
+            if cells and cells[0] == "":
+                cells.pop(0)
+            if cells and cells[-1] == "":
+                cells.pop()
+            if any(c for c in cells):
+                parsed_rows.append(cells)
+
+        if len(parsed_rows) <= 1:
+            return "\n".join(tbl_lines)
+
+        headers = [re.sub(r'[*_`]', '', h).strip() for h in parsed_rows[0]]
+        data_rows = parsed_rows[1:]
+
+        cards = []
+        for row in data_rows:
+            if not any(row):
+                continue
+            while len(row) < len(headers):
+                row.append("")
+
+            card_lines = []
+            raw_first = row[0].strip()
+            first_digits = re.sub(r"[^\d]", "", raw_first)
+
+            # Check if first column is an index/number (#, 1, 2, etc.)
+            if first_digits and len(row) >= 3:
+                badge = number_emojis.get(first_digits, f"*{first_digits}.*")
+                track_title = row[1].strip()
+                clean_title = re.sub(r'[*_`]', '', track_title).strip()
+                duration = row[2].strip()
+                clean_duration = re.sub(r'[*_`]', '', duration).strip()
+                details = row[3].strip() if len(row) > 3 else ""
+
+                header_dur_label = headers[2] if len(headers) > 2 else "Duration"
+                header_det_label = headers[3] if len(headers) > 3 else "What You'll Master"
+
+                card_lines.append(f"{badge} *{clean_title}*")
+                if clean_duration:
+                    card_lines.append(f"   ⏱️ *{header_dur_label}:* {clean_duration}")
+                if details:
+                    card_lines.append(f"   💡 *{header_det_label}:* {details}")
+            else:
+                clean_first = re.sub(r'[*_`]', '', raw_first).strip()
+                card_lines.append(f"🔹 *{clean_first}*")
+                for h, val in zip(headers[1:], row[1:]):
+                    val_str = val.strip()
+                    if val_str:
+                        card_lines.append(f"   • *{h}:* {val_str}")
+
+            cards.append("\n".join(card_lines))
+
+        return "\n\n".join(cards)
+
+    in_table = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("|") and stripped.endswith("|") and stripped.count("|") >= 2:
+            in_table = True
+            table_lines.append(line)
+        else:
+            if in_table:
+                output_lines.append(format_table_block(table_lines))
+                table_lines = []
+                in_table = False
+            output_lines.append(line)
+
+    if in_table:
+        output_lines.append(format_table_block(table_lines))
+
+    return "\n".join(output_lines)
+
+
 def sanitize_pricing_hallucinations(text: str) -> str:
     """
     Guard against LLM multiplying course weeks by tuition (e.g. 10 wks = ₦900,000 or ₦1,000,000).
@@ -60,6 +157,19 @@ def sanitize_pricing_hallucinations(text: str) -> str:
     return text
 
 
+def sanitize_whatsapp_message(text: str) -> str:
+    """
+    Apply comprehensive WhatsApp message formatting:
+    1. Converts any markdown tables into clean, mobile-friendly WhatsApp cards.
+    2. Enforces correct pricing guardrails against hallucinations.
+    """
+    if not text or not isinstance(text, str):
+        return text
+    text = convert_markdown_tables_to_whatsapp(text)
+    text = sanitize_pricing_hallucinations(text)
+    return text
+
+
 SYSTEM_PROMPT_TEXT = """You are Tara, Senior AI Admissions Advisor for TekTutors (Practical Data Analytics & AI Academy).
 
 ACADEMY ESSENTIALS:
@@ -81,9 +191,40 @@ OPERATIONAL RULES:
 2. ADVISOR CALLS: To book a 1-on-1 discovery call, warmly ask for Full Name, preferred time/date, and course interest; call `schedule_advisor_call`. Do not confuse with human escalation.
 3. CURRICULUM: For a specific course (e.g. Machine Learning, Data Science, Power BI, SQL, Python), summarize THAT exact course's modules and syllabus. NEVER mention Data Analytics, Excel, or Power BI when the prospect specifically asks for Machine Learning or Data Science! Without an email, summarize the specific modules for their chosen course and offer the syllabus PDF to their email. When an email is given, call `qualify_and_capture_lead` immediately with their specific `course_interest`, confirm dispatch, and do not ask again.
 4. HUMAN ESCALATION: Only escalate (`escalate_to_human_advisor`) for formal payment/refund disputes or explicit demands for a human manager.
-5. STYLE: WhatsApp format with *bold*, emojis, short bullet points. Paragraphs under 3 sentences. Warm consultative tone ending with a guiding question.
-6. COURSE CONSULTATION SEQUENCE:
-• Broad inquiry/greeting: Summarize the 6 pathways (1: Data Analytics, 2: Excel, 3: SQL, 4: Power BI, 5: Python & AI, 6: Explore Other Courses) and prompt for reply (1-6) or career goal.
+5. WHATSAPP PRESENTATION & STYLE:
+   - CRITICAL: NEVER USE MARKDOWN TABLES (| # | Track | Duration | ... |). WhatsApp mobile app CANNOT render markdown tables; they display as broken, messy raw pipe (|) symbols on phone screens.
+   - Always present lists as clean numbered cards (1️⃣, 2️⃣, 3️⃣...) with emoji bullets and blank lines between tracks.
+   - Use bold (*text*), emojis, and short punchy sentences. Paragraphs under 3 sentences. Warm consultative tone ending with a guiding question.
+6. COURSE PRESENTATION & CONSULTATION SEQUENCE:
+• Broad inquiry/greeting or when asked what courses are offered:
+  Present the pathways using this clean, mobile-optimized card layout (NEVER as a table):
+
+  🎓 *TekTutors Practical Tech Pathways (1-on-1 Mentorship):*
+
+  1️⃣ *Data Analytics & BI Accelerator* (⏱️ 10 wks)
+     💡 *What You'll Master:* Excel, SQL, Power BI, Python + 3 real capstone projects
+     ⭐ _Our #1 Most Popular Track!_
+
+  2️⃣ *Excel for Data Analysis* (⏱️ 6-8 wks)
+     💡 *What You'll Master:* Advanced formulas, Power Query, automated reporting & dashboards
+
+  3️⃣ *SQL for Analytics & Data Engineering* (⏱️ 6-8 wks)
+     💡 *What You'll Master:* Relational databases, complex queries, joins, CTEs & ETL
+
+  4️⃣ *Power BI & Business Intelligence* (⏱️ 6-8 wks)
+     💡 *What You'll Master:* Data modeling, DAX measures, interactive KPI dashboards & publishing
+
+  5️⃣ *Applied Python for Analytics & AI* (⏱️ 6-8 wks)
+     💡 *What You'll Master:* Python basics, Pandas, NumPy, visualization & intro to AI/ML
+
+  6️⃣ *Explore Other Specialized Tracks* (⏱️ 6-20 wks)
+     💡 *Tracks Available:* Data Science, Machine Learning, Business Analysis, Financial/HR Analytics
+
+  💰 *Flexible Tuition:* ₦100,000 / month (or ₦90,000 upfront with 10% discount).
+  🎁 *Fast-Action Perk:* Free ₦35,000 CV Optimization & LinkedIn Audit included!
+
+  👉 *Please reply with the number of your choice (1-6) OR type the name of the track you'd like to explore!*
+
 • Specific course inquiry (e.g. Machine Learning, Power BI, SQL, Python): NEVER dump all 6 tracks. Focus 100% on the requested course:
   a. Confirm course highlights and outcomes (1-on-1 mentor, 3 capstone projects, ₦100,000/month or ₦90,000 upfront).
   b. Ask ONE diagnostic qualification question (e.g., "Do you have prior experience with Python/math, or are you starting from scratch?").
@@ -319,7 +460,7 @@ class TekTutorsAgentManager:
             try:
                 ai_msg = await self.llm_with_tools.ainvoke(formatted_messages)
                 if hasattr(ai_msg, "content") and isinstance(ai_msg.content, str):
-                    ai_msg.content = sanitize_pricing_hallucinations(ai_msg.content)
+                    ai_msg.content = sanitize_whatsapp_message(ai_msg.content)
                 return {"messages": [ai_msg]}
             except Exception as e:
                 logger.warning(f"Error invoking model '{self.model_name}': {e}. Attempting fallback cascade...")
@@ -337,7 +478,7 @@ class TekTutorsAgentManager:
                         ).bind_tools(TEKTUTORS_TOOLS)
                         ai_msg = await alt_llm.ainvoke(formatted_messages)
                         if hasattr(ai_msg, "content") and isinstance(ai_msg.content, str):
-                            ai_msg.content = sanitize_pricing_hallucinations(ai_msg.content)
+                            ai_msg.content = sanitize_whatsapp_message(ai_msg.content)
                         logger.info(f"Fallback model '{alt_model}' succeeded! Switching active model.")
                         self.model_name = alt_model
                         self.llm_with_tools = alt_llm
@@ -497,7 +638,7 @@ class TekTutorsAgentManager:
             if not response_text:
                 response_text = "I'm checking those details for you. Let me connect you directly to an admissions advisor."
 
-            response_text = sanitize_pricing_hallucinations(response_text)
+            response_text = sanitize_whatsapp_message(response_text)
 
             tool_logs = list(dict.fromkeys(final_state.get("tool_logs", [])))
             result_dict = {

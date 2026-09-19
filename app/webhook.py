@@ -11,7 +11,7 @@ from app.config import settings
 from app.database import get_db, AsyncSessionLocal
 from app.models import Conversation, Message, Lead
 from app.whatsapp import whatsapp_client
-from app.agent import agent_manager
+from app.agent import agent_manager, sanitize_whatsapp_message
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -126,6 +126,9 @@ async def process_webhook_message_in_background(conversation_id: int, phone: str
                 conv = res.scalar_one_or_none()
                 if not conv:
                     return
+
+                if ai_reply:
+                    ai_reply = sanitize_whatsapp_message(ai_reply)
 
                 if conv.ai_active:
                     if ai_reply:

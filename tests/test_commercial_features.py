@@ -262,3 +262,35 @@ async def test_bulk_import_leads_api():
         assert data["imported"] >= 2
         assert data["skipped"] >= 1
 
+def test_convert_markdown_tables_to_whatsapp():
+    """Verify raw markdown tables are transformed into clean, readable WhatsApp cards."""
+    from app.agent import convert_markdown_tables_to_whatsapp, sanitize_whatsapp_message
+    
+    raw_user_table = (
+        "| # | Track | Duration (weeks) | What You’ll Master |\n"
+        "|---|-------|------------------|--------------------|\n"
+        "| *1* | *Data Analytics & BI Accelerator* | *10 wks* | Excel, SQL, Power BI, Python + real‑world capstone projects |\n"
+        "| *2* | *Excel for Data Analysis* | *6‑8 wks* | Advanced formulas, Power Query, dashboards, data‑visual storytelling |\n"
+        "| *3* | *SQL for Analytics & Data Engineering* | *6‑8 wks* | Data modeling, complex queries, performance tuning, ETL basics |\n"
+        "| *4* | *Power BI & Business Intelligence* | *6‑8 wks* | Data modeling, DAX, interactive reports, publishing to the cloud |\n"
+        "| *5* | *Applied Python for Analytics & AI* | *6‑8 wks* | Python fundamentals, pandas, data‑visualization, intro to AI/ML |\n"
+        "| *6* | *Explore Other Specialized Tracks* | *6‑20 wks* (depending on track) | R for Data Analysis, Advanced Excel & Power Query, Data Science (16‑20 wks), Machine Learning (16 wks), Business Analysis (10 wks), Financial/Marketing/HR Analytics (6‑8 wks) |"
+    )
+
+    cleaned = sanitize_whatsapp_message(raw_user_table)
+    
+    # 1. Verify no markdown table pipe symbols remain
+    assert "|" not in cleaned
+    # 2. Verify numbered badges and clean titles
+    assert "1️⃣ *Data Analytics & BI Accelerator*" in cleaned
+    assert "2️⃣ *Excel for Data Analysis*" in cleaned
+    assert "3️⃣ *SQL for Analytics & Data Engineering*" in cleaned
+    assert "4️⃣ *Power BI & Business Intelligence*" in cleaned
+    assert "5️⃣ *Applied Python for Analytics & AI*" in cleaned
+    assert "6️⃣ *Explore Other Specialized Tracks*" in cleaned
+    # 3. Verify clean duration and topics labels
+    assert "⏱️" in cleaned
+    assert "💡" in cleaned
+    assert "10 wks" in cleaned
+    assert "Excel, SQL, Power BI, Python" in cleaned
+
