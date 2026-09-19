@@ -20,12 +20,13 @@ services:
       - WEBHOOK_VERIFY_SIGNATURE_STRICT=${WEBHOOK_VERIFY_SIGNATURE_STRICT:-True}
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres_secure_pass@db:5432/tektutors
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
-      - SMTP_HOST=${SMTP_HOST:-}
-      - SMTP_PORT=${SMTP_PORT:-587}
-      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-465}
+      - SMTP_USER=${SMTP_USER:-tektutorsng@gmail.com}
       - SMTP_PASSWORD=${SMTP_PASSWORD:-}
-      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL:-admissions@tektutors.com.ng}
+      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL:-tektutorsng@gmail.com}
       - SMTP_FROM_NAME=${SMTP_FROM_NAME:-TekTutors Academy}
+      - SMTP_USE_TLS=${SMTP_USE_TLS:-False}
     depends_on:
       db:
         condition: service_healthy

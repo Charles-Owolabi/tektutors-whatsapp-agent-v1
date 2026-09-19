@@ -515,23 +515,67 @@ def render_branded_email_html(
 </body>
 </html>"""
 
+class IPv4SMTP_SSL(smtplib.SMTP_SSL):
+    """Guarantees pure IPv4 DNS resolution and connection to prevent IPv6 'Network is unreachable' errors."""
+    def _get_socket(self, host, port, timeout):
+        err = None
+        for res in socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM):
+            af, socktype, proto, canonname, sa = res
+            sock = None
+            try:
+                sock = socket.socket(af, socktype, proto)
+                if timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
+                    sock.settimeout(timeout)
+                sock.connect(sa)
+                return self.context.wrap_socket(sock, server_hostname=self._host)
+            except OSError as _err:
+                err = _err
+                if sock is not None:
+                    sock.close()
+        if err is not None:
+            raise err
+        raise OSError(f"Could not resolve IPv4 address for {host}")
+
+
+class IPv4SMTP(smtplib.SMTP):
+    """Guarantees pure IPv4 DNS resolution and connection to prevent IPv6 'Network is unreachable' errors."""
+    def _get_socket(self, host, port, timeout):
+        err = None
+        for res in socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM):
+            af, socktype, proto, canonname, sa = res
+            sock = None
+            try:
+                sock = socket.socket(af, socktype, proto)
+                if timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
+                    sock.settimeout(timeout)
+                sock.connect(sa)
+                return sock
+            except OSError as _err:
+                err = _err
+                if sock is not None:
+                    sock.close()
+        if err is not None:
+            raise err
+        raise OSError(f"Could not resolve IPv4 address for {host}")
+
+
 def _connect_smtp_server_resilient(host: str, port: int, is_ssl: bool, timeout: int = 15):
     """
-    Connect to SMTP server prioritizing IPv4 ('0.0.0.0' source address)
-    to completely prevent 'Network is unreachable' [Errno 101 / WinError 10051]
-    when running on networks where IPv6 is configured but not publicly routable.
+    Connect to SMTP server strictly prioritizing IPv4 to completely prevent
+    'Network is unreachable' [Errno 101 / WinError 10051] when running on dual-stack
+    cloud networks (Railway, Docker, etc.) where IPv6 is configured without public routes.
     """
-    # 1. First attempt: Force IPv4 source binding
+    # 1. First attempt: Strict IPv4 resolution & connection
     try:
         if is_ssl:
-            return smtplib.SMTP_SSL(host, port, timeout=timeout, source_address=("0.0.0.0", 0))
+            return IPv4SMTP_SSL(host, port, timeout=timeout)
         else:
-            server = smtplib.SMTP(host, port, timeout=timeout, source_address=("0.0.0.0", 0))
+            server = IPv4SMTP(host, port, timeout=timeout)
             if settings.SMTP_USE_TLS or port == 587:
                 server.starttls()
             return server
     except (OSError, smtplib.SMTPConnectError, socket.error) as ipv4_err:
-        logger.warning(f"IPv4-bound SMTP attempt to {host}:{port} failed ({ipv4_err}). Retrying standard socket...")
+        logger.warning(f"Strict IPv4 SMTP connection to {host}:{port} failed ({ipv4_err}). Retrying standard socket...")
 
     # 2. Second attempt: Fallback to standard system socket
     if is_ssl:
@@ -541,6 +585,7 @@ def _connect_smtp_server_resilient(host: str, port: int, is_ssl: bool, timeout: 
         if settings.SMTP_USE_TLS or port == 587:
             server.starttls()
         return server
+
 
 
 def _send_smtp_email_sync(to_email: str, subject: str, html_content: str, text_content: str) -> bool:
