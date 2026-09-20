@@ -300,6 +300,7 @@ def strip_asterisks(text: str) -> str:
     """
     if not text or not isinstance(text, str):
         return text
+    text = text.replace('\u202f', ' ').replace('\u00a0', ' ').replace('\u2011', '-')
     text = re.sub(r'(?m)^\s*[\*\-]\s+', '• ', text)
     text = re.sub(r'\*{3,}([^*\n]+?)\*{3,}', r'*\1*', text)
     text = re.sub(r'\*{2}([^*\n]+?)\*{2}', r'*\1*', text)
@@ -361,6 +362,90 @@ async def log_cost_savings(
     except Exception:
         await _persist()
 
+def is_conversational_query(text: str) -> bool:
+    """
+    Detect if the user message is a consultative, advice-seeking, or nuanced question
+    that should be answered dynamically by the AI model (Tara) rather than a static template.
+    """
+    clean = text.strip()
+    words = clean.split()
+    lower = clean.lower()
+
+    # Pure single digits (1-6) or menu keywords are fast-path menu selections
+    if re.match(r'^\s*([1-6])\s*$', clean) or lower in (
+        "menu", "tracks", "options", "courses", "other courses", "all courses", "view courses"
+    ):
+        return False
+
+    # Standalone email address provided to receive syllabus (short message)
+    if re.search(r'[\w\.-]+@[\w\.-]+\.\w+', clean) and len(words) <= 6:
+        return False
+
+    # Explicit urgent human escalation demands
+    if any(p in lower for p in [
+        "speak to human", "talk to human", "human agent", "real person",
+        "human representative", "talk to manager", "scam", "fraud"
+    ]):
+        return False
+
+    # Interactive button CTA clicks (exact button copy)
+    exact_button_phrases = [
+        "yes, please book me a 1-on-1 call with an admissions advisor.",
+        "tell me more about the month-to-month payment plan.",
+        "please share the complete course syllabus breakdown.",
+        "how to pay for the course?",
+        "send me the registration link",
+        "how do i register?",
+        "how can i register?"
+    ]
+    if lower in exact_button_phrases:
+        return False
+
+    # Standalone simple greetings like "hi", "hello", "good morning" without follow-up questions
+    if len(words) <= 2 and any(re.match(rf'^{g}[!\.]*$', lower) for g in [
+        "hi", "hello", "hey", "good morning", "good afternoon", "good evening", "hi there"
+    ]):
+        return False
+
+    # Factual short location queries like "where is your office", "where are you located", "physical address"
+    if any(re.search(pat, lower) for pat in LOCATION_PATTERNS) and len(words) <= 7 and not any(w in lower for w in [
+        "recommend", "background", "career", "teach", "learn", "study", "best"
+    ]):
+        return False
+
+    # If the user is asking a consultative question or giving context:
+    consultative_indicators = [
+        "i am a", "i'm a", "my background", "i work as", "i studied", "transition",
+        "switch to tech", "zero coding", "no coding", "no experience", "beginner",
+        "can i learn", "can i do", "can i cope", "will it be hard", "is it hard",
+        "which track", "what track", "which course", "what course", "recommend",
+        "suggest", "advice", "help me choose", "suitable for me", "good for me",
+        "fit for me", "difference between", "compare", "not sure which", "confused",
+        "looking to", "want to know if", "can data analytics", "how long will it take me",
+        "what do you think", "tell me what", "explain why", "is this right", "can i use",
+        "do i need", "is laptop", "weekend", "evening"
+    ]
+    if any(ci in lower for ci in consultative_indicators):
+        return True
+
+    # Questions that contain personal inquiry pronouns or comparison question words
+    if "?" in clean and any(w in lower for w in ["i", "my", "me", "should", "could", "would", "which", "why", "best", "advise"]):
+        return True
+
+    # If a message mentions course keywords inside a multi-word question or sentence:
+    # It must NOT be intercepted by the rigid brochure!
+    if len(words) > 4 and any(w in lower for w in [
+        "data analytic", "excel", "sql", "power bi", "python", "machine learning", "data science"
+    ]):
+        return True
+
+    # Multi-word sentence that doesn't match an exact button
+    if len(words) > 6 and ("?" in clean or any(w in lower for w in ["i", "my", "can", "how", "what", "why", "is"])):
+        return True
+
+    return False
+
+
 async def check_fast_path(phone: str, user_text: str) -> Optional[Dict[str, Any]]:
     """
     Evaluate user message against verified deterministic fast-path patterns.
@@ -380,6 +465,11 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
     lower_text = text_clean.lower()
     start_time = time.time()
     norm_key = _normalize_key(text_clean)
+
+    # Conversational inquiry filter: Allow natural advising to flow to LLM
+    if is_conversational_query(text_clean):
+        logger.info(f"Conversational inquiry detected for {clean_phone} ('{text_clean[:60]}') - routing to AI Model.")
+        return None
 
     # 0. Instant in-memory cache hit (< 0.1ms)
     cached = _QUERY_RESPONSE_CACHE.get(norm_key)

@@ -211,6 +211,7 @@ def sanitize_whatsapp_message(text: str) -> str:
     """
     if not text or not isinstance(text, str):
         return text
+    text = text.replace('\u202f', ' ').replace('\u00a0', ' ').replace('\u2011', '-')
     text = convert_markdown_tables_to_whatsapp(text)
     text = sanitize_pricing_hallucinations(text)
     text = format_whatsapp_markdown(text)
@@ -670,13 +671,7 @@ class TekTutorsAgentManager:
                 )
             except (asyncio.TimeoutError, Exception) as e:
                 logger.warning(f"Sub-second guard triggered or LLM exception ({e}). Immediate fallback to Smart Advisor Engine.")
-                mock_res = await self._mock_ai_response(clean_phone, user_text)
-                try:
-                    from app.cache import cache_query_response, _normalize_key
-                    cache_query_response(_normalize_key(user_text), mock_res)
-                except Exception:
-                    pass
-                return mock_res
+                return await self._mock_ai_response(clean_phone, user_text)
 
             # Extract the last assistant response
             final_messages = final_state.get("messages", [])
@@ -692,16 +687,10 @@ class TekTutorsAgentManager:
             response_text = sanitize_whatsapp_message(response_text)
 
             tool_logs = list(dict.fromkeys(final_state.get("tool_logs", [])))
-            result_dict = {
+            return {
                 "response": response_text,
                 "tool_logs": tool_logs
             }
-            try:
-                from app.cache import cache_query_response, _normalize_key
-                cache_query_response(_normalize_key(user_text), result_dict)
-            except Exception:
-                pass
-            return result_dict
         except Exception as e:
             logger.error(f"Error in LangGraph execution: {e}")
             return await self._mock_ai_response(clean_phone, user_text)
