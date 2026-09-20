@@ -983,11 +983,87 @@ class TekTutorsAgentManager:
             "6": 6, "six": 6, "6️⃣": 6, "sixth": 6,
         }
         
-        selected_track = None
+        # Check active conversation context before assuming this is Track 1-6!
+        last_asst_body = ""
+        active_course_context = None
+        has_catalog_menu_prompt = False
+        clean_phone = phone.strip().replace("+", "")
+        try:
+            from app.database import AsyncSessionLocal
+            from app.models import Conversation, Message, Lead
+            from sqlalchemy import select, desc
+            from app.cache import detect_target_course
+            async with AsyncSessionLocal() as db:
+                conv_rec = (await db.execute(select(Conversation).where(Conversation.phone == clean_phone).limit(1))).scalars().first()
+                if conv_rec:
+                    recent_msgs = (await db.execute(
+                        select(Message)
+                        .where(Message.conversation_id == conv_rec.id)
+                        .order_by(desc(Message.id))
+                        .limit(8)
+                    )).scalars().all()
+                    for m in recent_msgs:
+                        if m.sender == "assistant" and not last_asst_body:
+                            last_asst_body = m.body or ""
+                        if not active_course_context:
+                            c_found = detect_target_course(m.body or "")
+                            if c_found:
+                                active_course_context = c_found
+                    if not active_course_context:
+                        lead_rec = (await db.execute(select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1))).scalars().first()
+                        if lead_rec and lead_rec.course_interest:
+                            active_course_context = lead_rec.course_interest
+        except Exception as e:
+            logger.warning(f"Context resolution note in mock fallback: {e}")
+
+        low_last_asst = last_asst_body.lower()
+        is_two_option_prompt = (
+            ("1️⃣" in last_asst_body and "2️⃣" in last_asst_body and "3️⃣" not in last_asst_body) or
+            ("email you the" in low_last_asst and ("discovery call" in low_last_asst or "advisor call" in low_last_asst or "book a" in low_last_asst)) or
+            ("would you like me to:" in low_last_asst and "syllabus" in low_last_asst)
+        )
+        has_catalog_menu_prompt = (
+            "practical tech pathways" in low_last_asst or
+            "featured training tracks" in low_last_asst or
+            "reply with the number of your choice (1-6)" in low_last_asst or
+            ("1️⃣" in last_asst_body and "5️⃣" in last_asst_body)
+        )
+
+        chosen_num = None
         for k, num in number_map.items():
             if lower_text == k or f"track {k}" in lower_text or f"option {k}" in lower_text or f"course {k}" in lower_text or f"#{k}" in lower_text or f"number {k}" in lower_text or lower_text.startswith(f"{k} ") or lower_text.startswith(f"{k}.") or lower_text.startswith(f"{k}-"):
-                selected_track = next((t for t in CATALOG_TRACKS if t["num"] == num), None)
+                chosen_num = num
                 break
+
+        # If user answered 1 or 2 to a 2-option prompt (e.g. 1: Email syllabus vs 2: Book call)
+        if chosen_num is not None and is_two_option_prompt and not has_catalog_menu_prompt:
+            target_course = active_course_context or "Machine Learning with Python"
+            if chosen_num == 1:
+                reply = (
+                    f"📧 *Awesome! Please share your Email Address*\n\n"
+                    f"Reply with your email address (e.g. name@gmail.com) and our admissions team will send the full *{target_course}* syllabus and learning roadmap directly to your inbox! 🚀\n\n"
+                    f"👉 *Official Portal:* https://tektutors.com.ng/registration"
+                )
+                return {"response": reply, "tool_logs": ["search_tektutors_courses"]}
+            elif chosen_num == 2:
+                await qualify_and_capture_lead.ainvoke({
+                    "phone": phone,
+                    "course_interest": target_course,
+                    "notes": f"Booked discovery call for {target_course} via option 2"
+                })
+                reply = (
+                    f"📅 *Book Your 1-on-1 Admissions Discovery Call ({target_course})*\n\n"
+                    f"I'd love to set up your complimentary 15-minute consultation with a Senior TekTutors Admissions Advisor! 🎯\n\n"
+                    f"👉 *To lock in your call slot, please reply with:*\n"
+                    f"1. *Your Full Name*\n"
+                    f"2. *Preferred Time & Day* (e.g., Tomorrow at 2:00 PM)\n\n"
+                    f"You can also secure your enrollment directly anytime at:\n🔗 https://tektutors.com.ng/registration"
+                )
+                return {"response": reply, "tool_logs": ["qualify_and_capture_lead", "schedule_advisor_call"]}
+
+        selected_track = None
+        if chosen_num is not None and (has_catalog_menu_prompt or not last_asst_body or f"track {chosen_num}" in lower_text):
+            selected_track = next((t for t in CATALOG_TRACKS if t["num"] == chosen_num), None)
 
         # Check if user typed the name of a course wanted
         if not selected_track:

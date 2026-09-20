@@ -880,6 +880,97 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
         num_match = re.match(r'^\s*([1-6])\b', lower_text)
 
     if num_match or other_courses_match:
+        # Check active conversation context before assuming this is Track 1-6!
+        last_asst_body = ""
+        active_course_context = None
+        has_catalog_menu_prompt = False
+        try:
+            from app.database import AsyncSessionLocal
+            from app.models import Conversation, Message, Lead
+            from sqlalchemy import select, desc
+            async with AsyncSessionLocal() as db:
+                conv_rec = (await db.execute(select(Conversation).where(Conversation.phone == clean_phone).limit(1))).scalars().first()
+                if conv_rec:
+                    recent_msgs = (await db.execute(
+                        select(Message)
+                        .where(Message.conversation_id == conv_rec.id)
+                        .order_by(desc(Message.id))
+                        .limit(8)
+                    )).scalars().all()
+                    for m in recent_msgs:
+                        if m.sender == "assistant" and not last_asst_body:
+                            last_asst_body = m.body or ""
+                        if not active_course_context:
+                            c_found = detect_target_course(m.body or "")
+                            if c_found:
+                                active_course_context = c_found
+                    if not active_course_context:
+                        lead_rec = (await db.execute(select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1))).scalars().first()
+                        if lead_rec and lead_rec.course_interest:
+                            active_course_context = lead_rec.course_interest
+        except Exception as e:
+            logger.warning(f"Context resolution note in fast path: {e}")
+
+        low_last_asst = last_asst_body.lower()
+        is_two_option_prompt = (
+            ("1️⃣" in last_asst_body and "2️⃣" in last_asst_body and "3️⃣" not in last_asst_body) or
+            ("email you the" in low_last_asst and ("discovery call" in low_last_asst or "advisor call" in low_last_asst or "book a" in low_last_asst)) or
+            ("would you like me to:" in low_last_asst and "syllabus" in low_last_asst)
+        )
+        has_catalog_menu_prompt = (
+            "practical tech pathways" in low_last_asst or
+            "featured training tracks" in low_last_asst or
+            "reply with the number of your choice (1-6)" in low_last_asst or
+            ("1️⃣" in last_asst_body and "5️⃣" in last_asst_body)
+        )
+
+        raw_num = 1
+        if num_match:
+            raw_num = int(num_match.group(2) if num_match.lastindex and num_match.lastindex >= 2 else num_match.group(1))
+
+        # If the assistant specifically asked a 2-option question (e.g. 1: Email syllabus vs 2: Book call)
+        if is_two_option_prompt and not has_catalog_menu_prompt:
+            target_course = active_course_context or "Machine Learning with Python"
+            if raw_num == 1:
+                response = (
+                    f"📧 *Awesome! Please share your Email Address*\n\n"
+                    f"Reply with your email address (e.g. name@gmail.com) and our admissions team will send the full *{target_course}* syllabus and learning roadmap directly to your inbox! 🚀\n\n"
+                    f"👉 *Official Portal:* {REGISTRATION_URL}"
+                )
+                return {
+                    "response": response,
+                    "tool_logs": ["qualify_and_capture_lead"],
+                    "fast_path": True,
+                    "tokens_saved": 850
+                }
+            elif raw_num == 2:
+                from app.tools import qualify_and_capture_lead
+                await qualify_and_capture_lead.ainvoke({
+                    "phone": clean_phone,
+                    "course_interest": target_course,
+                    "notes": f"Booked discovery call for {target_course} via option 2"
+                })
+                response = (
+                    f"📅 *Book Your 1-on-1 Admissions Discovery Call ({target_course})*\n\n"
+                    f"I'd love to set up your complimentary 15-minute 1-on-1 consultation with a Senior TekTutors Admissions Advisor! 🎯\n\n"
+                    f"👉 *To lock in your call slot, please reply with:*\n"
+                    f"1. *Your Full Name*\n"
+                    f"2. *Preferred Time & Day* (e.g., Tomorrow at 2:00 PM)\n\n"
+                    f"You can also secure your enrollment directly anytime at:\n🔗 {REGISTRATION_URL}"
+                )
+                return {
+                    "response": response,
+                    "tool_logs": ["qualify_and_capture_lead", "schedule_advisor_call"],
+                    "fast_path": True,
+                    "tokens_saved": 850
+                }
+
+        # If user is in an active course conversation (e.g. discussing Machine Learning) and did NOT receive the 6-track catalog menu,
+        # do NOT intercept with Track 1-6! Route to AI Model so it answers in context.
+        if active_course_context and active_course_context != "Data Analytics & BI Accelerator" and not has_catalog_menu_prompt:
+            logger.info(f"User in active course context ({active_course_context}) replied '{text_clean}' - routing to AI Model.")
+            return None
+
         if other_courses_match:
             track_num = 6
         elif num_match:

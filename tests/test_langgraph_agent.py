@@ -96,3 +96,64 @@ async def test_machine_learning_curriculum_resolution():
     # Must NOT claim Machine Learning is Data Analytics or Excel
     assert "Excel for Data Analysis" not in response_text
 
+
+@pytest.mark.asyncio
+async def test_context_aware_option_selection_for_machine_learning():
+    """
+    Verify the exact user bug report:
+    When assistant asks:
+    'Would you like me to:
+    1️⃣ Email you the full 16-week Machine Learning syllabus (just share your email), or
+    2️⃣ Book a free 15-min discovery call'
+    And user replies '1':
+    Agent must ask for email for Machine Learning, NOT dump 'Track 1: Data Analytics & BI Accelerator'.
+    """
+    await init_db_and_seed()
+    from app.database import AsyncSessionLocal
+    from app.models import Conversation, Message
+    from app.cache import check_fast_path
+
+    import time
+    test_phone = f"234809{int(time.time()) % 1000000:06d}"
+    async with AsyncSessionLocal() as db:
+        from sqlalchemy import select
+        conv_res = await db.execute(select(Conversation).where(Conversation.phone == test_phone))
+        conv = conv_res.scalar_one_or_none()
+        if not conv:
+            conv = Conversation(phone=test_phone, customer_name="Prospect")
+            db.add(conv)
+            await db.commit()
+            await db.refresh(conv)
+
+        # Preceding conversation
+        m1 = Message(conversation_id=conv.id, sender="user", body="Tell me about Machine Learning")
+        m2 = Message(
+            conversation_id=conv.id,
+            sender="assistant",
+            body=(
+                "Since you're new to Python and stats, our 1-on-1 mentor will start with the fundamentals and build up step-by-step.\n\n"
+                "Would you like me to:\n"
+                "1️⃣ Email you the full 16-week Machine Learning syllabus (just share your email), or\n"
+                "2️⃣ Book a free 15-min discovery call with an advisor to walk through the roadmap?\n\n"
+                "Which works best for you?"
+            )
+        )
+        db.add_all([m1, m2])
+        await db.commit()
+
+    # User replies '1'
+    res = await agent_manager.process_user_message(
+        phone=test_phone,
+        user_text="1",
+        chat_history_messages=[]
+    )
+    assert "response" in res
+    response_text = res["response"]
+    # Must NOT dump Track 1 Data Analytics!
+    assert "Track 1: Data Analytics & BI Accelerator" not in response_text
+    assert "Data Analytics & BI Accelerator" not in response_text
+    # Must ask for email for Machine Learning
+    assert "Email" in response_text or "email" in response_text
+    assert "Machine Learning" in response_text
+
+
