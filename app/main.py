@@ -144,7 +144,7 @@ async def init_db_and_seed():
                 from app.agent import SYSTEM_PROMPT_TEXT
                 cfg_res = await db.execute(select(SystemConfig).limit(1))
                 cfg = cfg_res.scalar_one_or_none()
-                if cfg and ("WHATSAPP PRESENTATION & BOLD FORMATTING" not in (cfg.system_prompt or "") or "https://tektutors.com.ng/registration" not in (cfg.system_prompt or "") or "6)" not in (cfg.system_prompt or "") or "COURSE LISTING" not in (cfg.system_prompt or "") or "₦90,000" not in (cfg.system_prompt or "") or "6-8 wks" not in (cfg.system_prompt or "") or "NEVER USE MARKDOWN TABLES" not in (cfg.system_prompt or "")):
+                if cfg and ("WHATSAPP PRESENTATION & BOLD FORMATTING" not in (cfg.system_prompt or "") or "https://tektutors.com.ng/registration" not in (cfg.system_prompt or "") or "6)" not in (cfg.system_prompt or "") or "COURSE LISTING" not in (cfg.system_prompt or "") or "₦90,000" not in (cfg.system_prompt or "") or "6-8 wks" not in (cfg.system_prompt or "") or "NEVER USE MARKDOWN TABLES" not in (cfg.system_prompt or "") or "NEVER EVER use markdown link syntax" not in (cfg.system_prompt or "")):
                     cfg.system_prompt = SYSTEM_PROMPT_TEXT.strip()
                     await db.commit()
             except Exception as e:

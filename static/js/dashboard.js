@@ -763,6 +763,31 @@ function formatWhatsAppText(rawText) {
     formatted = formatted.replace(/_([^_]+)_/g, '<em>$1</em>');
     formatted = formatted.replace(/~([^~]+)~/g, '<del>$1</del>');
     formatted = formatted.replace(/```([^`]+)```/g, '<code>$1</code>');
+
+    // Convert markdown links [Label](URL) to styled interactive button cards
+    formatted = formatted.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, function(match, label, url) {
+        let cleanLabel = label.trim();
+        const lower = cleanLabel.toLowerCase();
+        if (lower.includes('register') || lower.includes('build practical skills') || lower.includes('training')) {
+            cleanLabel = 'Register for Training';
+        } else if (cleanLabel.length > 35) {
+            cleanLabel = 'Open Link';
+        }
+        return `<div class="wa-msg-cta-container"><a href="${url}" target="_blank" rel="noopener noreferrer" class="wa-chat-cta-btn"><i class="fa-solid fa-arrow-up-right-from-square"></i> ${cleanLabel}</a></div>`;
+    });
+
+    // Convert registration URL calls to action into clean interactive buttons
+    formatted = formatted.replace(/(?:👉|🔗)?\s*(?:&gt;\s*)?<strong>(Register Online|Official Portal|Enroll Online|Official Registration &amp; Payment Portal):?<\/strong>\s*(?:<br>)?\s*(https?:\/\/[^\s<]+)/gi, function(match, label, url) {
+        let cleanLabel = label.replace(/&amp;/g, '&').trim();
+        if (cleanLabel.length > 25) cleanLabel = 'Register Online';
+        return `<div class="wa-msg-cta-container"><a href="${url}" target="_blank" rel="noopener noreferrer" class="wa-chat-cta-btn"><i class="fa-solid fa-arrow-up-right-from-square"></i> ${cleanLabel}</a></div>`;
+    });
+
+    // Convert standalone tektutors registration URL into interactive button
+    formatted = formatted.replace(/(?:👉|🔗)?\s*(https?:\/\/tektutors\.com\.ng\/registration)/gi, function(match, url) {
+        return `<div class="wa-msg-cta-container"><a href="${url}" target="_blank" rel="noopener noreferrer" class="wa-chat-cta-btn"><i class="fa-solid fa-arrow-up-right-from-square"></i> Register for Training</a></div>`;
+    });
+
     formatted = formatted.replace(/\n/g, '<br>');
     return formatted;
 }

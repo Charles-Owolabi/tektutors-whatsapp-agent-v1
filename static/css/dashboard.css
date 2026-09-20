@@ -1179,6 +1179,49 @@ textarea.form-control {
     box-shadow: 0 4px 14px rgba(0, 168, 132, 0.35);
 }
 
+/* WhatsApp Message In-Chat CTA Buttons */
+.wa-msg-cta-container {
+    margin: 0.65rem 0 0.4rem 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.wa-chat-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #00a884 0%, #25D366 100%);
+    color: #ffffff !important;
+    text-decoration: none !important;
+    padding: 0.55rem 1rem;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    box-shadow: 0 3px 10px rgba(37, 211, 102, 0.28);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    cursor: pointer;
+    text-align: center;
+    width: fit-content;
+    max-width: 100%;
+}
+
+.wa-chat-cta-btn:hover {
+    background: linear-gradient(135deg, #02b68f 0%, #20ba5c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(37, 211, 102, 0.4);
+    color: #ffffff !important;
+}
+
+.wa-chat-cta-btn:active {
+    transform: translateY(0);
+}
+
+.wa-chat-cta-btn i {
+    font-size: 0.72rem;
+}
+
 /* WhatsApp Double Blue Ticks */
 .wa-checkmarks {
     display: inline-flex;

@@ -522,9 +522,11 @@ def is_conversational_query(text: str) -> bool:
         "fit for me", "difference between", "compare", "not sure which", "confused",
         "looking to", "want to know if", "can data analytics", "how long will it take me",
         "what do you think", "tell me what", "explain why", "is this right", "can i use",
-        "do i need", "is laptop", "weekend", "evening"
+        "do i need", "is laptop", "weekend", "evening", "curriculum", "syllabus",
+        "course outline", "what do you teach", "what will i learn", "what is covered",
+        "tell me about", "interested in", "details on", "information on", "learn more"
     ]
-    if any(ci in lower for ci in consultative_indicators):
+    if any(ci in lower for ci in consultative_indicators) and not re.search(r'[\w\.-]+@[\w\.-]+\.\w+', clean):
         return True
 
     # Questions that contain personal inquiry pronouns or comparison question words

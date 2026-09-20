@@ -202,17 +202,46 @@ def sanitize_pricing_hallucinations(text: str) -> str:
     return text
 
 
+def sanitize_markdown_links_for_whatsapp(text: str) -> str:
+    """
+    WhatsApp does NOT support markdown hyperlink syntax like [Label](url).
+    Convert all markdown links to clean, bolded WhatsApp-native text with naked URLs.
+    Example:
+    '[Register for AI, Data & Digital Training Build practical skills for the digital economy](https://tektutors.com.ng/registration)'
+    -> '👉 *Register Online:* https://tektutors.com.ng/registration'
+    """
+    if not text or not isinstance(text, str):
+        return text
+
+    def _replace_link(match: re.Match) -> str:
+        label = match.group(1).strip()
+        url = match.group(2).strip()
+        # Clean long page titles (e.g. website title tags)
+        lower_label = label.lower()
+        if any(kw in lower_label for kw in ["register", "registration", "build practical skills", "enroll", "apply"]):
+            clean_label = "Register Online"
+        elif len(label) > 35:
+            clean_label = "Official Link"
+        else:
+            clean_label = label
+        return f"👉 *{clean_label}:* {url}"
+
+    return re.sub(r'\[([^\]]+)\]\((https?://[^\)]+)\)', _replace_link, text)
+
+
 def sanitize_whatsapp_message(text: str) -> str:
     """
     Apply comprehensive WhatsApp message formatting:
     1. Converts any markdown tables into clean, mobile-friendly WhatsApp cards with bold emphasis.
-    2. Enforces correct pricing guardrails against hallucinations.
-    3. Normalizes all markdown bolding (**word**) to WhatsApp single-asterisk bold (*word*).
+    2. Converts raw markdown hyperlinks [label](url) into clean WhatsApp bold label + URL.
+    3. Enforces correct pricing guardrails against hallucinations.
+    4. Normalizes all markdown bolding (**word**) to WhatsApp single-asterisk bold (*word*).
     """
     if not text or not isinstance(text, str):
         return text
     text = text.replace('\u202f', ' ').replace('\u00a0', ' ').replace('\u2011', '-')
     text = convert_markdown_tables_to_whatsapp(text)
+    text = sanitize_markdown_links_for_whatsapp(text)
     text = sanitize_pricing_hallucinations(text)
     text = format_whatsapp_markdown(text)
     return text
@@ -245,6 +274,7 @@ OPERATIONAL RULES:
    - Ensure NO spaces inside asterisks: always write *word*, never * word *.
    - For bullet points, use clean dots (•) or emoji bullets (🔹, 👉), NEVER asterisks (*).
    - NEVER USE MARKDOWN TABLES (| # | Track | Duration |). WhatsApp mobile cannot render tables. Use clean, emoji-badged mobile cards instead.
+   - NEVER EVER use markdown link syntax like [Label](url) or [Text](url)! WhatsApp does NOT support markdown links and displays raw brackets. Always write: 👉 *Register Online:* https://tektutors.com.ng/registration or write the plain URL on its own line.
    - Keep paragraphs under 3 sentences. Warm consultative tone ending with a guiding question.
 6. COURSE PRESENTATION & CONSULTATION SEQUENCE:
 • Broad inquiry/greeting or when asked what courses are offered:
@@ -297,8 +327,7 @@ SUPPORTED_GROQ_MODELS = [
     "openai/gpt-oss-20b",
     "qwen/qwen3.8-27b",
     "groq/compound-mini",
-    "allam-2-7b",
-    "groq/compound"
+    "allam-2-7b"
 ]
 
 _cached_system_config: Optional[Dict[str, Any]] = None
@@ -392,7 +421,7 @@ class TekTutorsAgentManager:
                     temperature=0.2,
                     max_tokens=650,
                     max_retries=0,
-                    request_timeout=15.0
+                    request_timeout=25.0
                 )
                 self.llm_with_tools = llm.bind_tools(TEKTUTORS_TOOLS)
                 self.model_name = m
@@ -525,7 +554,7 @@ class TekTutorsAgentManager:
                             temperature=0.2,
                             max_tokens=650,
                             max_retries=0,
-                            request_timeout=12.0
+                            request_timeout=20.0
                         ).bind_tools(TEKTUTORS_TOOLS)
                         ai_msg = await alt_llm.ainvoke(formatted_messages)
                         if hasattr(ai_msg, "content") and isinstance(ai_msg.content, str):
@@ -803,32 +832,61 @@ class TekTutorsAgentManager:
 
         # 1. Curriculum / Syllabus requests (e.g. "send curriculum to my email: name@example.com")
         if is_curriculum_req:
-            course_title = "Machine Learning with Python"
-            if "data analytic" in lower_text:
-                course_title = "Data Analytics"
-            elif "power bi" in lower_text or "powerbi" in lower_text or "bi" in lower_text:
-                course_title = "Power BI Data Analytics"
-            elif "sql" in lower_text or "database" in lower_text:
-                course_title = "SQL for Data Analysis"
-            elif "excel" in lower_text:
-                course_title = "Excel for Data Analysis"
+            from app.cache import detect_target_course, get_course_syllabus
+            target_course = detect_target_course(actual_text)
+            if not target_course:
+                # Check recent messages or lead record for prior course interest
+                clean_phone = phone.strip().replace("+", "")
+                try:
+                    from app.database import AsyncSessionLocal
+                    from app.models import Conversation, Message, Lead
+                    from sqlalchemy import select, desc
+                    async with AsyncSessionLocal() as db:
+                        conv_rec = (await db.execute(select(Conversation).where(Conversation.phone == clean_phone).limit(1))).scalars().first()
+                        if conv_rec:
+                            recent_msgs = (await db.execute(select(Message).where(Message.conversation_id == conv_rec.id).order_by(desc(Message.id)).limit(8))).scalars().all()
+                            for m in recent_msgs:
+                                c_found = detect_target_course(m.body or "")
+                                if c_found:
+                                    target_course = c_found
+                                    break
+                        if not target_course:
+                            lead_rec = (await db.execute(select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1))).scalars().first()
+                            if lead_rec and lead_rec.course_interest:
+                                target_course = lead_rec.course_interest
+                except Exception as ex:
+                    logger.warning(f"Could not resolve prior course interest: {ex}")
+
+            if not target_course:
+                target_course = "Data Analytics & BI Accelerator"
+
+            canonical_title, syllabus_data = get_course_syllabus(target_course)
+            module_bullets = "\n".join([f"🔹 *{m.split(':')[0].strip()}:* {':'.join(m.split(':')[1:]).strip() if ':' in m else m}" for m in syllabus_data.get("modules", [])])
 
             if extracted_email:
                 await qualify_and_capture_lead.ainvoke({
                     "phone": phone,
                     "email": extracted_email,
-                    "course_interest": course_title,
-                    "notes": f"Requested {course_title} curriculum to {extracted_email}"
+                    "course_interest": canonical_title,
+                    "notes": f"Requested {canonical_title} curriculum to {extracted_email}"
                 })
+                try:
+                    from app.email_service import dispatch_engagement_email
+                    await dispatch_engagement_email(
+                        trigger_event="syllabus",
+                        course_name=canonical_title,
+                        recipient_email=extracted_email,
+                        recipient_name="Student"
+                    )
+                except Exception as err:
+                    logger.error(f"Error dispatching syllabus email in mock fallback: {err}")
+
                 reply = (
                     f"📧 *Curriculum Sent to Your Inbox!*\n\n"
-                    f"I've noted down your email (**{extracted_email}**), and our admissions team is sending the full, detailed *{course_title}* curriculum and syllabus directly to your inbox! 🚀\n\n"
-                    f"📚 *Here is an immediate overview of what you will master:*\n"
-                    f"• *Core Foundations:* Practical tools, data wrangling, and industry workflows.\n"
-                    f"• *Hands-On Applied Modules:* Live mentored exercises, real-world case studies, and code walkthroughs.\n"
-                    f"• *Capstone Portfolio Projects:* 3 employer-ready portfolio projects built using live datasets.\n"
-                    f"• *Personalized 1-on-1 Mentorship:* Dedicated weekly live sessions with an industry expert.\n\n"
-                    f"⏱️ *Duration:* Flexible month-to-month learning (₦100,000 / month)\n\n"
+                    f"I've noted down your email (**{extracted_email}**), and our admissions team is sending the full, detailed *{canonical_title}* curriculum and syllabus directly to your inbox! 🚀\n\n"
+                    f"📚 *Here is an immediate overview of what you will master in {canonical_title}:*\n"
+                    f"{module_bullets}\n\n"
+                    f"⏱️ *Duration:* {syllabus_data.get('duration', 'Flexible month-to-month')} (₦100,000 / month)\n\n"
                     f"👉 *Ready to lock in your mentorship slot?*\n"
                     f"You can register and make payment directly here: https://tektutors.com.ng/registration\n\n"
                     f"Would you like to schedule a quick 15-minute discovery call with our lead mentor?"
@@ -836,16 +894,14 @@ class TekTutorsAgentManager:
                 return {"response": reply, "tool_logs": ["qualify_and_capture_lead", "search_tektutors_courses"]}
             else:
                 reply = (
-                    f"📚 *TekTutors Practical Curriculum & Syllabus Breakdown ({course_title})*\n\n"
-                    "All TekTutors pathways are 100% practical, project-based, and taught through live 1-on-1 mentorship. Here is our core syllabus architecture:\n\n"
-                    "🔹 *Module 1: Foundations & Business Metrics* — Problem scoping, data collection, and diagnostic analytics.\n"
-                    "🔹 *Module 2: Data Wrangling & Database Mastery* — Advanced Excel (Power Query, Dynamic Arrays) + Relational SQL (Joins, Window Functions, Subqueries).\n"
-                    "🔹 *Module 3: Business Intelligence & Dashboards* — Power BI data modeling, DAX measures, and interactive executive reporting.\n"
-                    "🔹 *Module 4: Advanced Analytics & AI Automation* — Python programming, Pandas data analysis, EDA, and predictive modeling.\n"
-                    "🔹 *Module 5: Capstone Projects & Career Portfolio* — 3 real-world portfolio projects built to impress hiring managers.\n\n"
-                    "📧 *Want the complete week-by-week PDF brochure?*\n"
-                    "👉 Reply with your *Email Address* (e.g., name@gmail.com) and our admissions team will send the full syllabus straight to your inbox!\n\n"
-                    "Or complete your registration directly here:\n🔗 https://tektutors.com.ng/registration"
+                    f"📚 *TekTutors Practical Curriculum & Syllabus Breakdown ({canonical_title})*\n\n"
+                    f"All TekTutors pathways are 100% practical, project-based, and taught through live 1-on-1 mentorship. Here is the syllabus architecture for *{canonical_title}*:\n\n"
+                    f"{module_bullets}\n\n"
+                    f"💡 *Prerequisites:* {syllabus_data.get('prerequisites', 'None. Complete beginners welcome.')}\n"
+                    f"⏱️ *Duration:* {syllabus_data.get('duration', 'Flexible month-to-month')} (₦100,000 / month)\n\n"
+                    f"📧 *Want the complete week-by-week PDF brochure?*\n"
+                    f"👉 Reply with your *Email Address* (e.g., name@gmail.com) and our admissions team will send the full syllabus straight to your inbox!\n\n"
+                    f"Or complete your registration directly here:\n🔗 https://tektutors.com.ng/registration"
                 )
                 return {"response": reply, "tool_logs": ["search_tektutors_courses", "qualify_and_capture_lead"]}
 
@@ -854,11 +910,42 @@ class TekTutorsAgentManager:
             name = None
             if "my name is" in lower_text:
                 name = actual_text.lower().split("my name is")[-1].strip().title()
+
+            from app.cache import detect_target_course, get_course_syllabus
+            target_course = detect_target_course(actual_text)
+            if not target_course:
+                clean_phone = phone.strip().replace("+", "")
+                try:
+                    from app.database import AsyncSessionLocal
+                    from app.models import Conversation, Message, Lead
+                    from sqlalchemy import select, desc
+                    async with AsyncSessionLocal() as db:
+                        conv_rec = (await db.execute(select(Conversation).where(Conversation.phone == clean_phone).limit(1))).scalars().first()
+                        if conv_rec:
+                            recent_msgs = (await db.execute(select(Message).where(Message.conversation_id == conv_rec.id).order_by(desc(Message.id)).limit(8))).scalars().all()
+                            for m in recent_msgs:
+                                c_found = detect_target_course(m.body or "")
+                                if c_found:
+                                    target_course = c_found
+                                    break
+                        if not target_course:
+                            lead_rec = (await db.execute(select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1))).scalars().first()
+                            if lead_rec and lead_rec.course_interest:
+                                target_course = lead_rec.course_interest
+                except Exception as ex:
+                    logger.warning(f"Could not resolve prior course interest: {ex}")
+
+            if not target_course:
+                target_course = "Data Analytics & BI Accelerator"
+
+            canonical_title, syllabus_data = get_course_syllabus(target_course)
+            module_bullets = "\n".join([f"• *{m.split(':')[0].strip()}:* {':'.join(m.split(':')[1:]).strip() if ':' in m else m}" for m in syllabus_data.get("modules", [])])
+
             await qualify_and_capture_lead.ainvoke({
                 "phone": phone,
                 "name": name,
                 "email": extracted_email,
-                "course_interest": "Data Analytics & BI Accelerator",
+                "course_interest": canonical_title,
                 "notes": "Captured via automated chat"
             })
             if extracted_email:
@@ -866,7 +953,7 @@ class TekTutorsAgentManager:
                     from app.email_service import dispatch_engagement_email
                     await dispatch_engagement_email(
                         trigger_event="syllabus",
-                        course_name="Data Analytics & BI Accelerator",
+                        course_name=canonical_title,
                         recipient_email=extracted_email,
                         recipient_name=name or "Student"
                     )
@@ -875,16 +962,12 @@ class TekTutorsAgentManager:
 
                 reply = (
                     f"📧 *Curriculum Sent to Your Inbox!*\n\n"
-                    f"I have dispatched the complete week-by-week syllabus directly to your inbox at: *{extracted_email}*! 🚀\n\n"
-                    f"📚 *Quick Overview of What You Will Master:*\n"
-                    f"• *Module 1:* Foundations & Diagnostic Business Scoping\n"
-                    f"• *Module 2:* Practical Data Wrangling (Advanced Excel + Relational SQL)\n"
-                    f"• *Module 3:* Business Intelligence & Executive Dashboards (Power BI)\n"
-                    f"• *Module 4:* Python Data Analysis, EDA & Automation\n"
-                    f"• *Module 5:* 3 End-to-End Employer-Ready Capstone Projects\n\n"
+                    f"I have dispatched the complete week-by-week syllabus for *{canonical_title}* directly to your inbox at: *{extracted_email}*! 🚀\n\n"
+                    f"📚 *Quick Overview of What You Will Master in {canonical_title}:*\n"
+                    f"{module_bullets}\n\n"
                     f"💵 *Tuition:* ₦100,000 / month (or ₦90,000 upfront, saving ₦10,000) with dedicated private 1-on-1 mentorship.\n\n"
                     f"👉 Secure your slot & assigned mentor here: https://tektutors.com.ng/registration\n\n"
-                    f"Have you worked with any data tools before, or are you starting completely fresh?"
+                    f"Have you worked with data tools before, or are you starting completely fresh?"
                 )
             else:
                 reply = f"Awesome! Nice to meet you, {name}! How can I help you with TekTutors courses today?"

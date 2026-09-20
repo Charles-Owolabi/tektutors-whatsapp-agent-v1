@@ -68,3 +68,31 @@ async def test_langgraph_multi_turn_state():
     state = await agent_manager.graph.aget_state(cfg)
     assert state is not None
     assert len(state.values.get("messages", [])) >= 2
+
+
+def test_markdown_link_sanitization():
+    """Verify that raw markdown hyperlink brackets are sanitized for WhatsApp."""
+    from app.agent import sanitize_whatsapp_message, sanitize_markdown_links_for_whatsapp
+
+    raw_link = "[Register for AI, Data & Digital Training Build practical skills for the digital economy](https://tektutors.com.ng/registration)"
+    sanitized = sanitize_whatsapp_message(raw_link)
+    assert "[" not in sanitized and "]" not in sanitized
+    assert "https://tektutors.com.ng/registration" in sanitized
+    assert "Register Online" in sanitized
+
+
+@pytest.mark.asyncio
+async def test_machine_learning_curriculum_resolution():
+    """Verify that requesting Machine Learning returns Machine Learning modules and not Data Analytics."""
+    await init_db_and_seed()
+    res = await agent_manager.process_user_message(
+        phone="2348099112233",
+        user_text="What is the curriculum for Machine Learning?",
+        chat_history_messages=[]
+    )
+    assert "response" in res
+    response_text = res["response"]
+    assert "Machine Learning" in response_text
+    # Must NOT claim Machine Learning is Data Analytics or Excel
+    assert "Excel for Data Analysis" not in response_text
+
