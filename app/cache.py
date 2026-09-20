@@ -76,6 +76,12 @@ TRACK_INFO = {
     }
 }
 
+INVALID_COURSE_NAMES = {
+    "not specified", "none", "null", "n/a", "na", "undefined",
+    "general", "general inquiry", "other specialized tracks",
+    "unknown", "other courses", "other available courses & specialized tracks"
+}
+
 COURSE_SYLLABUS_MAP = {
     "Machine Learning with Python": {
         "title": "Machine Learning with Python",
@@ -161,6 +167,42 @@ COURSE_SYLLABUS_MAP = {
         ],
         "prerequisites": "None. Ideal for career switchers."
     },
+    "Financial Analytics": {
+        "title": "Financial Analytics",
+        "duration": "6-8 Weeks (1.5-2 Months)",
+        "modules": [
+            "Module 1: Financial Modeling Foundations & Accounting Integration",
+            "Module 2: Financial Ratio Analysis, Cash Flow Modeling & Working Capital",
+            "Module 3: Variance Analysis, Budgeting & Rolling Forecasts in Excel/Power BI",
+            "Module 4: Executive Financial Dashboards & KPI Storytelling",
+            "Module 5: Real-World Corporate Valuation & Financial Capstone Projects"
+        ],
+        "prerequisites": "Basic understanding of spreadsheets and business fundamentals."
+    },
+    "HR Analytics": {
+        "title": "HR Analytics",
+        "duration": "6-8 Weeks (1.5-2 Months)",
+        "modules": [
+            "Module 1: People Analytics Architecture & HR Metrics Definition",
+            "Module 2: Employee Turnover, Retention & Headcount Modeling",
+            "Module 3: Talent Acquisition Analytics, Pipeline Conversion & Cost-Per-Hire",
+            "Module 4: HR Executive Dashboards in Power BI with Demographic Segmentation",
+            "Module 5: Workforce Planning & Predictive Retention Capstone Projects"
+        ],
+        "prerequisites": "Basic computer skills. Ideal for HR professionals."
+    },
+    "Marketing Analytics": {
+        "title": "Marketing Analytics",
+        "duration": "6-8 Weeks (1.5-2 Months)",
+        "modules": [
+            "Module 1: Customer Acquisition, CAC, LTV & Marketing Funnel Analysis",
+            "Module 2: Multi-Touch Attribution Modeling & Campaign ROI Tracking",
+            "Module 3: Customer Segmentation & Cohort Retention Analysis",
+            "Module 4: Performance Marketing Executive Dashboards in Power BI",
+            "Module 5: Full-Funnel Digital Marketing Optimization Capstone Projects"
+        ],
+        "prerequisites": "Basic computer skills. Ideal for marketers and growth leads."
+    },
     "Data Analytics & BI Accelerator": {
         "title": "Data Analytics & BI Accelerator",
         "duration": "10 Weeks (2.5 Months)",
@@ -176,16 +218,26 @@ COURSE_SYLLABUS_MAP = {
 }
 
 
-def detect_target_course(text: str) -> Optional[str]:
-    """Identify which specific course is being discussed or requested."""
-    lower = text.lower()
+def normalize_course_name(name: Optional[str]) -> Optional[str]:
+    """
+    Sanitize and normalize any course name or query string into a canonical course title.
+    Returns None if the name is empty or an invalid placeholder like 'Not specified'.
+    """
+    if not name or not isinstance(name, str):
+        return None
+    clean = name.strip()
+    lower = clean.lower()
+    if lower in INVALID_COURSE_NAMES:
+        return None
+
+    # Exact or alias matches
     if "machine learning" in lower or "machine-learning" in lower or re.search(r'\bml\b', lower):
         return "Machine Learning with Python"
     if "data science" in lower or re.search(r'\bds\b', lower):
         return "Data Science with Python"
     if "power bi" in lower or "powerbi" in lower:
         return "Power BI & Business Intelligence"
-    if "sql" in lower or "database" in lower:
+    if "sql" in lower or "database" in lower or "postgres" in lower or "mysql" in lower:
         return "SQL & Enterprise Database Analytics"
     if "excel" in lower:
         return "Excel for Data Analysis & Business Modeling"
@@ -193,10 +245,52 @@ def detect_target_course(text: str) -> Optional[str]:
         return "Applied Python for Data Analysis & AI"
     if "business analysis" in lower or "business analyst" in lower or re.search(r'\bba\b', lower):
         return "Business Analysis"
+    if "financial analytic" in lower or "finance" in lower:
+        return "Financial Analytics"
+    if "hr analytic" in lower or "people analytic" in lower:
+        return "HR Analytics"
+    if "marketing analytic" in lower:
+        return "Marketing Analytics"
+    if "data analytic" in lower or "data analysis" in lower or "business intelligence" in lower or re.search(r'\bbi\b', lower):
+        return "Data Analytics & BI Accelerator"
+
+    # Exact canonical check
+    for canonical in COURSE_SYLLABUS_MAP:
+        if canonical.lower() == lower:
+            return canonical
+
+    # Track info catalog check
     for track_num, track in TRACK_INFO.items():
-        if track["title"].lower() in lower or str(track_num) in lower:
-            return track["title"]
+        if track_num == 6:
+            continue
+        if track["title"].lower() in lower or str(track_num) == lower:
+            if "excel" in track["title"].lower():
+                return "Excel for Data Analysis & Business Modeling"
+            if "sql" in track["title"].lower():
+                return "SQL & Enterprise Database Analytics"
+            if "power bi" in track["title"].lower():
+                return "Power BI & Business Intelligence"
+            if "python" in track["title"].lower():
+                return "Applied Python for Data Analysis & AI"
+            return "Data Analytics & BI Accelerator"
+
     return None
+
+
+def get_course_syllabus(course_name: Optional[str]) -> tuple:
+    """
+    Safely resolve a course name to its canonical title and complete syllabus dictionary.
+    Guarantees that a valid syllabus is returned and never yields 'Not specified'.
+    """
+    canonical_name = normalize_course_name(course_name)
+    if not canonical_name or canonical_name not in COURSE_SYLLABUS_MAP:
+        canonical_name = "Data Analytics & BI Accelerator"
+    return canonical_name, COURSE_SYLLABUS_MAP[canonical_name]
+
+
+def detect_target_course(text: str) -> Optional[str]:
+    """Identify which specific course is being discussed or requested."""
+    return normalize_course_name(text)
 
 
 GREETING_PATTERNS = [
@@ -377,9 +471,14 @@ def is_conversational_query(text: str) -> bool:
     ):
         return False
 
-    # Standalone email address provided to receive syllabus (short message)
-    if re.search(r'[\w\.-]+@[\w\.-]+\.\w+', clean) and len(words) <= 6:
-        return False
+    # Direct Email Delivery / Syllabus Capture request (e.g. "Email the pdf curriculum of machine learning to ctowolabi@gmail.com")
+    if re.search(r'[\w\.-]+@[\w\.-]+\.\w+', clean):
+        email_keywords = [
+            "curriculum", "syllabus", "brochure", "outline", "send", "email",
+            "mail", "forward", "dispatch", "deliver", "share", "drop", "info", "course", "pdf"
+        ]
+        if any(kw in lower for kw in email_keywords) or len(words) <= 8 or "?" not in clean:
+            return False
 
     # Explicit urgent human escalation demands
     if any(p in lower for p in [
@@ -616,31 +715,34 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
         # 1. Detect target course from current text
         detected_course = detect_target_course(lower_text)
 
-        # 2. If not found in current message (e.g. user just supplied their email), look up lead's prior course_interest or recent conversation
+        # 2. If not found in current message (e.g. user just supplied their email), look up recent conversation or lead's prior course_interest
         if not detected_course:
             try:
                 from app.database import AsyncSessionLocal
                 from app.models import Lead, Conversation, Message
                 from sqlalchemy import select, desc
                 async with AsyncSessionLocal() as db:
-                    lead_rec = (await db.execute(select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1))).scalars().first()
-                    if lead_rec and lead_rec.course_interest and lead_rec.course_interest not in ("General Inquiry", "Other Specialized Tracks"):
-                        detected_course = lead_rec.course_interest
+                    # Check recent messages in the conversation first
+                    conv_rec = (await db.execute(select(Conversation).where(Conversation.phone == clean_phone).limit(1))).scalars().first()
+                    if conv_rec:
+                        recent_msgs = (await db.execute(select(Message).where(Message.conversation_id == conv_rec.id).order_by(desc(Message.id)).limit(8))).scalars().all()
+                        for m in recent_msgs:
+                            c_found = detect_target_course(m.body or "")
+                            if c_found:
+                                detected_course = c_found
+                                break
 
+                    # If still not found, check lead's recorded course_interest
                     if not detected_course:
-                        conv_rec = (await db.execute(select(Conversation).where(Conversation.phone == clean_phone).limit(1))).scalars().first()
-                        if conv_rec:
-                            recent_msgs = (await db.execute(select(Message).where(Message.conversation_id == conv_rec.id).order_by(desc(Message.id)).limit(6))).scalars().all()
-                            for m in recent_msgs:
-                                c_found = detect_target_course(m.body or "")
-                                if c_found:
-                                    detected_course = c_found
-                                    break
-            except Exception:
-                pass
+                        lead_rec = (await db.execute(select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1))).scalars().first()
+                        if lead_rec and lead_rec.course_interest:
+                            norm_interest = normalize_course_name(lead_rec.course_interest)
+                            if norm_interest:
+                                detected_course = norm_interest
+            except Exception as e:
+                logger.warning(f"Fast-path curriculum course resolution note: {e}")
 
-        course_label = detected_course if detected_course else "Data Analytics & BI Accelerator"
-        syllabus_data = COURSE_SYLLABUS_MAP.get(course_label, COURSE_SYLLABUS_MAP["Data Analytics & BI Accelerator"])
+        course_label, syllabus_data = get_course_syllabus(detected_course)
 
         await qualify_and_capture_lead.ainvoke({
             "phone": clean_phone,
@@ -722,24 +824,25 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
                     from app.models import Lead, Conversation, Message
                     from sqlalchemy import select, desc
                     async with AsyncSessionLocal() as db:
-                        lead_rec = (await db.execute(select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1))).scalars().first()
-                        if lead_rec and lead_rec.course_interest and lead_rec.course_interest not in ("General Inquiry", "Other Specialized Tracks"):
-                            detected_course = lead_rec.course_interest
+                        conv_rec = (await db.execute(select(Conversation).where(Conversation.phone == clean_phone).limit(1))).scalars().first()
+                        if conv_rec:
+                            recent_msgs = (await db.execute(select(Message).where(Message.conversation_id == conv_rec.id).order_by(desc(Message.id)).limit(8))).scalars().all()
+                            for m in recent_msgs:
+                                c_found = detect_target_course(m.body or "")
+                                if c_found:
+                                    detected_course = c_found
+                                    break
 
                         if not detected_course:
-                            conv_rec = (await db.execute(select(Conversation).where(Conversation.phone == clean_phone).limit(1))).scalars().first()
-                            if conv_rec:
-                                recent_msgs = (await db.execute(select(Message).where(Message.conversation_id == conv_rec.id).order_by(desc(Message.id)).limit(6))).scalars().all()
-                                for m in recent_msgs:
-                                    c_found = detect_target_course(m.body or "")
-                                    if c_found:
-                                        detected_course = c_found
-                                        break
-                except Exception:
-                    pass
+                            lead_rec = (await db.execute(select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1))).scalars().first()
+                            if lead_rec and lead_rec.course_interest:
+                                norm_interest = normalize_course_name(lead_rec.course_interest)
+                                if norm_interest:
+                                    detected_course = norm_interest
+                except Exception as e:
+                    logger.warning(f"Fast-path syllabus overview course resolution note: {e}")
 
-            target_course = detected_course if detected_course else "Data Analytics & BI Accelerator"
-            syllabus_data = COURSE_SYLLABUS_MAP.get(target_course, COURSE_SYLLABUS_MAP["Data Analytics & BI Accelerator"])
+            target_course, syllabus_data = get_course_syllabus(detected_course)
 
             await qualify_and_capture_lead.ainvoke({
                 "phone": clean_phone,

@@ -15,8 +15,10 @@ from app.tools import (
 
 @pytest.fixture(autouse=True)
 def mock_smtp_sender():
-    """Mock external SMTP delivery in unit tests so test suite runs fast and isolated."""
-    with patch("app.email_service._send_smtp_email_sync", return_value=True):
+    """Mock external SMTP and API email delivery in unit tests so test suite runs fast and isolated."""
+    with patch("app.email_service._send_smtp_email_sync", return_value=True), \
+         patch("app.email_service._send_resend_email_async", return_value=True), \
+         patch("app.email_service._send_brevo_email_async", return_value=True):
         yield
 
 @pytest.mark.asyncio

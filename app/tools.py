@@ -218,6 +218,10 @@ async def qualify_and_capture_lead(
     if name and ("is" in name.lower() or ":" in name or "name" in name.lower()):
         name = name.split(":")[-1].split("is")[-1].strip().title()
 
+    from app.cache import normalize_course_name
+    if course_interest:
+        course_interest = normalize_course_name(course_interest)
+
     async with AsyncSessionLocal() as db:
         stmt = select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1)
         res = await db.execute(stmt)
@@ -274,24 +278,26 @@ async def qualify_and_capture_lead(
         await db.refresh(lead)
 
         # Automatically trigger personalized syllabus & roadmap email when email is captured
-        if lead.email and "@" in lead.email:
+        # (Skip if triggered via fast-path, which directly dispatches the comprehensive syllabus email with full modules)
+        if lead.email and "@" in lead.email and not (notes and "via fast path" in notes.lower()):
             try:
                 from app.email_service import dispatch_engagement_email, enroll_lead_in_daily_drip_sequence
+                safe_lead_course = normalize_course_name(lead.course_interest) or normalize_course_name(course_interest) or "Data Analytics & BI Accelerator"
                 await dispatch_engagement_email(
                     lead_id=lead.id,
                     trigger_event="syllabus",
-                    course_name=lead.course_interest or course_interest or "Data Analytics & BI Accelerator",
+                    course_name=safe_lead_course,
                     recipient_email=lead.email,
                     recipient_name=lead.name or "Student"
                 )
-                logger.info(f"Syllabus email successfully dispatched for lead #{lead.id} to {lead.email}")
+                logger.info(f"Syllabus email successfully dispatched for lead #{lead.id} to {lead.email} ({safe_lead_course})")
 
                 # Automatically enroll lead in 5-day daily follow-up drip sequence
                 await enroll_lead_in_daily_drip_sequence(
                     lead_id=lead.id,
                     email=lead.email,
                     name=lead.name or "Student",
-                    course_name=lead.course_interest or course_interest or "Data Analytics & BI Accelerator"
+                    course_name=safe_lead_course
                 )
             except Exception as e:
                 logger.error(f"Error during lead syllabus email or drip sequence dispatch for {lead.email}: {e}")
@@ -589,10 +595,12 @@ async def trigger_conversion_email_campaign(
                 await db.commit()
                 await db.refresh(lead)
         else:
+            from app.cache import normalize_course_name
+            safe_course_init = normalize_course_name(course_name) or "Data Analytics & BI Accelerator"
             lead = Lead(
                 phone=clean_phone,
                 email=target_email,
-                course_interest=course_name or "Data Analytics & BI Accelerator",
+                course_interest=safe_course_init,
                 status="qualified",
                 lead_score=70
             )
@@ -600,7 +608,8 @@ async def trigger_conversion_email_campaign(
             await db.commit()
             await db.refresh(lead)
 
-        target_course = course_name or lead.course_interest or "Data Analytics & BI Accelerator"
+        from app.cache import normalize_course_name
+        target_course = normalize_course_name(course_name) or normalize_course_name(lead.course_interest) or "Data Analytics & BI Accelerator"
         target_name = lead.name or "Student"
 
         result = await dispatch_engagement_email(
@@ -666,10 +675,12 @@ async def schedule_followup_email(
                 await db.commit()
                 await db.refresh(lead)
         else:
+            from app.cache import normalize_course_name
+            safe_course_init = normalize_course_name(course_name) or "Data Analytics & BI Accelerator"
             lead = Lead(
                 phone=clean_phone,
                 email=target_email,
-                course_interest=course_name or "Data Analytics & BI Accelerator",
+                course_interest=safe_course_init,
                 status="qualified",
                 lead_score=70
             )
@@ -677,7 +688,8 @@ async def schedule_followup_email(
             await db.commit()
             await db.refresh(lead)
 
-        target_course = course_name or lead.course_interest or "Data Analytics & BI Accelerator"
+        from app.cache import normalize_course_name
+        target_course = normalize_course_name(course_name) or normalize_course_name(lead.course_interest) or "Data Analytics & BI Accelerator"
         target_name = lead.name or "Student"
         scheduled_dt = parse_schedule_time(delay_or_datetime)
 
