@@ -53,7 +53,16 @@ async def init_db_and_seed():
                     ("currency", "VARCHAR(10) DEFAULT 'NGN'"),
                     ("currency_symbol", "VARCHAR(5) DEFAULT '₦'"),
                     ("outbound_webhook_url", "VARCHAR(255)"),
-                    ("outbound_webhook_secret", "VARCHAR(100)")
+                    ("outbound_webhook_secret", "VARCHAR(100)"),
+                    ("email_header_title", "VARCHAR(150) DEFAULT 'TekTutors'"),
+                    ("email_header_subtitle", "VARCHAR(255) DEFAULT 'Practical Data Analytics & AI Mentorship Academy'"),
+                    ("email_header_badge", "VARCHAR(100) DEFAULT 'Live 1-on-1 Mentorship'"),
+                    ("email_primary_color", "VARCHAR(30) DEFAULT '#eb6711'"),
+                    ("email_footer_contact", "TEXT DEFAULT 'Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517'"),
+                    ("email_footer_copyright", "VARCHAR(255) DEFAULT 'TekTutors Academy. All rights reserved.'"),
+                    ("email_footer_extra", "TEXT DEFAULT ''"),
+                    ("email_custom_header_html", "TEXT"),
+                    ("email_custom_footer_html", "TEXT")
                 ]:
                     if col not in existing_sys_cols:
                         await conn.execute(text(f"ALTER TABLE system_config ADD COLUMN {col} {col_type}"))
@@ -72,7 +81,16 @@ async def init_db_and_seed():
                     ("currency", "VARCHAR(10) DEFAULT 'NGN'"),
                     ("currency_symbol", "VARCHAR(5) DEFAULT '₦'"),
                     ("outbound_webhook_url", "VARCHAR(255)"),
-                    ("outbound_webhook_secret", "VARCHAR(100)")
+                    ("outbound_webhook_secret", "VARCHAR(100)"),
+                    ("email_header_title", "VARCHAR(150) DEFAULT 'TekTutors'"),
+                    ("email_header_subtitle", "VARCHAR(255) DEFAULT 'Practical Data Analytics & AI Mentorship Academy'"),
+                    ("email_header_badge", "VARCHAR(100) DEFAULT 'Live 1-on-1 Mentorship'"),
+                    ("email_primary_color", "VARCHAR(30) DEFAULT '#eb6711'"),
+                    ("email_footer_contact", "TEXT DEFAULT 'Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517'"),
+                    ("email_footer_copyright", "VARCHAR(255) DEFAULT 'TekTutors Academy. All rights reserved.'"),
+                    ("email_footer_extra", "TEXT DEFAULT ''"),
+                    ("email_custom_header_html", "TEXT"),
+                    ("email_custom_footer_html", "TEXT")
                 ]:
                     await conn.execute(text(f"ALTER TABLE system_config ADD COLUMN IF NOT EXISTS {col} {col_type}"))
 
@@ -146,7 +164,11 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Error during startup init_db_and_seed: {e}", exc_info=True)
 
-    from app.email_service import start_scheduled_email_worker, stop_scheduled_email_worker
+    from app.email_service import start_scheduled_email_worker, stop_scheduled_email_worker, sync_email_branding_from_db
+    try:
+        await sync_email_branding_from_db()
+    except Exception as e:
+        logger.warning(f"Note: Email branding cache sync skipped: {e}")
     start_scheduled_email_worker()
 
     yield

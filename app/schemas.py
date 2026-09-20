@@ -143,6 +143,16 @@ class SystemConfigResponse(BaseModel):
     currency_symbol: Optional[str] = "₦"
     outbound_webhook_url: Optional[str] = None
     outbound_webhook_secret: Optional[str] = None
+    # Editable Email Branding
+    email_header_title: Optional[str] = "TekTutors"
+    email_header_subtitle: Optional[str] = "Practical Data Analytics & AI Mentorship Academy"
+    email_header_badge: Optional[str] = "Live 1-on-1 Mentorship"
+    email_primary_color: Optional[str] = "#eb6711"
+    email_footer_contact: Optional[str] = "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517"
+    email_footer_copyright: Optional[str] = "TekTutors Academy. All rights reserved."
+    email_footer_extra: Optional[str] = ""
+    email_custom_header_html: Optional[str] = None
+    email_custom_footer_html: Optional[str] = None
 
 class SystemConfigUpdate(BaseModel):
     agent_name: Optional[str] = None
@@ -155,6 +165,53 @@ class SystemConfigUpdate(BaseModel):
     currency_symbol: Optional[str] = None
     outbound_webhook_url: Optional[str] = None
     outbound_webhook_secret: Optional[str] = None
+    # Editable Email Branding
+    email_header_title: Optional[str] = None
+    email_header_subtitle: Optional[str] = None
+    email_header_badge: Optional[str] = None
+    email_primary_color: Optional[str] = None
+    email_footer_contact: Optional[str] = None
+    email_footer_copyright: Optional[str] = None
+    email_footer_extra: Optional[str] = None
+    email_custom_header_html: Optional[str] = None
+    email_custom_footer_html: Optional[str] = None
+
+class EmailBrandingResponse(BaseModel):
+    header_title: str = "TekTutors"
+    header_subtitle: str = "Practical Data Analytics & AI Mentorship Academy"
+    header_badge: str = "Live 1-on-1 Mentorship"
+    primary_color: str = "#eb6711"
+    footer_contact: str = "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517"
+    footer_copyright: str = "TekTutors Academy. All rights reserved."
+    footer_extra: Optional[str] = ""
+    custom_header_html: Optional[str] = None
+    custom_footer_html: Optional[str] = None
+
+class EmailBrandingUpdate(BaseModel):
+    header_title: Optional[str] = None
+    header_subtitle: Optional[str] = None
+    header_badge: Optional[str] = None
+    primary_color: Optional[str] = None
+    footer_contact: Optional[str] = None
+    footer_copyright: Optional[str] = None
+    footer_extra: Optional[str] = None
+    custom_header_html: Optional[str] = None
+    custom_footer_html: Optional[str] = None
+
+class EmailBrandingPreviewRequest(BaseModel):
+    header_title: Optional[str] = "TekTutors"
+    header_subtitle: Optional[str] = "Practical Data Analytics & AI Mentorship Academy"
+    header_badge: Optional[str] = "Live 1-on-1 Mentorship"
+    primary_color: Optional[str] = "#eb6711"
+    footer_contact: Optional[str] = "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517"
+    footer_copyright: Optional[str] = "TekTutors Academy. All rights reserved."
+    footer_extra: Optional[str] = ""
+    custom_header_html: Optional[str] = None
+    custom_footer_html: Optional[str] = None
+    sample_subject: Optional[str] = "Welcome to TekTutors Live 1-on-1 Mentorship"
+    sample_body: Optional[str] = "Hi Student,\n\nWe are excited to share your personalized curriculum roadmap. Here is what makes our 1-on-1 model exceptional:\n\n• **100% Dedicated Live Mentor** guiding every line of code\n• **3 Employer-Grade Portfolio Projects** deployed to GitHub\n• **Flexible Month-to-Month Tuition** with zero long-term lock-in\n\nReady to get started?"
+    cta_text: Optional[str] = "Register Online"
+    cta_url: Optional[str] = "https://tektutors.com.ng/registration"
 
 # --- Email Hub & Marketing Schemas ---
 class SingleEmailSendRequest(BaseModel):

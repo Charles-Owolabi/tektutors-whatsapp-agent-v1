@@ -393,14 +393,95 @@ PREBUILT_EMAIL_TEMPLATES = [
     }
 ]
 
+# =====================================================================
+# EDITABLE EMAIL BRANDING, HEADER & FOOTER SYSTEM
+# =====================================================================
+
+_EMAIL_BRANDING_CACHE: Dict[str, Any] = {
+    "header_title": "TekTutors",
+    "header_subtitle": "Practical Data Analytics & AI Mentorship Academy",
+    "header_badge": "Live 1-on-1 Mentorship",
+    "primary_color": "#eb6711",
+    "footer_contact": "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517",
+    "footer_copyright": "TekTutors Academy. All rights reserved.",
+    "footer_extra": "",
+    "custom_header_html": None,
+    "custom_footer_html": None
+}
+
+def get_email_branding_cache() -> Dict[str, Any]:
+    """Return a copy of the active in-memory email branding configuration."""
+    return dict(_EMAIL_BRANDING_CACHE)
+
+def update_email_branding_cache(new_config: Dict[str, Any]) -> Dict[str, Any]:
+    """Update the in-memory email branding configuration."""
+    global _EMAIL_BRANDING_CACHE
+    for k, v in new_config.items():
+        if k in _EMAIL_BRANDING_CACHE:
+            _EMAIL_BRANDING_CACHE[k] = v
+    return dict(_EMAIL_BRANDING_CACHE)
+
+async def sync_email_branding_from_db():
+    """Load and synchronize email branding from SystemConfig database table into memory."""
+    try:
+        from app.database import AsyncSessionLocal
+        from app.models import SystemConfig
+        from sqlalchemy import select
+        async with AsyncSessionLocal() as db:
+            stmt = select(SystemConfig).limit(1)
+            res = await db.execute(stmt)
+            cfg = res.scalar_one_or_none()
+            if cfg:
+                update_email_branding_cache({
+                    "header_title": cfg.email_header_title or "TekTutors",
+                    "header_subtitle": cfg.email_header_subtitle or "Practical Data Analytics & AI Mentorship Academy",
+                    "header_badge": cfg.email_header_badge or "Live 1-on-1 Mentorship",
+                    "primary_color": cfg.email_primary_color or "#eb6711",
+                    "footer_contact": cfg.email_footer_contact or "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517",
+                    "footer_copyright": cfg.email_footer_copyright or "TekTutors Academy. All rights reserved.",
+                    "footer_extra": cfg.email_footer_extra or "",
+                    "custom_header_html": cfg.email_custom_header_html,
+                    "custom_footer_html": cfg.email_custom_footer_html
+                })
+                logger.info(f"Synchronized email branding configuration from DB (Header: '{_EMAIL_BRANDING_CACHE['header_title']}')")
+    except Exception as e:
+        logger.warning(f"Note: Could not sync email branding from DB ({e})")
+
+
 def render_branded_email_html(
     subject: str,
     body_markdown: str,
     cta_text: str = "Register Online",
     cta_url: str = "https://tektutors.com.ng/registration",
-    recipient_name: str = "Student"
+    recipient_name: str = "Student",
+    header_title: Optional[str] = None,
+    header_subtitle: Optional[str] = None,
+    header_badge: Optional[str] = None,
+    primary_color: Optional[str] = None,
+    footer_contact: Optional[str] = None,
+    footer_copyright: Optional[str] = None,
+    footer_extra: Optional[str] = None,
+    custom_header_html: Optional[str] = None,
+    custom_footer_html: Optional[str] = None
 ) -> str:
-    """Render modern, responsive HTML email matching TekTutors visual identity."""
+    """
+    Render modern, responsive HTML email matching TekTutors visual identity with
+    fully editable and configurable header, footer, color accents, and custom HTML overrides.
+    """
+    cfg = get_email_branding_cache()
+
+    # Resolve active values (arguments override cache defaults)
+    active_primary_color = (primary_color or cfg.get("primary_color") or "#eb6711").strip()
+    active_header_title = header_title if header_title is not None else (cfg.get("header_title") or "TekTutors")
+    active_header_subtitle = header_subtitle if header_subtitle is not None else (cfg.get("header_subtitle") or "")
+    active_header_badge = header_badge if header_badge is not None else (cfg.get("header_badge") or "")
+    active_footer_contact = footer_contact if footer_contact is not None else (cfg.get("footer_contact") or "")
+    active_footer_copyright = footer_copyright if footer_copyright is not None else (cfg.get("footer_copyright") or "TekTutors Academy. All rights reserved.")
+    active_footer_extra = footer_extra if footer_extra is not None else (cfg.get("footer_extra") or "")
+    active_custom_header = custom_header_html if custom_header_html is not None else cfg.get("custom_header_html")
+    active_custom_footer = custom_footer_html if custom_footer_html is not None else cfg.get("custom_footer_html")
+
+    # Format Markdown body paragraphs
     paragraphs = [p.strip() for p in body_markdown.split("\n\n") if p.strip()]
     formatted_paras = []
     
@@ -421,6 +502,76 @@ def render_branded_email_html(
 
     body_content_html = "\n".join(formatted_paras)
 
+    # 1. Render Header
+    if active_custom_header and active_custom_header.strip():
+        header_markup = active_custom_header.strip()
+    else:
+        # Styled title: if 'TekTutors', keep the iconic orange highlight span
+        if active_header_title.strip().lower() == "tektutors":
+            styled_title = f'Tek<span style="color: {active_primary_color};">Tutors</span>'
+        else:
+            styled_title = active_header_title.strip()
+
+        subtitle_markup = f'<div style="font-size: 12px; color: #94a3b8; margin-top: 4px; font-weight: 500;">{active_header_subtitle.strip()}</div>' if active_header_subtitle.strip() else ''
+        
+        badge_markup = ""
+        if active_header_badge.strip():
+            badge_markup = f"""<td align="right">
+              <span style="display: inline-block; padding: 4px 10px; background: rgba(235, 103, 17, 0.18); border: 1px solid {active_primary_color}; color: {active_primary_color}; font-size: 11px; font-weight: 700; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
+                {active_header_badge.strip()}
+              </span>
+            </td>"""
+
+        header_markup = f"""<!-- Header Banner -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 32px 28px; text-align: left; border-bottom: 3px solid {active_primary_color};">
+              <table width="100%" role="presentation">
+                <tr>
+                  <td>
+                    <div style="font-size: 22px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">
+                      {styled_title}
+                    </div>
+                    {subtitle_markup}
+                  </td>
+                  {badge_markup}
+                </tr>
+              </table>
+            </td>
+          </tr>"""
+
+    # 2. Render Footer
+    if active_custom_footer and active_custom_footer.strip():
+        footer_markup = active_custom_footer.strip()
+    else:
+        # Auto-link WhatsApp contact if present and not already linked
+        contact_line = active_footer_contact.strip()
+        if "<a " not in contact_line:
+            # If phone number like +234 ... or 080... found, link it
+            phone_match = re.search(r'(\+?234[\s\d\-]+|\b0[789][01]\d{8}\b)', contact_line)
+            if phone_match:
+                raw_phone = phone_match.group(1)
+                num_only = re.sub(r'[^\d]', '', raw_phone)
+                if not num_only.startswith("234"):
+                    num_only = "234" + num_only.lstrip("0")
+                linked_phone = f'<a href="https://wa.me/{num_only}" style="color: #00a884; font-weight: 600; text-decoration: none;">{raw_phone}</a>'
+                contact_line = contact_line.replace(raw_phone, linked_phone)
+
+        extra_markup = f'<p style="margin: 8px 0 0 0; font-size: 11px; color: #94a3b8; line-height: 1.4;">{active_footer_extra.strip()}</p>' if active_footer_extra.strip() else ''
+
+        footer_markup = f"""<!-- Footer -->
+          <tr>
+            <td style="background-color: #f8fafc; padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
+              <p style="margin: 0 0 8px 0; font-size: 12px; color: #64748b; line-height: 1.5;">
+                {contact_line}
+              </p>
+              <p style="margin: 0; font-size: 11px; color: #94a3b8;">
+                &copy; {datetime.datetime.now().year} {active_footer_copyright.strip()} &bull; 
+                <a href="https://tektutors.com.ng" style="color: #64748b; text-decoration: none;">tektutors.com.ng</a>
+              </p>
+              {extra_markup}
+            </td>
+          </tr>"""
+
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -435,28 +586,7 @@ def render_branded_email_html(
         <!-- Main Card Container -->
         <table role="presentation" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
           
-          <!-- Header Banner -->
-          <tr>
-            <td style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 32px 28px; text-align: left; border-bottom: 3px solid #eb6711;">
-              <table width="100%" role="presentation">
-                <tr>
-                  <td>
-                    <div style="font-size: 22px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">
-                      Tek<span style="color: #eb6711;">Tutors</span>
-                    </div>
-                    <div style="font-size: 12px; color: #94a3b8; margin-top: 4px; font-weight: 500;">
-                      Practical Data Analytics & AI Mentorship Academy
-                    </div>
-                  </td>
-                  <td align="right">
-                    <span style="display: inline-block; padding: 4px 10px; background: rgba(235, 103, 17, 0.18); border: 1px solid rgba(235, 103, 17, 0.4); color: #ff8c3a; font-size: 11px; font-weight: 700; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
-                      Live 1-on-1 Mentorship
-                    </span>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+          {header_markup}
 
           <!-- Email Content Body -->
           <tr>
@@ -470,7 +600,7 @@ def render_branded_email_html(
               <!-- Primary CTA Button -->
               <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 32px 0 24px 0;">
                 <tr>
-                  <td align="left" style="border-radius: 8px; background: #eb6711;">
+                  <td align="left" style="border-radius: 8px; background: {active_primary_color};">
                     <a href="{cta_url}" target="_blank" style="display: inline-block; padding: 14px 28px; font-size: 15px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 8px; letter-spacing: 0.2px;">
                       {cta_text} &rarr;
                     </a>
@@ -494,19 +624,7 @@ def render_branded_email_html(
             </td>
           </tr>
 
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #f8fafc; padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
-              <p style="margin: 0 0 8px 0; font-size: 12px; color: #64748b; line-height: 1.5;">
-                Have questions or need help? Reply to this email or message Tara on WhatsApp: 
-                <a href="https://wa.me/2348063584517" style="color: #00a884; font-weight: 600; text-decoration: none;">+234 806 358 4517</a>
-              </p>
-              <p style="margin: 0; font-size: 11px; color: #94a3b8;">
-                &copy; {datetime.datetime.now().year} TekTutors Academy. All rights reserved. &bull; 
-                <a href="https://tektutors.com.ng" style="color: #64748b; text-decoration: none;">tektutors.com.ng</a>
-              </p>
-            </td>
-          </tr>
+          {footer_markup}
 
         </table>
       </td>

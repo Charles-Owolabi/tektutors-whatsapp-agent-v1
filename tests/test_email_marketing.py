@@ -448,3 +448,81 @@ async def test_broadcast_email_deduplication():
         sent_emails = [r["email"] for r in data["results"]]
         assert sent_emails.count(shared_email) == 1
 
+
+@pytest.mark.asyncio
+async def test_email_branding_api_get_and_update():
+    """Verify GET and PUT /api/emails/branding fetch and update editable email header and footer."""
+    await init_db_and_seed()
+    with TestClient(app) as client:
+        # 1. Fetch current branding
+        res = client.get("/api/emails/branding")
+        assert res.status_code == 200
+        data = res.json()
+        assert "header_title" in data
+        assert "footer_contact" in data
+        assert "primary_color" in data
+
+        # 2. Update branding with custom values
+        update_payload = {
+            "header_title": "TekTutors Pro Academy",
+            "header_subtitle": "Elite AI & Analytics Engineering Mentorship",
+            "header_badge": "VIP 1-on-1 Cohort",
+            "primary_color": "#2563eb",
+            "footer_contact": "Questions? Reach our admissions team at +234 809 111 2233",
+            "footer_copyright": "TekTutors Global Inc. All rights reserved.",
+            "footer_extra": "Lagos, Nigeria • You received this because you inquired about TekTutors programs."
+        }
+        put_res = client.put("/api/emails/branding", json=update_payload)
+        assert put_res.status_code == 200
+        updated = put_res.json()
+        assert updated["header_title"] == "TekTutors Pro Academy"
+        assert updated["header_badge"] == "VIP 1-on-1 Cohort"
+        assert updated["primary_color"] == "#2563eb"
+        assert "TekTutors Global Inc" in updated["footer_copyright"]
+
+        # 3. Verify GET returns updated configuration
+        get_res = client.get("/api/emails/branding")
+        assert get_res.status_code == 200
+        re_get = get_res.json()
+        assert re_get["header_title"] == "TekTutors Pro Academy"
+        assert re_get["primary_color"] == "#2563eb"
+
+
+@pytest.mark.asyncio
+async def test_email_branding_preview_and_render():
+    """Verify /api/emails/branding/preview and render_branded_email_html generate custom header and footer."""
+    await init_db_and_seed()
+    from app.email_service import render_branded_email_html
+
+    with TestClient(app) as client:
+        preview_payload = {
+            "header_title": "Custom Data Institute",
+            "header_subtitle": "Industry Mentorship for Modern Analysts",
+            "header_badge": "Spring 2026 Cohort",
+            "primary_color": "#059669",
+            "footer_contact": "Chat with an advisor on WhatsApp: +2348063584517",
+            "footer_copyright": "Custom Data Institute. All rights reserved.",
+            "sample_subject": "Test Customized Email Header",
+            "sample_body": "This is test email body content."
+        }
+        res = client.post("/api/emails/branding/preview", json=preview_payload)
+        assert res.status_code == 200
+        html = res.json()["html"]
+        assert "Custom Data Institute" in html
+        assert "Spring 2026 Cohort" in html
+        assert "#059669" in html
+        assert "https://wa.me/2348063584517" in html
+        assert "Custom Data Institute. All rights reserved." in html
+
+    # Direct function test with custom HTML overrides
+    custom_hdr = '<div class="custom-hero"><h1>Exclusive Partner Header</h1></div>'
+    custom_ftr = '<div class="custom-footer"><p>Partner compliance footer</p></div>'
+    rendered_custom = render_branded_email_html(
+        subject="Special Partner Announcement",
+        body_markdown="Hello Partner,",
+        custom_header_html=custom_hdr,
+        custom_footer_html=custom_ftr
+    )
+    assert '<div class="custom-hero"><h1>Exclusive Partner Header</h1></div>' in rendered_custom
+    assert '<div class="custom-footer"><p>Partner compliance footer</p></div>' in rendered_custom
+

@@ -2782,5 +2782,261 @@ async function triggerCleanSlate() {
     }
 }
 
+// =====================================================================
+// EMAIL HEADER & FOOTER BRANDING CUSTOMIZATION
+// =====================================================================
+
+let _emailBrandingState = null;
+let _brandingPreviewDebounceTimer = null;
+
+async function openEmailBrandingModal() {
+    const modal = document.getElementById('email-branding-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    await loadEmailBranding();
+}
+
+function closeEmailBrandingModal() {
+    const modal = document.getElementById('email-branding-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function loadEmailBranding() {
+    try {
+        const res = await fetch('/api/emails/branding');
+        if (!res.ok) throw new Error('Failed to fetch email branding');
+        const data = await res.json();
+        _emailBrandingState = data;
+
+        // Populate fields
+        const headerTitleInput = document.getElementById('branding-header-title');
+        const headerSubtitleInput = document.getElementById('branding-header-subtitle');
+        const headerBadgeInput = document.getElementById('branding-header-badge');
+        const primaryColorPicker = document.getElementById('branding-primary-color-picker');
+        const primaryColorText = document.getElementById('branding-primary-color');
+        const colorPreviewCode = document.getElementById('branding-color-preview-code');
+        const footerContactInput = document.getElementById('branding-footer-contact');
+        const footerCopyrightInput = document.getElementById('branding-footer-copyright');
+        const footerExtraInput = document.getElementById('branding-footer-extra');
+        const customHeaderHtml = document.getElementById('branding-custom-header-html');
+        const customFooterHtml = document.getElementById('branding-custom-footer-html');
+
+        if (headerTitleInput) headerTitleInput.value = data.header_title || 'TekTutors';
+        if (headerSubtitleInput) headerSubtitleInput.value = data.header_subtitle || '';
+        if (headerBadgeInput) headerBadgeInput.value = data.header_badge || '';
+        
+        const color = data.primary_color || '#eb6711';
+        if (primaryColorPicker) primaryColorPicker.value = color;
+        if (primaryColorText) primaryColorText.value = color;
+        if (colorPreviewCode) {
+            colorPreviewCode.innerText = color;
+            colorPreviewCode.style.color = color;
+        }
+
+        if (footerContactInput) footerContactInput.value = data.footer_contact || '';
+        if (footerCopyrightInput) footerCopyrightInput.value = data.footer_copyright || '';
+        if (footerExtraInput) footerExtraInput.value = data.footer_extra || '';
+        if (customHeaderHtml) customHeaderHtml.value = data.custom_header_html || '';
+        if (customFooterHtml) customFooterHtml.value = data.custom_footer_html || '';
+
+        // If custom HTML exists, expand advanced accordion
+        if (data.custom_header_html || data.custom_footer_html) {
+            const container = document.getElementById('branding-advanced-html-container');
+            const chevron = document.getElementById('branding-advanced-chevron');
+            if (container) container.style.display = 'flex';
+            if (chevron) chevron.className = 'fa-solid fa-chevron-up';
+        }
+
+        // Render initial preview
+        updateEmailBrandingLivePreview(true);
+    } catch (err) {
+        console.error('Error loading email branding:', err);
+        showToast('Could not load current email branding', 'error');
+    }
+}
+
+function updateEmailBrandingLivePreview(immediate = false) {
+    if (_brandingPreviewDebounceTimer) clearTimeout(_brandingPreviewDebounceTimer);
+
+    const execute = async () => {
+        const payload = {
+            header_title: document.getElementById('branding-header-title')?.value || 'TekTutors',
+            header_subtitle: document.getElementById('branding-header-subtitle')?.value || '',
+            header_badge: document.getElementById('branding-header-badge')?.value || '',
+            primary_color: document.getElementById('branding-primary-color')?.value || '#eb6711',
+            footer_contact: document.getElementById('branding-footer-contact')?.value || '',
+            footer_copyright: document.getElementById('branding-footer-copyright')?.value || '',
+            footer_extra: document.getElementById('branding-footer-extra')?.value || '',
+            custom_header_html: document.getElementById('branding-custom-header-html')?.value || null,
+            custom_footer_html: document.getElementById('branding-custom-footer-html')?.value || null
+        };
+
+        try {
+            const res = await fetch('/api/emails/branding/preview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const iframe = document.getElementById('branding-preview-iframe');
+                if (iframe) {
+                    iframe.srcdoc = data.html;
+                }
+            }
+        } catch (err) {
+            console.error('Error rendering live branding preview:', err);
+        }
+    };
+
+    if (immediate) {
+        execute();
+    } else {
+        _brandingPreviewDebounceTimer = setTimeout(execute, 200);
+    }
+}
+
+async function saveEmailBranding() {
+    const saveBtn = document.getElementById('btn-save-email-branding');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+    }
+
+    const payload = {
+        header_title: document.getElementById('branding-header-title')?.value.trim() || 'TekTutors',
+        header_subtitle: document.getElementById('branding-header-subtitle')?.value.trim() || '',
+        header_badge: document.getElementById('branding-header-badge')?.value.trim() || '',
+        primary_color: document.getElementById('branding-primary-color')?.value.trim() || '#eb6711',
+        footer_contact: document.getElementById('branding-footer-contact')?.value.trim() || '',
+        footer_copyright: document.getElementById('branding-footer-copyright')?.value.trim() || '',
+        footer_extra: document.getElementById('branding-footer-extra')?.value.trim() || '',
+        custom_header_html: document.getElementById('branding-custom-header-html')?.value.trim() || null,
+        custom_footer_html: document.getElementById('branding-custom-footer-html')?.value.trim() || null
+    };
+
+    try {
+        const res = await fetch('/api/emails/branding', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            _emailBrandingState = data;
+            showToast('✅ Email Header & Footer saved successfully!', 'success');
+            // If email composer is open, refresh preview
+            if (typeof updateEmailLivePreviewDebounced === 'function') {
+                updateEmailLivePreviewDebounced();
+            }
+            setTimeout(closeEmailBrandingModal, 600);
+        } else {
+            showToast(data.detail || 'Failed to save email branding', 'error');
+        }
+    } catch (err) {
+        console.error('Error saving email branding:', err);
+        showToast('Network error while saving email branding', 'error');
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Header &amp; Footer';
+        }
+    }
+}
+
+function resetEmailBrandingDefaults() {
+    const defaultData = {
+        header_title: "TekTutors",
+        header_subtitle: "Practical Data Analytics & AI Mentorship Academy",
+        header_badge: "Live 1-on-1 Mentorship",
+        primary_color: "#eb6711",
+        footer_contact: "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517",
+        footer_copyright: "TekTutors Academy. All rights reserved.",
+        footer_extra: "",
+        custom_header_html: "",
+        custom_footer_html: ""
+    };
+
+    const headerTitleInput = document.getElementById('branding-header-title');
+    const headerSubtitleInput = document.getElementById('branding-header-subtitle');
+    const headerBadgeInput = document.getElementById('branding-header-badge');
+    const primaryColorPicker = document.getElementById('branding-primary-color-picker');
+    const primaryColorText = document.getElementById('branding-primary-color');
+    const colorPreviewCode = document.getElementById('branding-color-preview-code');
+    const footerContactInput = document.getElementById('branding-footer-contact');
+    const footerCopyrightInput = document.getElementById('branding-footer-copyright');
+    const footerExtraInput = document.getElementById('branding-footer-extra');
+    const customHeaderHtml = document.getElementById('branding-custom-header-html');
+    const customFooterHtml = document.getElementById('branding-custom-footer-html');
+
+    if (headerTitleInput) headerTitleInput.value = defaultData.header_title;
+    if (headerSubtitleInput) headerSubtitleInput.value = defaultData.header_subtitle;
+    if (headerBadgeInput) headerBadgeInput.value = defaultData.header_badge;
+    if (primaryColorPicker) primaryColorPicker.value = defaultData.primary_color;
+    if (primaryColorText) primaryColorText.value = defaultData.primary_color;
+    if (colorPreviewCode) {
+        colorPreviewCode.innerText = defaultData.primary_color;
+        colorPreviewCode.style.color = defaultData.primary_color;
+    }
+    if (footerContactInput) footerContactInput.value = defaultData.footer_contact;
+    if (footerCopyrightInput) footerCopyrightInput.value = defaultData.footer_copyright;
+    if (footerExtraInput) footerExtraInput.value = defaultData.footer_extra;
+    if (customHeaderHtml) customHeaderHtml.value = "";
+    if (customFooterHtml) customFooterHtml.value = "";
+
+    updateEmailBrandingLivePreview(true);
+    showToast('Reset to default TekTutors branding layout.');
+}
+
+function onBrandingColorPickerChange(val) {
+    const textInput = document.getElementById('branding-primary-color');
+    const previewCode = document.getElementById('branding-color-preview-code');
+    if (textInput) textInput.value = val;
+    if (previewCode) {
+        previewCode.innerText = val;
+        previewCode.style.color = val;
+    }
+    updateEmailBrandingLivePreview();
+}
+
+function onBrandingColorTextChange(val) {
+    if (!val.startsWith('#') && val.length === 6) val = '#' + val;
+    const picker = document.getElementById('branding-primary-color-picker');
+    const previewCode = document.getElementById('branding-color-preview-code');
+    if (previewCode) {
+        previewCode.innerText = val;
+        previewCode.style.color = val;
+    }
+    if (picker && /^#[0-9A-Fa-f]{6}$/.test(val)) {
+        picker.value = val;
+    }
+    updateEmailBrandingLivePreview();
+}
+
+function setBrandingColorPreset(colorHex) {
+    const picker = document.getElementById('branding-primary-color-picker');
+    const textInput = document.getElementById('branding-primary-color');
+    const previewCode = document.getElementById('branding-color-preview-code');
+    if (picker) picker.value = colorHex;
+    if (textInput) textInput.value = colorHex;
+    if (previewCode) {
+        previewCode.innerText = colorHex;
+        previewCode.style.color = colorHex;
+    }
+    updateEmailBrandingLivePreview();
+}
+
+function toggleAdvancedHtmlOverrides() {
+    const container = document.getElementById('branding-advanced-html-container');
+    const chevron = document.getElementById('branding-advanced-chevron');
+    if (!container) return;
+    const isHidden = container.style.display === 'none';
+    container.style.display = isHidden ? 'flex' : 'none';
+    if (chevron) {
+        chevron.className = isHidden ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
+    }
+}
+
 
 

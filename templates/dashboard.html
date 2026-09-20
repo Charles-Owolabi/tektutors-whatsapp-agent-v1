@@ -826,8 +826,9 @@
                             <h2><i class="fa-solid fa-envelope-open-text glow-icon" style="color: #38bdf8;"></i> TekTutors Email Hub &amp; Campaign Engine</h2>
                             <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Dispatch high-converting consultation follow-ups, syllabus roadmaps, and promotional tuition vouchers with personalized branding.</p>
                         </div>
-                        <div style="display: flex; gap: 0.5rem;">
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                             <button class="btn btn-secondary" onclick="loadEmailHub()"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+                            <button class="btn btn-secondary" style="background: rgba(235,103,17,0.15); color: #ff8c3a; border: 1px solid rgba(235,103,17,0.35);" onclick="openEmailBrandingModal()"><i class="fa-solid fa-paint-roller"></i> Edit Header &amp; Footer</button>
                             <button class="btn btn-secondary" style="background: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.3);" onclick="openEmailComposer(null, null, 'broadcast')"><i class="fa-solid fa-bullhorn"></i> Broadcast Campaign</button>
                             <button class="btn btn-primary" onclick="openEmailComposer()"><i class="fa-solid fa-plus"></i> Compose Email</button>
                         </div>
@@ -1148,6 +1149,23 @@
                                 <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem;"><i class="fa-solid fa-save"></i> Save Configuration</button>
                             </div>
                         </form>
+
+                        <!-- Email Header & Footer Branding Settings Card -->
+                        <div class="glass-card" style="margin-top: 1.5rem; padding: 1.25rem; border: 1px solid rgba(235, 103, 17, 0.35); background: rgba(235, 103, 17, 0.05); border-radius: 12px; max-width: 820px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                                <div>
+                                    <h4 style="color: #ff8c3a; margin: 0 0 0.25rem 0; font-size: 0.95rem;">
+                                        <i class="fa-solid fa-paint-roller"></i> Email Header &amp; Footer Customization
+                                    </h4>
+                                    <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0; max-width: 540px; line-height: 1.4;">
+                                        Edit the brand title, live badge, accent colors, WhatsApp support link, and copyright notice displayed on all emails sent to prospective students.
+                                    </p>
+                                </div>
+                                <button type="button" class="btn btn-secondary" onclick="openEmailBrandingModal()" style="background: rgba(235, 103, 17, 0.15); border-color: rgba(235, 103, 17, 0.4); color: #ff8c3a; font-size: 0.82rem; padding: 0.55rem 1.25rem; white-space: nowrap; border-radius: 8px; cursor: pointer;">
+                                    <i class="fa-solid fa-pen-to-square"></i> Edit Email Header &amp; Footer
+                                </button>
+                            </div>
+                        </div>
 
                         <!-- Production Readiness: Clean Slate Reset Card -->
                         <div class="clean-slate-card" style="margin-top: 2rem; padding: 1.25rem; border: 1px solid rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.05); border-radius: 12px; max-width: 820px;">
@@ -1544,6 +1562,149 @@
 
             <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 0.5rem; text-align: right;">
                 <button class="btn btn-secondary" onclick="closeConversionFollowup()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Header & Footer Customization Modal -->
+    <div id="email-branding-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass-card" style="max-width: 1060px; width: 95vw; max-height: 92vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                    <h3 style="display: flex; align-items: center; gap: 0.5rem; margin: 0; font-size: 1.15rem; color: #fff;">
+                        <i class="fa-solid fa-paint-roller" style="color: #ff8c3a;"></i> Edit Email Header &amp; Footer
+                    </h3>
+                    <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.2rem 0 0 0;">
+                        Changes made here apply automatically to all outgoing syllabus, follow-up, drip sequence, and broadcast emails.
+                    </p>
+                </div>
+                <button class="btn-icon" onclick="closeEmailBrandingModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 1.25rem; padding: 1.25rem 0; overflow-y: auto; flex: 1;">
+                <!-- Left: Editable Form Controls -->
+                <form id="email-branding-form" onsubmit="event.preventDefault(); saveEmailBranding();" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                    
+                    <!-- Section 1: Header Banner Customization -->
+                    <div style="background: rgba(15, 23, 42, 0.45); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <span style="font-size: 0.82rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 0.4rem;">
+                                <i class="fa-solid fa-heading"></i> Email Header Banner
+                            </span>
+                            <span class="badge" style="background: rgba(56,189,248,0.15); color: #38bdf8; font-size: 0.68rem;">Top Banner</span>
+                        </div>
+
+                        <div class="form-row" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 0.75rem;">
+                            <div class="form-group" style="margin: 0;">
+                                <label for="branding-header-title" style="font-size: 0.75rem; font-weight: 600; color: #fff;">Brand / Academy Title</label>
+                                <input type="text" id="branding-header-title" class="form-control" placeholder="e.g. TekTutors" oninput="updateEmailBrandingLivePreview()">
+                                <small style="font-size: 0.68rem; color: var(--text-muted);">Tip: Entering "TekTutors" renders with iconic 2-tone styling.</small>
+                            </div>
+                            <div class="form-group" style="margin: 0;">
+                                <label for="branding-header-badge" style="font-size: 0.75rem; font-weight: 600; color: #fff;">Pill Badge Text</label>
+                                <input type="text" id="branding-header-badge" class="form-control" placeholder="e.g. Live 1-on-1 Mentorship" oninput="updateEmailBrandingLivePreview()">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin: 0;">
+                            <label for="branding-header-subtitle" style="font-size: 0.75rem; font-weight: 600; color: #fff;">Header Subtitle / Academy Tagline</label>
+                            <input type="text" id="branding-header-subtitle" class="form-control" placeholder="e.g. Practical Data Analytics & AI Mentorship Academy" oninput="updateEmailBrandingLivePreview()">
+                        </div>
+
+                        <!-- Brand Accent Color -->
+                        <div class="form-group" style="margin: 0;">
+                            <label style="font-size: 0.75rem; font-weight: 600; color: #fff; display: flex; justify-content: space-between; align-items: center;">
+                                <span>Brand Accent &amp; Button Color</span>
+                                <span id="branding-color-preview-code" style="font-family: monospace; color: #ff8c3a; font-size: 0.75rem;">#eb6711</span>
+                            </label>
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <input type="color" id="branding-primary-color-picker" value="#eb6711" style="width: 44px; height: 38px; border: none; border-radius: 6px; cursor: pointer; background: transparent;" onchange="onBrandingColorPickerChange(this.value)">
+                                <input type="text" id="branding-primary-color" class="form-control" value="#eb6711" placeholder="#eb6711" style="max-width: 130px; font-family: monospace;" oninput="onBrandingColorTextChange(this.value)">
+                                <!-- Quick Preset Color Swatches -->
+                                <div style="display: flex; gap: 0.35rem; align-items: center;">
+                                    <button type="button" title="TekTutors Orange" onclick="setBrandingColorPreset('#eb6711')" style="width: 24px; height: 24px; border-radius: 50%; background: #eb6711; border: 2px solid #fff; cursor: pointer;"></button>
+                                    <button type="button" title="Electric Blue" onclick="setBrandingColorPreset('#2563eb')" style="width: 24px; height: 24px; border-radius: 50%; background: #2563eb; border: 1px solid rgba(255,255,255,0.4); cursor: pointer;"></button>
+                                    <button type="button" title="Emerald Green" onclick="setBrandingColorPreset('#059669')" style="width: 24px; height: 24px; border-radius: 50%; background: #059669; border: 1px solid rgba(255,255,255,0.4); cursor: pointer;"></button>
+                                    <button type="button" title="Royal Purple" onclick="setBrandingColorPreset('#7c3aed')" style="width: 24px; height: 24px; border-radius: 50%; background: #7c3aed; border: 1px solid rgba(255,255,255,0.4); cursor: pointer;"></button>
+                                    <button type="button" title="Crimson Red" onclick="setBrandingColorPreset('#e11d48')" style="width: 24px; height: 24px; border-radius: 50%; background: #e11d48; border: 1px solid rgba(255,255,255,0.4); cursor: pointer;"></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Footer Customization -->
+                    <div style="background: rgba(15, 23, 42, 0.45); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <span style="font-size: 0.82rem; font-weight: 700; color: #10b981; display: flex; align-items: center; gap: 0.4rem;">
+                                <i class="fa-solid fa-shoe-prints"></i> Email Footer &amp; Contact Line
+                            </span>
+                            <span class="badge" style="background: rgba(16,185,129,0.15); color: #10b981; font-size: 0.68rem;">Bottom Footer</span>
+                        </div>
+
+                        <div class="form-group" style="margin: 0;">
+                            <label for="branding-footer-contact" style="font-size: 0.75rem; font-weight: 600; color: #fff;">WhatsApp &amp; Support Contact Text</label>
+                            <textarea id="branding-footer-contact" class="form-control" rows="2" placeholder="Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517" oninput="updateEmailBrandingLivePreview()"></textarea>
+                            <small style="font-size: 0.68rem; color: var(--text-muted);">Phone numbers (+234...) are automatically converted into clickable WhatsApp chat links.</small>
+                        </div>
+
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                            <div class="form-group" style="margin: 0;">
+                                <label for="branding-footer-copyright" style="font-size: 0.75rem; font-weight: 600; color: #fff;">Copyright Notice</label>
+                                <input type="text" id="branding-footer-copyright" class="form-control" placeholder="TekTutors Academy. All rights reserved." oninput="updateEmailBrandingLivePreview()">
+                            </div>
+                            <div class="form-group" style="margin: 0;">
+                                <label for="branding-footer-extra" style="font-size: 0.75rem; font-weight: 600; color: #fff;">Address &amp; Compliance Notes</label>
+                                <input type="text" id="branding-footer-extra" class="form-control" placeholder="e.g. Lagos, Nigeria • Unsubscribe" oninput="updateEmailBrandingLivePreview()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Advanced Custom HTML Overrides (Collapsible) -->
+                    <div style="background: rgba(15, 23, 42, 0.3); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.75rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleAdvancedHtmlOverrides()">
+                            <span style="font-size: 0.78rem; font-weight: 600; color: #94a3b8; display: flex; align-items: center; gap: 0.4rem;">
+                                <i class="fa-solid fa-code"></i> Advanced Raw HTML Overrides (Optional)
+                            </span>
+                            <i id="branding-advanced-chevron" class="fa-solid fa-chevron-down" style="font-size: 0.75rem; color: #94a3b8;"></i>
+                        </div>
+                        <div id="branding-advanced-html-container" style="display: none; margin-top: 0.75rem; flex-direction: column; gap: 0.6rem;">
+                            <div class="form-group" style="margin: 0;">
+                                <label for="branding-custom-header-html" style="font-size: 0.72rem; color: #fff;">Custom Header HTML (Replaces top banner table row):</label>
+                                <textarea id="branding-custom-header-html" class="form-control" rows="3" style="font-family: monospace; font-size: 0.75rem;" placeholder="Leave empty to use the standard high-converting banner above..." oninput="updateEmailBrandingLivePreview()"></textarea>
+                            </div>
+                            <div class="form-group" style="margin: 0;">
+                                <label for="branding-custom-footer-html" style="font-size: 0.72rem; color: #fff;">Custom Footer HTML (Replaces footer table row):</label>
+                                <textarea id="branding-custom-footer-html" class="form-control" rows="3" style="font-family: monospace; font-size: 0.75rem;" placeholder="Leave empty to use the standard high-converting footer above..." oninput="updateEmailBrandingLivePreview()"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Action Buttons -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                        <button type="button" class="btn btn-secondary" onclick="resetEmailBrandingDefaults()">
+                            <i class="fa-solid fa-arrow-rotate-left"></i> Reset Defaults
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-email-branding">
+                            <i class="fa-solid fa-floppy-disk"></i> Save Header &amp; Footer
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Right: Interactive Live HTML Preview Pane -->
+                <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; display: flex; flex-direction: column; height: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border-color);">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #ff8c3a; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-eye"></i> Real-Time Email Preview
+                        </span>
+                        <span class="badge" style="background: rgba(235,103,17,0.15); color: #ff8c3a; font-size: 0.68rem;">Live Render</span>
+                    </div>
+                    <div style="flex: 1; border-radius: 8px; overflow: hidden; background: #fff; min-height: 480px; position: relative;">
+                        <iframe id="branding-preview-iframe" style="width: 100%; height: 100%; min-height: 480px; border: none;" title="Email Header &amp; Footer Live Preview"></iframe>
+                    </div>
+                    <p style="font-size: 0.7rem; color: var(--text-muted); margin: 0.4rem 0 0 0; text-align: center;">
+                        ⚡ Live preview reflects the exact responsive HTML students see on mobile and desktop email clients.
+                    </p>
+                </div>
             </div>
         </div>
     </div>

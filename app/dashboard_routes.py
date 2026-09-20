@@ -17,11 +17,15 @@ from app.schemas import (
     SystemConfigResponse, SystemConfigUpdate, LeadStatusUpdate, 
     LeadNotesUpdate, CampaignSendRequest, CampaignUpdateRequest, AppointmentStatusUpdate,
     SingleEmailSendRequest, BroadcastEmailSendRequest,
-    LeadBulkImportRequest, LeadBulkImportItem
+    LeadBulkImportRequest, LeadBulkImportItem,
+    EmailBrandingResponse, EmailBrandingUpdate, EmailBrandingPreviewRequest
 )
 from app.whatsapp import whatsapp_client
 from app.agent import agent_manager, SYSTEM_PROMPT_TEXT, strip_asterisks
-from app.email_service import PREBUILT_EMAIL_TEMPLATES, send_email_async, render_branded_email_html
+from app.email_service import (
+    PREBUILT_EMAIL_TEMPLATES, send_email_async, render_branded_email_html,
+    get_email_branding_cache, update_email_branding_cache, sync_email_branding_from_db
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Admin Dashboard & Simulator API"])
@@ -1444,6 +1448,17 @@ async def update_settings(payload: SystemConfigUpdate, db: AsyncSession = Depend
     except Exception:
         pass
 
+    # Keep email branding cache in sync if branding fields updated
+    branding_sync = {}
+    for bk in ["email_header_title", "email_header_subtitle", "email_header_badge", "email_primary_color",
+               "email_footer_contact", "email_footer_copyright", "email_footer_extra",
+               "email_custom_header_html", "email_custom_footer_html"]:
+        if bk in update_data:
+            cache_k = bk.replace("email_", "")
+            branding_sync[cache_k] = update_data[bk]
+    if branding_sync:
+        update_email_branding_cache(branding_sync)
+
     return config
 
 
@@ -1539,6 +1554,111 @@ async def get_email_logs(
     ]
 
 
+@router.get("/api/emails/branding", response_model=EmailBrandingResponse)
+async def get_email_branding(db: AsyncSession = Depends(get_db)):
+    """Fetch current editable email branding, header, and footer configuration."""
+    stmt = select(SystemConfig).limit(1)
+    res = await db.execute(stmt)
+    config = res.scalar_one_or_none()
+    
+    if not config:
+        return EmailBrandingResponse()
+        
+    update_email_branding_cache({
+        "header_title": config.email_header_title or "TekTutors",
+        "header_subtitle": config.email_header_subtitle or "Practical Data Analytics & AI Mentorship Academy",
+        "header_badge": config.email_header_badge or "Live 1-on-1 Mentorship",
+        "primary_color": config.email_primary_color or "#eb6711",
+        "footer_contact": config.email_footer_contact or "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517",
+        "footer_copyright": config.email_footer_copyright or "TekTutors Academy. All rights reserved.",
+        "footer_extra": config.email_footer_extra or "",
+        "custom_header_html": config.email_custom_header_html,
+        "custom_footer_html": config.email_custom_footer_html
+    })
+    
+    return EmailBrandingResponse(
+        header_title=config.email_header_title or "TekTutors",
+        header_subtitle=config.email_header_subtitle or "Practical Data Analytics & AI Mentorship Academy",
+        header_badge=config.email_header_badge or "Live 1-on-1 Mentorship",
+        primary_color=config.email_primary_color or "#eb6711",
+        footer_contact=config.email_footer_contact or "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517",
+        footer_copyright=config.email_footer_copyright or "TekTutors Academy. All rights reserved.",
+        footer_extra=config.email_footer_extra or "",
+        custom_header_html=config.email_custom_header_html,
+        custom_footer_html=config.email_custom_footer_html
+    )
+
+
+@router.put("/api/emails/branding", response_model=EmailBrandingResponse)
+async def update_email_branding(payload: EmailBrandingUpdate, db: AsyncSession = Depends(get_db)):
+    """Update editable email branding, header, footer, and theme colors."""
+    stmt = select(SystemConfig).limit(1)
+    res = await db.execute(stmt)
+    config = res.scalar_one_or_none()
+    
+    if not config:
+        config = SystemConfig()
+        db.add(config)
+        await db.flush()
+
+    data = payload.model_dump(exclude_unset=True)
+    mapping = {
+        "header_title": "email_header_title",
+        "header_subtitle": "email_header_subtitle",
+        "header_badge": "email_header_badge",
+        "primary_color": "email_primary_color",
+        "footer_contact": "email_footer_contact",
+        "footer_copyright": "email_footer_copyright",
+        "footer_extra": "email_footer_extra",
+        "custom_header_html": "email_custom_header_html",
+        "custom_footer_html": "email_custom_footer_html"
+    }
+    
+    cache_update = {}
+    for api_key, model_field in mapping.items():
+        if api_key in data:
+            val = data[api_key]
+            setattr(config, model_field, val)
+            cache_update[api_key] = val
+
+    await db.commit()
+    await db.refresh(config)
+    update_email_branding_cache(cache_update)
+    
+    return EmailBrandingResponse(
+        header_title=config.email_header_title or "TekTutors",
+        header_subtitle=config.email_header_subtitle or "Practical Data Analytics & AI Mentorship Academy",
+        header_badge=config.email_header_badge or "Live 1-on-1 Mentorship",
+        primary_color=config.email_primary_color or "#eb6711",
+        footer_contact=config.email_footer_contact or "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517",
+        footer_copyright=config.email_footer_copyright or "TekTutors Academy. All rights reserved.",
+        footer_extra=config.email_footer_extra or "",
+        custom_header_html=config.email_custom_header_html,
+        custom_footer_html=config.email_custom_footer_html
+    )
+
+
+@router.post("/api/emails/branding/preview")
+async def preview_email_branding(payload: EmailBrandingPreviewRequest):
+    """Generate instant live HTML preview using candidate header & footer branding settings."""
+    html = render_branded_email_html(
+        subject=payload.sample_subject or "Welcome to TekTutors Live 1-on-1 Mentorship",
+        body_markdown=payload.sample_body or "Sample email content",
+        cta_text=payload.cta_text or "Register Online",
+        cta_url=payload.cta_url or "https://tektutors.com.ng/registration",
+        header_title=payload.header_title,
+        header_subtitle=payload.header_subtitle,
+        header_badge=payload.header_badge,
+        primary_color=payload.primary_color,
+        footer_contact=payload.footer_contact,
+        footer_copyright=payload.footer_copyright,
+        footer_extra=payload.footer_extra,
+        custom_header_html=payload.custom_header_html,
+        custom_footer_html=payload.custom_footer_html
+    )
+    return {"html": html}
+
+
 @router.post("/api/emails/preview")
 async def preview_email_html(payload: dict = Body(...)):
     """Generate and return branded HTML preview for an email draft."""
@@ -1553,7 +1673,16 @@ async def preview_email_html(payload: dict = Body(...)):
         body_markdown=body,
         cta_text=cta_text,
         cta_url=cta_url,
-        recipient_name=recipient_name
+        recipient_name=recipient_name,
+        header_title=payload.get("header_title"),
+        header_subtitle=payload.get("header_subtitle"),
+        header_badge=payload.get("header_badge"),
+        primary_color=payload.get("primary_color"),
+        footer_contact=payload.get("footer_contact"),
+        footer_copyright=payload.get("footer_copyright"),
+        footer_extra=payload.get("footer_extra"),
+        custom_header_html=payload.get("custom_header_html"),
+        custom_footer_html=payload.get("custom_footer_html")
     )
     return {"html": html}
 

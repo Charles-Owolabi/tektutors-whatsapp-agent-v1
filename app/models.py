@@ -97,6 +97,17 @@ class SystemConfig(Base):
     outbound_webhook_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     outbound_webhook_secret: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
 
+    # Editable Email Branding, Header & Footer Configuration
+    email_header_title: Mapped[Optional[str]] = mapped_column(String(150), default="TekTutors")
+    email_header_subtitle: Mapped[Optional[str]] = mapped_column(String(255), default="Practical Data Analytics & AI Mentorship Academy")
+    email_header_badge: Mapped[Optional[str]] = mapped_column(String(100), default="Live 1-on-1 Mentorship")
+    email_primary_color: Mapped[Optional[str]] = mapped_column(String(30), default="#eb6711")
+    email_footer_contact: Mapped[Optional[str]] = mapped_column(Text, default="Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517")
+    email_footer_copyright: Mapped[Optional[str]] = mapped_column(String(255), default="TekTutors Academy. All rights reserved.")
+    email_footer_extra: Mapped[Optional[str]] = mapped_column(Text, default="")
+    email_custom_header_html: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    email_custom_footer_html: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
 class CostTelemetry(Base):
     __tablename__ = "cost_telemetry"
 
