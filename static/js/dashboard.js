@@ -1561,8 +1561,13 @@ async function dispatchBroadcastCampaign() {
             body: JSON.stringify(payload)
         });
         const data = await res.json();
-        if (res.ok && data.status === 'success') {
-            showToast(`🚀 ${data.message}`);
+        if (res.ok) {
+            if (data.failed_count > 0) {
+                showCampaignDeliveryReport(data);
+                showToast(data.message, 'warning');
+            } else {
+                showToast(`🚀 ${data.message}`);
+            }
             fetchConversations();
             if (typeof fetchLeads === 'function') fetchLeads();
             if (typeof fetchCRMStats === 'function') fetchCRMStats();
@@ -3064,4 +3069,66 @@ function toggleAdvancedHtmlOverrides() {
 }
 
 
+function showCampaignDeliveryReport(data) {
+    // Remove existing modal if any
+    const existing = document.getElementById('campaign-delivery-modal');
+    if (existing) existing.remove();
 
+    const failures = (data.delivery_details || []).filter(d => d.status === 'failed');
+    let failuresHtml = '';
+    if (failures.length > 0) {
+        failuresHtml = `
+            <div style="margin-top: 1rem; max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 0.75rem;">
+                <div style="font-size: 0.78rem; font-weight: 700; color: #f87171; margin-bottom: 0.5rem;">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i> FAILED RECIPIENTS (${failures.length}):
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    ${failures.map(f => `
+                        <div style="font-size: 0.76rem; border-left: 3px solid #ef4444; padding-left: 0.5rem; background: rgba(239, 68, 68, 0.08); padding: 0.4rem 0.6rem; border-radius: 4px;">
+                            <div style="font-weight: 600; color: #fca5a5;">${f.name} (<code>${f.phone}</code>)</div>
+                            <div style="color: #cbd5e1; margin-top: 0.2rem;">Reason: ${f.error || 'Rejected by Meta WhatsApp API'}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    const modalHtml = `
+        <div id="campaign-delivery-modal" class="modal-overlay active" style="z-index: 11000;">
+            <div class="modal-card" style="max-width: 520px; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
+                <div class="modal-header d-flex justify-content-between align-items-center">
+                    <h3 class="modal-title" style="font-size: 1.15rem;">
+                        <i class="fa-solid fa-bullhorn text-warning me-2"></i> WhatsApp Delivery Report
+                    </h3>
+                    <button class="btn-icon-sm" onclick="document.getElementById('campaign-delivery-modal').remove()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body p-3">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                        <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 0.75rem; text-align: center;">
+                            <div style="font-size: 0.75rem; color: #6ee7b7; font-weight: 600; text-transform: uppercase;">Delivered</div>
+                            <div style="font-size: 1.6rem; font-weight: 800; color: #10b981;">${data.delivered_count || 0}</div>
+                        </div>
+                        <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 0.75rem; text-align: center;">
+                            <div style="font-size: 0.75rem; color: #fca5a5; font-weight: 600; text-transform: uppercase;">Failed on WhatsApp</div>
+                            <div style="font-size: 1.6rem; font-weight: 800; color: #ef4444;">${data.failed_count || 0}</div>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 0.5rem;">${data.message}</p>
+                    ${failuresHtml}
+                </div>
+                <div class="modal-footer p-3 d-flex justify-content-between">
+                    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('campaign-delivery-modal').remove()">
+                        Dismiss
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="document.getElementById('campaign-delivery-modal').remove(); askCopilot('Explain why my WhatsApp campaign had failed deliveries and how to fix it.');">
+                        <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Troubleshoot with AI Copilot
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}

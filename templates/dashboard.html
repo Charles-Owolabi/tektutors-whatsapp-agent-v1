@@ -80,6 +80,12 @@
                     <i class="fa-solid fa-sliders"></i>
                     <span>System Settings</span>
                 </button>
+                            <div class="nav-section-label">AI COPILOT & SUPPORT</div>
+                <button class="nav-btn" data-tab="copilot">
+                    <i class="fa-solid fa-wand-magic-sparkles text-primary"></i>
+                    <span>AI Support & Guide</span>
+                    <span class="badge badge-hot">COPILOT</span>
+                </button>
             </nav>
 
             <div class="user-guide-box" style="margin-top: auto; padding: 0.85rem; background: rgba(235, 103, 17, 0.08); border: 1px solid rgba(235, 103, 17, 0.25); border-radius: 10px; text-align: center; margin-bottom: 0.75rem;">
@@ -1186,6 +1192,137 @@
                     </div>
                 </div>
             </section>
+        
+            <!-- AI Copilot & System Support Tab -->
+            <section id="tab-copilot" class="tab-pane">
+                <div class="tab-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="tab-title"><i class="fa-solid fa-wand-magic-sparkles text-primary me-2"></i> TekTutors In-App AI Support & Troubleshooter</h2>
+                        <p class="tab-subtitle">Real-time troubleshooting, operational diagnostics, and step-by-step guidance for WhatsApp, campaigns, and CRM.</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-secondary btn-sm" id="btn-refresh-diagnostics" onclick="refreshSupportDiagnostics()">
+                            <i class="fa-solid fa-arrows-rotate me-1"></i> Refresh Health Check
+                        </button>
+                    </div>
+                </div>
+
+                <div class="copilot-grid">
+                    <!-- Left Column: Diagnostic Health & Rules Telemetry -->
+                    <div class="copilot-sidebar-panel">
+                        <!-- Live Health Card -->
+                        <div class="card p-3 mb-3 bg-dark-glass">
+                            <h4 class="card-title text-sm text-uppercase text-muted mb-3">
+                                <i class="fa-solid fa-heart-pulse text-danger me-1"></i> Real-Time Service Health
+                            </h4>
+                            <div class="diag-status-list" id="diag-status-list">
+                                <div class="diag-status-item">
+                                    <span class="diag-label"><i class="fa-brands fa-whatsapp text-success me-1"></i> WhatsApp Cloud API:</span>
+                                    <span class="badge bg-secondary" id="diag-wa-badge">Checking...</span>
+                                </div>
+                                <div class="diag-status-item">
+                                    <span class="diag-label"><i class="fa-solid fa-brain text-info me-1"></i> Groq AI LLM:</span>
+                                    <span class="badge bg-secondary" id="diag-groq-badge">Checking...</span>
+                                </div>
+                                <div class="diag-status-item">
+                                    <span class="diag-label"><i class="fa-solid fa-envelope text-warning me-1"></i> Email Engine:</span>
+                                    <span class="badge bg-secondary" id="diag-email-badge">Checking...</span>
+                                </div>
+                                <div class="diag-status-item">
+                                    <span class="diag-label"><i class="fa-solid fa-database text-primary me-1"></i> Database:</span>
+                                    <span class="badge bg-secondary" id="diag-db-badge">Checking...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Last Broadcast Telemetry Card -->
+                        <div class="card p-3 mb-3 bg-dark-glass" id="diag-last-campaign-card">
+                            <h4 class="card-title text-sm text-uppercase text-muted mb-2">
+                                <i class="fa-solid fa-bullhorn text-warning me-1"></i> Latest WhatsApp Broadcast
+                            </h4>
+                            <div id="diag-last-campaign-content" class="text-sm text-muted">
+                                No broadcast has been dispatched in the current session yet.
+                            </div>
+                        </div>
+
+                        <!-- Meta WhatsApp Rules Quick Ref -->
+                        <div class="card p-3 bg-dark-glass">
+                            <h4 class="card-title text-sm text-uppercase text-muted mb-2">
+                                <i class="fa-solid fa-circle-info text-info me-1"></i> Why Campaigns May Fail
+                            </h4>
+                            <ul class="text-xs text-muted ps-3 mb-0" style="line-height: 1.6;">
+                                <li><strong class="text-light">24-Hour Care Window:</strong> Meta forbids free-form text to contacts who haven't messaged you in 24 hours. Only recent contacts receive regular broadcasts.</li>
+                                <li><strong class="text-light">Sandbox Restriction:</strong> In Meta Dev Mode, messages only deliver to verified numbers in your Meta Developer Console.</li>
+                                <li><strong class="text-light">Phone Format:</strong> Use international E.164 (e.g. <code>2348012345678</code>) without <code>+</code> or leading <code>0</code>.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Interactive Support Chat -->
+                    <div class="copilot-chat-panel card">
+                        <div class="copilot-chat-header d-flex justify-content-between align-items-center p-3 border-bottom">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="copilot-avatar">
+                                    <i class="fa-solid fa-robot text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">TekTutors AI Support Copilot</div>
+                                    <div class="text-xs text-success d-flex align-items-center gap-1">
+                                        <span class="pulse-dot-sm"></span> Online & Ready to Assist
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="clearCopilotChat('tab')">
+                                <i class="fa-solid fa-trash-can me-1"></i> Clear Chat
+                            </button>
+                        </div>
+
+                        <!-- Suggested Quick Actions Chips -->
+                        <div class="copilot-chips-bar p-2 border-bottom d-flex flex-wrap gap-2">
+                            <button class="copilot-chip" onclick="askCopilot('Why did only 1 out of 3 recipients receive my WhatsApp campaign broadcast?')">
+                                🩺 Why did only 1 recipient receive my campaign?
+                            </button>
+                            <button class="copilot-chip" onclick="askCopilot('How do I send campaigns outside the 24-hour customer window using Meta templates?')">
+                                📜 How to use Meta WhatsApp Templates
+                            </button>
+                            <button class="copilot-chip" onclick="askCopilot('Why is the WhatsApp bot not responding to incoming messages?')">
+                                ⚡ WhatsApp Webhook & Token Troubleshooter
+                            </button>
+                            <button class="copilot-chip" onclick="askCopilot('How does automated lead scoring and qualification work?')">
+                                🎯 Leads CRM & Scoring Guide
+                            </button>
+                            <button class="copilot-chip" onclick="askCopilot('How do I configure custom email domains with Resend or SMTP?')">
+                                📧 Email Hub & Domain Setup
+                            </button>
+                        </div>
+
+                        <!-- Messages Stream -->
+                        <div class="copilot-messages-box p-3" id="tab-copilot-messages">
+                            <div class="copilot-msg copilot-msg-bot">
+                                <div class="copilot-msg-avatar"><i class="fa-solid fa-robot"></i></div>
+                                <div class="copilot-msg-bubble">
+                                    <p class="mb-1"><strong>Hello! I am your TekTutors In-App AI Support & Troubleshooter Copilot.</strong></p>
+                                    <p class="mb-2 text-sm">I can explain any feature of this CRM, guide you through broadcasts, and troubleshoot delivery or integration issues in real time.</p>
+                                    <p class="mb-0 text-xs text-muted">Click any of the quick diagnostic pills above or type your question below!</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Input Box -->
+                        <div class="copilot-input-box p-3 border-top">
+                            <form id="tab-copilot-form" onsubmit="handleCopilotSubmit(event, 'tab')">
+                                <div class="input-group">
+                                    <textarea id="tab-copilot-input" class="form-control" rows="1" placeholder="Ask about campaigns, WhatsApp delivery, leads, email hub, or errors..." style="resize: none;" onkeydown="handleCopilotKeydown(event, 'tab')"></textarea>
+                                    <button class="btn btn-primary px-3" type="submit" id="tab-copilot-send-btn">
+                                        <i class="fa-solid fa-paper-plane me-1"></i> Send
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 
@@ -1761,5 +1898,359 @@
     <div id="toast-container" style="position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem;"></div>
 
     <script src="/static/js/dashboard.js?v=1.0.2"></script>
+
+    <!-- Floating AI Support Copilot Trigger & Drawer -->
+    <div id="floating-copilot-container">
+        <!-- Floating Pill Button -->
+        <button id="floating-copilot-btn" class="floating-copilot-btn" onclick="toggleFloatingCopilot()" title="Ask AI Support & Troubleshooter">
+            <span class="copilot-pulse-ring"></span>
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span class="btn-text">AI Support</span>
+        </button>
+
+        <!-- Floating Drawer Window -->
+        <div id="floating-copilot-drawer" class="floating-copilot-drawer d-none">
+            <div class="floating-header d-flex justify-content-between align-items-center p-3 border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="copilot-avatar-sm">
+                        <i class="fa-solid fa-robot text-primary"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-sm">TekTutors AI Support Copilot</div>
+                        <div class="text-xs text-muted">In-App Troubleshooter & Guide</div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                    <button class="btn-icon-sm" onclick="toggleFloatingCopilot()" title="Close">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Drawer Quick Chips -->
+            <div class="floating-chips p-2 border-bottom d-flex gap-1 overflow-auto">
+                <button class="copilot-chip-sm" onclick="askCopilot('Why did only 1 out of 3 recipients receive my WhatsApp campaign broadcast?')">
+                    🩺 1 of 3 Received Campaign
+                </button>
+                <button class="copilot-chip-sm" onclick="askCopilot('Why is WhatsApp bot not replying?')">
+                    ⚡ Bot Offline?
+                </button>
+                <button class="copilot-chip-sm" onclick="askCopilot('How do I send a WhatsApp campaign?')">
+                    🚀 Broadcast Guide
+                </button>
+            </div>
+
+            <!-- Drawer Messages Body -->
+            <div class="floating-messages p-3" id="floating-copilot-messages">
+                <div class="copilot-msg copilot-msg-bot">
+                    <div class="copilot-msg-avatar"><i class="fa-solid fa-robot"></i></div>
+                    <div class="copilot-msg-bubble text-sm">
+                        <p class="mb-1"><strong>Hi there!</strong> How can I help you with TekTutors CRM today?</p>
+                        <p class="mb-0 text-xs text-muted">Ask anything about campaigns, leads, or troubleshooting WhatsApp delivery!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Drawer Input Area -->
+            <div class="floating-input-area p-2 border-top">
+                <form id="floating-copilot-form" onsubmit="handleCopilotSubmit(event, 'floating')">
+                    <div class="input-group input-group-sm">
+                        <input type="text" id="floating-copilot-input" class="form-control" placeholder="Ask AI Support or report an issue..." autocomplete="off">
+                        <button class="btn btn-primary" type="submit" id="floating-copilot-send-btn">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+<script>
+// ==========================================
+// TekTutors In-App AI Support & Troubleshooter
+// ==========================================
+
+const copilotChatHistory = [];
+
+function toggleFloatingCopilot() {
+    const drawer = document.getElementById('floating-copilot-drawer');
+    if (!drawer) return;
+    drawer.classList.toggle('d-none');
+    if (!drawer.classList.contains('d-none')) {
+        const input = document.getElementById('floating-copilot-input');
+        if (input) input.focus();
+        scrollCopilotMessages('floating');
+    }
+}
+
+function scrollCopilotMessages(mode) {
+    const containerId = mode === 'floating' ? 'floating-copilot-messages' : 'tab-copilot-messages';
+    const box = document.getElementById(containerId);
+    if (box) {
+        box.scrollTop = box.scrollHeight;
+    }
+}
+
+function handleCopilotKeydown(event, mode) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        handleCopilotSubmit(event, mode);
+    }
+}
+
+function clearCopilotChat(mode) {
+    copilotChatHistory.length = 0;
+    const box = document.getElementById(mode === 'floating' ? 'floating-copilot-messages' : 'tab-copilot-messages');
+    if (box) {
+        box.innerHTML = `
+            <div class="copilot-msg copilot-msg-bot">
+                <div class="copilot-msg-avatar"><i class="fa-solid fa-robot"></i></div>
+                <div class="copilot-msg-bubble text-sm">
+                    <p class="mb-0">Chat history cleared. How can I assist you now?</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function askCopilot(question) {
+    // If floating drawer is open, ask there; otherwise, switch to tab or open drawer
+    const drawer = document.getElementById('floating-copilot-drawer');
+    if (drawer && !drawer.classList.contains('d-none')) {
+        const input = document.getElementById('floating-copilot-input');
+        if (input) {
+            input.value = question;
+            document.getElementById('floating-copilot-form').dispatchEvent(new Event('submit', { cancelable: true }));
+        }
+    } else {
+        // Activate copilot tab
+        const copilotNavBtn = document.querySelector('.nav-btn[data-tab="copilot"]');
+        if (copilotNavBtn) {
+            copilotNavBtn.click();
+        }
+        const input = document.getElementById('tab-copilot-input');
+        if (input) {
+            input.value = question;
+            document.getElementById('tab-copilot-form').dispatchEvent(new Event('submit', { cancelable: true }));
+        }
+    }
+}
+
+function formatMarkdownForDisplay(text) {
+    if (!text) return '';
+    let formatted = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    // Code blocks
+    formatted = formatted.replace(/```([a-zA-Z]*)\n([\s\S]*?)```/g, '<pre class="copilot-code-block"><code>$2</code></pre>');
+    // Inline code
+    formatted = formatted.replace(/`([^`]+)`/g, '<code class="copilot-inline-code">$1</code>');
+    // Headers
+    formatted = formatted.replace(/^### (.*$)/gim, '<h5 class="fw-bold text-primary mt-2 mb-1">$1</h5>');
+    formatted = formatted.replace(/^## (.*$)/gim, '<h4 class="fw-bold text-light mt-2 mb-1">$1</h4>');
+    // Bold
+    formatted = formatted.replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/\*([^\*\n]+)\*/g, '<strong>$1</strong>');
+    // Bullets
+    formatted = formatted.replace(/^\s*[•\-]\s+(.*$)/gim, '<li class="text-sm">$1</li>');
+    // Numbers
+    formatted = formatted.replace(/^\s*(\d+)\.\s+(.*$)/gim, '<div class="ps-2 text-sm"><strong>$1.</strong> $2</div>');
+    // Newlines to <br> where appropriate
+    formatted = formatted.replace(/\n/g, '<br>');
+    return formatted;
+}
+
+async function handleCopilotSubmit(event, mode) {
+    if (event) event.preventDefault();
+    const inputId = mode === 'floating' ? 'floating-copilot-input' : 'tab-copilot-input';
+    const sendBtnId = mode === 'floating' ? 'floating-copilot-send-btn' : 'tab-copilot-send-btn';
+    const messagesBoxId = mode === 'floating' ? 'floating-copilot-messages' : 'tab-copilot-messages';
+
+    const input = document.getElementById(inputId);
+    const sendBtn = document.getElementById(sendBtnId);
+    const messagesBox = document.getElementById(messagesBoxId);
+    if (!input || !input.value.trim()) return;
+
+    const userText = input.value.trim();
+    input.value = '';
+
+    // Append User Message to UI
+    const userMsgHtml = `
+        <div class="copilot-msg copilot-msg-user">
+            <div class="copilot-msg-bubble">
+                <p class="mb-0 text-sm">${userText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+            </div>
+            <div class="copilot-msg-avatar user-avatar"><i class="fa-solid fa-user"></i></div>
+        </div>
+    `;
+    messagesBox.insertAdjacentHTML('beforeend', userMsgHtml);
+
+    // Append Loading Bot Message
+    const loadingId = 'copilot-loading-' + Date.now();
+    const loadingHtml = `
+        <div class="copilot-msg copilot-msg-bot" id="${loadingId}">
+            <div class="copilot-msg-avatar"><i class="fa-solid fa-robot"></i></div>
+            <div class="copilot-msg-bubble">
+                <div class="d-flex align-items-center gap-2 text-sm text-muted">
+                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                    <span>Analyzing system telemetry & preparing solution...</span>
+                </div>
+            </div>
+        </div>
+    `;
+    messagesBox.insertAdjacentHTML('beforeend', loadingHtml);
+    scrollCopilotMessages(mode);
+
+    if (sendBtn) sendBtn.disabled = true;
+
+    try {
+        const response = await fetch('/api/support/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: userText,
+                history: copilotChatHistory
+            })
+        });
+
+        const data = await response.json();
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
+
+        const replyRaw = data.reply || 'No response returned.';
+        const formattedReply = formatMarkdownForDisplay(replyRaw);
+
+        const botMsgHtml = `
+            <div class="copilot-msg copilot-msg-bot">
+                <div class="copilot-msg-avatar"><i class="fa-solid fa-robot"></i></div>
+                <div class="copilot-msg-bubble">
+                    <div class="copilot-reply-content">${formattedReply}</div>
+                </div>
+            </div>
+        `;
+        messagesBox.insertAdjacentHTML('beforeend', botMsgHtml);
+
+        // Update conversation memory
+        copilotChatHistory.push({ role: 'user', content: userText });
+        copilotChatHistory.push({ role: 'assistant', content: replyRaw });
+
+        // Update diagnostics if provided
+        if (data.diagnostics) {
+            renderSupportDiagnostics(data.diagnostics);
+        }
+    } catch (err) {
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
+
+        const errorHtml = `
+            <div class="copilot-msg copilot-msg-bot">
+                <div class="copilot-msg-avatar text-danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="copilot-msg-bubble border border-danger">
+                    <p class="text-danger mb-0 text-sm">Failed to connect to AI Support: ${err.message}</p>
+                </div>
+            </div>
+        `;
+        messagesBox.insertAdjacentHTML('beforeend', errorHtml);
+    } finally {
+        if (sendBtn) sendBtn.disabled = false;
+        scrollCopilotMessages(mode);
+    }
+}
+
+async function refreshSupportDiagnostics() {
+    const btn = document.getElementById('btn-refresh-diagnostics');
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-arrows-rotate fa-spin me-1"></i> Checking...';
+
+    try {
+        const res = await fetch('/api/support/diagnose');
+        const diag = await res.json();
+        renderSupportDiagnostics(diag);
+    } catch (e) {
+        console.error('Error fetching support diagnostics:', e);
+    } finally {
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-arrows-rotate me-1"></i> Refresh Health Check';
+    }
+}
+
+function renderSupportDiagnostics(diag) {
+    if (!diag) return;
+
+    // WhatsApp
+    const waBadge = document.getElementById('diag-wa-badge');
+    if (waBadge && diag.whatsapp) {
+        if (diag.whatsapp.is_live) {
+            waBadge.className = 'badge bg-success';
+            waBadge.textContent = 'Active (Live Cloud API)';
+        } else {
+            waBadge.className = 'badge bg-warning text-dark';
+            waBadge.textContent = 'Mock / Simulator Mode';
+        }
+    }
+
+    // Groq AI
+    const groqBadge = document.getElementById('diag-groq-badge');
+    if (groqBadge && diag.groq_ai) {
+        if (diag.groq_ai.status === 'configured') {
+            groqBadge.className = 'badge bg-success';
+            groqBadge.textContent = diag.groq_ai.model || 'Groq Active';
+        } else {
+            groqBadge.className = 'badge bg-warning text-dark';
+            groqBadge.textContent = 'Fallback Mode (No Key)';
+        }
+    }
+
+    // Email
+    const emailBadge = document.getElementById('diag-email-badge');
+    if (emailBadge && diag.email) {
+        emailBadge.className = diag.email.active_engine !== 'Mock Mode' ? 'badge bg-success' : 'badge bg-secondary';
+        emailBadge.textContent = diag.email.active_engine;
+    }
+
+    // Database
+    const dbBadge = document.getElementById('diag-db-badge');
+    if (dbBadge && diag.database) {
+        dbBadge.className = 'badge bg-info text-dark';
+        dbBadge.textContent = diag.database.type;
+    }
+
+    // Latest Campaign Card
+    const campContent = document.getElementById('diag-last-campaign-content');
+    if (campContent) {
+        if (diag.last_campaign) {
+            const lc = diag.last_campaign;
+            let statusColor = lc.failed_count === 0 ? 'text-success' : (lc.delivered_count > 0 ? 'text-warning' : 'text-danger');
+            let failureHtml = '';
+            if (lc.details && lc.details.length) {
+                const fails = lc.details.filter(d => d.status === 'failed');
+                if (fails.length > 0) {
+                    failureHtml = '<div class="mt-2 text-xs text-danger"><strong>Failed Recipient Reasons:</strong><ul class="ps-3 mb-0">';
+                    fails.forEach(f => {
+                        failureHtml += `<li><code>${f.phone}</code>: ${f.error || 'Delivery rejected by WhatsApp'}</li>`;
+                    });
+                    failureHtml += '</ul></div>';
+                }
+            }
+            campContent.innerHTML = `
+                <div class="fw-bold ${statusColor} mb-1">
+                    <i class="fa-solid fa-circle-check me-1"></i> Dispatched to ${lc.total_targets} target(s):
+                    <span class="text-success">${lc.delivered_count} Delivered</span>, 
+                    <span class="text-danger">${lc.failed_count} Failed</span>
+                </div>
+                <div class="text-xs text-muted">Campaign ID: <code>${lc.campaign_id}</code> | Time: ${lc.timestamp ? lc.timestamp.slice(11, 19) : 'Recent'}</div>
+                ${failureHtml}
+            `;
+        }
+    }
+}
+
+// Automatically fetch diagnostics on page load
+document.addEventListener('DOMContentLoaded', () => {
+    refreshSupportDiagnostics();
+});
+</script>
+
 </body>
 </html>

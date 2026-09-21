@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Request, Body
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -11,6 +11,13 @@ import re
 import datetime
 from app.database import get_db
 from app.models import Conversation, Message, Lead, Course, FAQ, Appointment, SystemConfig, CostTelemetry, EmailLog, ScheduledEmail
+from pydantic import BaseModel
+class SupportChatRequest(BaseModel):
+    message: str
+    history: Optional[List[Dict[str, str]]] = None
+
+LAST_CAMPAIGN_SUMMARY: Dict[str, Any] = {}
+
 from app.schemas import (
     SimulatorChatRequest, HumanMessageRequest, HandoffToggleRequest, 
     LeadCreate, CourseCreate, CourseUpdate, FAQCreate, FAQUpdate, 
@@ -1142,6 +1149,7 @@ async def send_broadcast_campaign(payload: CampaignSendRequest, db: AsyncSession
     leads = unique_leads
         
     sent_count = 0
+    delivery_results = []
     for lead in leads:
         personalized = strip_asterisks(template_text.replace("{{name}}", lead.name or "there").replace("{{course}}", lead.course_interest or "our tech programs"))
         action_buttons = "\n\n" + "\n".join([f"🔘 [{btn}]" for btn in actions])
@@ -1164,27 +1172,86 @@ async def send_broadcast_campaign(payload: CampaignSendRequest, db: AsyncSession
         conv.last_message_at = datetime.datetime.now()
 
         # Dispatch via Meta WhatsApp Cloud API
+        delivery_status = "delivered"
+        delivery_error = None
+
         if whatsapp_client.is_configured():
             try:
                 button_items = [{"id": f"act_{i}", "title": act[:20]} for i, act in enumerate(actions[:3])]
+                res_api = None
                 if button_items:
                     res_api = await whatsapp_client.send_interactive_buttons(lead.phone, personalized, button_items)
-                    if res_api.get("error"):
-                        await whatsapp_client.send_text_message(lead.phone, full_body)
+                    if res_api and res_api.get("error"):
+                        res_fallback = await whatsapp_client.send_text_message(lead.phone, full_body)
+                        if res_fallback and res_fallback.get("error"):
+                            res_api = res_fallback
                 else:
-                    await whatsapp_client.send_text_message(lead.phone, full_body)
+                    res_api = await whatsapp_client.send_text_message(lead.phone, full_body)
+
+                if res_api and res_api.get("error"):
+                    delivery_status = "failed"
+                    err_obj = res_api.get("error", {})
+                    err_code = err_obj.get("code") if isinstance(err_obj, dict) else None
+                    err_msg = err_obj.get("message", "") if isinstance(err_obj, dict) else str(err_obj)
+
+                    if err_code == 131047:
+                        delivery_error = "Meta 24-hour service window expired (contact has not messaged your WhatsApp bot in the last 24h). Requires pre-approved Meta Template."
+                    elif err_code == 131030:
+                        delivery_error = "Meta Sandbox restriction: phone number not in verified test numbers list (Manage phone number list in Meta Developer Portal)."
+                    elif err_code == 131026:
+                        delivery_error = "Undeliverable by WhatsApp (number may not have an active WhatsApp account or invalid format)."
+                    else:
+                        delivery_error = f"Meta API Error ({err_code or 'N/A'}): {err_msg}"
             except Exception as e:
+                delivery_status = "failed"
+                delivery_error = str(e)
                 logger.error(f"Error dispatching live WhatsApp broadcast to {lead.phone}: {e}")
 
+        # If delivery failed, tag message and lead notes so CRM records accurately reflect delivery failure
+        if delivery_status == "failed":
+            msg.media_type = "failed"
+            msg.body = f"[⚠️ WhatsApp Delivery Failed: {delivery_error}]\n\n" + full_body
+            fail_note = f"[Broadcast Failed]: {delivery_error}"
+            lead.notes = (lead.notes + " | " if lead.notes else "") + fail_note
+
         sent_count += 1
+        delivery_results.append({
+            "phone": lead.phone,
+            "name": lead.name or "Student",
+            "status": delivery_status,
+            "error": delivery_error
+        })
         
     await db.commit()
+
+    delivered_count = sum(1 for d in delivery_results if d["status"] == "delivered")
+    failed_count = sum(1 for d in delivery_results if d["status"] == "failed")
+
+    global LAST_CAMPAIGN_SUMMARY
+    LAST_CAMPAIGN_SUMMARY = {
+        "timestamp": datetime.datetime.now().isoformat(),
+        "campaign_id": payload.campaign_id,
+        "total_targets": len(leads),
+        "delivered_count": delivered_count,
+        "failed_count": failed_count,
+        "is_live_whatsapp": whatsapp_client.is_configured(),
+        "details": delivery_results
+    }
+
+    status_str = "success" if failed_count == 0 else ("partial" if delivered_count > 0 else "failed")
+    summary_msg = f"Broadcast complete: {delivered_count} delivered successfully"
+    if failed_count > 0:
+        summary_msg += f", {failed_count} failed delivery on WhatsApp (see details/Copilot for breakdown)."
+
     return {
-        "status": "success",
+        "status": status_str,
         "campaign_id": payload.campaign_id,
         "recipients_count": sent_count,
+        "delivered_count": delivered_count,
+        "failed_count": failed_count,
         "is_live_whatsapp": whatsapp_client.is_configured(),
-        "message": f"Broadcast successfully dispatched to {sent_count} recipient(s) via {'WhatsApp Cloud API' if whatsapp_client.is_configured() else 'Simulator'}!"
+        "message": summary_msg,
+        "delivery_details": delivery_results
     }
 
 @router.post("/api/leads")
@@ -2046,4 +2113,32 @@ async def process_scheduled_emails_now():
     }
 
 
+# ==========================================
+# In-App AI Support & Troubleshooter Copilot
+# ==========================================
 
+@router.get("/api/support/diagnose")
+async def get_support_diagnostics_endpoint():
+    """Return real-time operational health checks and recent broadcast delivery telemetry."""
+    from app.support_agent import get_system_diagnostics
+    diag = get_system_diagnostics()
+    diag["last_campaign"] = LAST_CAMPAIGN_SUMMARY or None
+    return diag
+
+
+@router.post("/api/support/chat")
+async def support_copilot_chat(payload: SupportChatRequest):
+    """Conversational AI assistance to answer questions, guide features, and troubleshoot errors."""
+    from app.support_agent import generate_support_reply, get_system_diagnostics
+    
+    # Enrich with latest campaign summary if user query relates to campaign delivery
+    diag = get_system_diagnostics()
+    diag["last_campaign"] = LAST_CAMPAIGN_SUMMARY or None
+    
+    query = payload.message.strip()
+    if not query:
+        raise HTTPException(status_code=400, detail="Query message cannot be empty.")
+
+    res = await generate_support_reply(query=query, chat_history=payload.history)
+    res["diagnostics"]["last_campaign"] = LAST_CAMPAIGN_SUMMARY or None
+    return res
