@@ -147,6 +147,12 @@ function switchToTab(tabName) {
     navButtons.forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
     tabPanes.forEach(p => p.classList.toggle('active', p.id === `tab-${tabName}`));
 
+    // Auto-close mobile sidebar when user selects any menu item
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar && sidebar.classList.contains('mobile-open')) {
+        toggleMobileSidebar();
+    }
+
     // Update dynamic executive header title & subtitle
     const meta = TAB_METADATA[tabName];
     const headerTitle = document.getElementById('header-view-title');

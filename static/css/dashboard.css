@@ -81,11 +81,50 @@ body {
 /* Sidebar */
 .sidebar {
     width: 260px;
+    height: 100vh;
+    max-height: 100vh;
     background: rgba(10, 16, 44, 0.96);
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     padding: 1.25rem 1rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+    -webkit-overflow-scrolling: touch;
+    flex-shrink: 0;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.brand {
+    flex-shrink: 0;
+}
+
+.user-guide-box {
+    flex-shrink: 0;
+}
+
+.system-status {
+    flex-shrink: 0;
+    margin-top: 0.5rem;
+    padding-bottom: 1.25rem;
 }
 
 .brand {
@@ -2399,13 +2438,20 @@ textarea.form-control {
 @media (max-width: 900px) {
     .sidebar {
         position: fixed;
-        left: -280px;
+        left: -290px;
         top: 0;
         bottom: 0;
-        z-index: 999;
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100vh;
+        max-height: 100dvh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        z-index: 10001;
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        width: 270px;
-        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+        width: 280px;
+        box-shadow: 6px 0 30px rgba(0, 0, 0, 0.7);
     }
 
     .sidebar.mobile-open {
