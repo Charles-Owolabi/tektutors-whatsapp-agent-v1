@@ -81,19 +81,39 @@ body {
 /* Sidebar */
 .sidebar {
     width: 260px;
-    height: 100vh;
-    max-height: 100vh;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
     background: rgba(10, 16, 44, 0.96);
     border-right: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    padding: 1.25rem 1rem;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
-    -webkit-overflow-scrolling: touch;
-    flex-shrink: 0;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 1.25rem 1rem 2rem 1rem;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(255, 255, 255, 0.25) transparent !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+    flex-shrink: 0 !important;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(235, 103, 17, 0.6);
 }
 
 .sidebar::-webkit-scrollbar {
@@ -208,7 +228,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    flex: 1;
+    flex-shrink: 0;
 }
 
 .nav-btn {

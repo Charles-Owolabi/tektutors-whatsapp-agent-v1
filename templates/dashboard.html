@@ -9,12 +9,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="/static/images/tektutors-icon.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/static/css/dashboard.css?v=2.1.0">
+    <link rel="stylesheet" href="/static/css/dashboard.css?v=3.0.0">
 </head>
 <body>
     <div class="app-layout">
         <!-- Sidebar Navigation -->
-        <aside class="sidebar">
+        <aside class="sidebar" style="height: 100vh; height: 100dvh; max-height: 100vh; max-height: 100dvh; overflow-y: auto !important; overflow-x: hidden !important; -webkit-overflow-scrolling: touch !important; touch-action: pan-y !important; display: flex !important; flex-direction: column !important;">
             <div class="brand">
                 <a href="/dashboard" class="brand-link" title="TekTutors AI Control Panel">
                     <div class="brand-logo-card">
@@ -27,7 +27,7 @@
                 </a>
             </div>
 
-            <nav class="nav-menu">
+            <nav class="nav-menu" style="flex-shrink: 0; display: flex; flex-direction: column; gap: 0.5rem;">
                 <div class="nav-section-label">INBOX & SIMULATION</div>
                 <button class="nav-btn active" data-tab="handoff">
                     <i class="fa-solid fa-headset"></i>
@@ -88,7 +88,7 @@
                 </button>
             </nav>
 
-            <div class="user-guide-box" style="margin-top: auto; padding: 0.85rem; background: rgba(235, 103, 17, 0.08); border: 1px solid rgba(235, 103, 17, 0.25); border-radius: 10px; text-align: center; margin-bottom: 0.75rem;">
+            <div class="user-guide-box" style="margin-top: 1.25rem; flex-shrink: 0; padding: 0.85rem; background: rgba(235, 103, 17, 0.08); border: 1px solid rgba(235, 103, 17, 0.25); border-radius: 10px; text-align: center; margin-bottom: 0.75rem;">
                 <div style="font-size: 0.8rem; font-weight: 600; color: #ff8c3a; margin-bottom: 0.25rem;">
                     <i class="fa-solid fa-circle-question"></i> Non-Tech Quick Guide
                 </div>
