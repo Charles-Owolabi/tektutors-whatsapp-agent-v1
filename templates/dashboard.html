@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="/static/images/tektutors-icon.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/static/css/dashboard.css?v=3.0.0">
+    <link rel="stylesheet" href="/static/css/dashboard.css?v=3.1.0">
 </head>
 <body>
     <div class="app-layout">
@@ -363,7 +363,7 @@
 
             <!-- TAB 2: WHATSAPP SIMULATOR -->
             <section id="tab-simulator" class="tab-pane">
-                <div class="simulator-layout">
+                <div class="simulator-layout" id="simulator-layout">
                     <div class="simulator-info glass-card">
                         <h2><i class="fa-brands fa-whatsapp glow-icon"></i> WhatsApp Browser Simulator</h2>
                         <p>Experience the <strong>TekTutors AI Sales Agent</strong> in real-time. Test customer objections, lead qualification, and voice notes instantly without needing live Meta credentials!</p>
@@ -443,9 +443,9 @@
                     </div>
 
                     <!-- Phone Mockup Container -->
-                    <div class="phone-container">
-                        <div class="phone-mockup">
-                            <div class="phone-header">
+                    <div class="phone-container" id="sim-phone-container">
+                        <div class="phone-mockup" id="sim-phone-mockup">
+                            <div class="phone-header" id="sim-phone-header">
                                 <div class="dynamic-island">
                                     <span class="island-camera"></span>
                                     <span class="island-sensor"></span>
@@ -458,9 +458,20 @@
                                         <h4>TekTutors AI Advisor</h4>
                                         <span class="online-status"><span class="status-pulse-dot"></span> Online • WhatsApp Business</span>
                                     </div>
-                                    <button class="btn-icon sound-btn" id="sound-toggle-btn" onclick="toggleAudioChimes()" title="Toggle Notification Audio" style="margin-left: auto; color: #fff; font-size: 0.9rem;">
-                                        <i class="fa-solid fa-volume-high"></i>
-                                    </button>
+                                    <div class="advisor-window-actions ms-auto d-flex align-items-center gap-1">
+                                        <button class="btn-advisor-action sound-btn" id="sound-toggle-btn" onclick="toggleAudioChimes(event)" title="Toggle Notification Audio">
+                                            <i class="fa-solid fa-volume-high"></i>
+                                        </button>
+                                        <button class="btn-advisor-action" id="btn-advisor-min" onclick="minimizeAiAdvisor(event)" title="Minimize AI Advisor">
+                                            <i class="fa-solid fa-minus" id="advisor-min-icon"></i>
+                                        </button>
+                                        <button class="btn-advisor-action" id="btn-advisor-max" onclick="maximizeAiAdvisor(event)" title="Maximize AI Advisor">
+                                            <i class="fa-solid fa-expand" id="advisor-max-icon"></i>
+                                        </button>
+                                        <button class="btn-advisor-action btn-advisor-close" id="btn-advisor-close" onclick="closeAiAdvisor(event)" title="Close AI Advisor">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -488,6 +499,21 @@
                                 <input type="text" id="sim-user-input" placeholder="Type a message on WhatsApp..." onkeydown="if(event.key==='Enter') sendSimMessage()">
                                 <button class="sim-send-btn" onclick="sendSimMessage()">
                                     <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Advisor Closed Restore Card -->
+                        <div id="advisor-closed-card" class="advisor-closed-card" style="display: none;">
+                            <div class="advisor-closed-inner">
+                                <div class="advisor-closed-avatar">
+                                    <img src="/static/images/tektutors-icon.svg" alt="TekTutors" class="wa-avatar-img">
+                                </div>
+                                <div class="advisor-closed-text">
+                                    <h5 class="mb-1 text-light">TekTutors AI Advisor is Closed</h5>
+                                    <p class="text-xs text-muted mb-3">The WhatsApp simulator interface is currently minimized/hidden to give you maximum space.</p>
+                                </div>
+                                <button class="btn btn-primary btn-sm" onclick="reopenAiAdvisor()">
+                                    <i class="fa-solid fa-arrow-rotate-left me-1"></i> Reopen AI Advisor
                                 </button>
                             </div>
                         </div>
@@ -1207,7 +1233,7 @@
                     </div>
                 </div>
 
-                <div class="copilot-grid">
+                <div class="copilot-grid" id="copilot-grid">
                     <!-- Left Column: Diagnostic Health & Rules Telemetry -->
                     <div class="copilot-sidebar-panel">
                         <!-- Live Health Card -->
@@ -1271,10 +1297,14 @@
                                         <span class="pulse-dot-sm"></span> Online & Ready to Assist
                                     </div>
                                 </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <button class="btn btn-outline-secondary btn-sm" onclick="clearCopilotChat('tab')">
+                                    <i class="fa-solid fa-trash-can me-1"></i> Clear Chat
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" id="btn-tab-copilot-max" onclick="maximizeTabCopilot()" title="Maximize Support View">
+                                    <i class="fa-solid fa-expand" id="tab-copilot-max-icon"></i>
+                                </button>
                             </div>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="clearCopilotChat('tab')">
-                                <i class="fa-solid fa-trash-can me-1"></i> Clear Chat
-                            </button>
                         </div>
 
                         <!-- Suggested Quick Actions Chips -->
@@ -1910,18 +1940,24 @@
 
         <!-- Floating Drawer Window -->
         <div id="floating-copilot-drawer" class="floating-copilot-drawer d-none">
-            <div class="floating-header d-flex justify-content-between align-items-center p-3 border-bottom">
+            <div class="floating-header d-flex justify-content-between align-items-center p-3 border-bottom" id="floating-copilot-header" onclick="handleFloatingHeaderClick(event)">
                 <div class="d-flex align-items-center gap-2">
                     <div class="copilot-avatar-sm">
                         <i class="fa-solid fa-robot text-primary"></i>
                     </div>
                     <div>
                         <div class="fw-bold text-sm">TekTutors AI Support Copilot</div>
-                        <div class="text-xs text-muted">In-App Troubleshooter & Guide</div>
+                        <div class="text-xs text-muted" id="floating-copilot-subtitle">In-App Troubleshooter & Guide</div>
                     </div>
                 </div>
-                <div class="d-flex align-items-center gap-1">
-                    <button class="btn-icon-sm" onclick="toggleFloatingCopilot()" title="Close">
+                <div class="d-flex align-items-center gap-1 copilot-window-actions">
+                    <button class="btn-icon-sm" id="btn-copilot-min" onclick="minimizeFloatingCopilot(event)" title="Minimize Troubleshooter">
+                        <i class="fa-solid fa-minus" id="copilot-min-icon"></i>
+                    </button>
+                    <button class="btn-icon-sm" id="btn-copilot-max" onclick="maximizeFloatingCopilot(event)" title="Maximize Troubleshooter">
+                        <i class="fa-solid fa-expand" id="copilot-max-icon"></i>
+                    </button>
+                    <button class="btn-icon-sm btn-copilot-close" id="btn-copilot-close" onclick="closeFloatingCopilot(event)" title="Close Troubleshooter">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
@@ -1973,16 +2009,250 @@
 
 const copilotChatHistory = [];
 
+// ==========================================
+// Window Controls: AI Advisor (WhatsApp Simulator)
+// ==========================================
+function minimizeAiAdvisor(event) {
+    if (event) event.stopPropagation();
+    const mockup = document.getElementById('sim-phone-mockup');
+    const layout = document.getElementById('simulator-layout');
+    const minIcon = document.getElementById('advisor-min-icon');
+    const maxIcon = document.getElementById('advisor-max-icon');
+    if (!mockup) return;
+
+    const isMin = mockup.classList.toggle('is-minimized');
+    if (isMin) {
+        mockup.classList.remove('is-maximized');
+        if (layout) {
+            layout.classList.add('advisor-minimized');
+            layout.classList.remove('advisor-maximized');
+        }
+        if (minIcon) {
+            minIcon.className = 'fa-solid fa-window-restore';
+        }
+        if (maxIcon) {
+            maxIcon.className = 'fa-solid fa-expand';
+        }
+        document.getElementById('btn-advisor-min')?.setAttribute('title', 'Restore AI Advisor');
+        document.getElementById('btn-advisor-max')?.setAttribute('title', 'Maximize AI Advisor');
+    } else {
+        if (layout) layout.classList.remove('advisor-minimized');
+        if (minIcon) {
+            minIcon.className = 'fa-solid fa-minus';
+        }
+        document.getElementById('btn-advisor-min')?.setAttribute('title', 'Minimize AI Advisor');
+    }
+}
+
+function maximizeAiAdvisor(event) {
+    if (event) event.stopPropagation();
+    const mockup = document.getElementById('sim-phone-mockup');
+    const layout = document.getElementById('simulator-layout');
+    const maxIcon = document.getElementById('advisor-max-icon');
+    const minIcon = document.getElementById('advisor-min-icon');
+    if (!mockup) return;
+
+    const isMax = mockup.classList.toggle('is-maximized');
+    if (isMax) {
+        mockup.classList.remove('is-minimized');
+        if (layout) {
+            layout.classList.add('advisor-maximized');
+            layout.classList.remove('advisor-minimized');
+        }
+        if (maxIcon) {
+            maxIcon.className = 'fa-solid fa-compress';
+        }
+        if (minIcon) {
+            minIcon.className = 'fa-solid fa-minus';
+        }
+        document.getElementById('btn-advisor-max')?.setAttribute('title', 'Restore Normal Size');
+        document.getElementById('btn-advisor-min')?.setAttribute('title', 'Minimize AI Advisor');
+    } else {
+        if (layout) layout.classList.remove('advisor-maximized');
+        if (maxIcon) {
+            maxIcon.className = 'fa-solid fa-expand';
+        }
+        document.getElementById('btn-advisor-max')?.setAttribute('title', 'Maximize AI Advisor');
+    }
+}
+
+function closeAiAdvisor(event) {
+    if (event) event.stopPropagation();
+    const mockup = document.getElementById('sim-phone-mockup');
+    const closedCard = document.getElementById('advisor-closed-card');
+    const layout = document.getElementById('simulator-layout');
+    if (mockup) mockup.style.display = 'none';
+    if (closedCard) closedCard.style.display = 'flex';
+    if (layout) {
+        layout.classList.add('advisor-closed');
+        layout.classList.remove('advisor-minimized', 'advisor-maximized');
+    }
+}
+
+function reopenAiAdvisor() {
+    const mockup = document.getElementById('sim-phone-mockup');
+    const closedCard = document.getElementById('advisor-closed-card');
+    const layout = document.getElementById('simulator-layout');
+    const minIcon = document.getElementById('advisor-min-icon');
+    const maxIcon = document.getElementById('advisor-max-icon');
+
+    if (closedCard) closedCard.style.display = 'none';
+    if (mockup) {
+        mockup.style.display = '';
+        mockup.classList.remove('is-minimized', 'is-maximized');
+    }
+    if (layout) {
+        layout.classList.remove('advisor-closed', 'advisor-minimized', 'advisor-maximized');
+    }
+    if (minIcon) minIcon.className = 'fa-solid fa-minus';
+    if (maxIcon) maxIcon.className = 'fa-solid fa-expand';
+    document.getElementById('btn-advisor-min')?.setAttribute('title', 'Minimize AI Advisor');
+    document.getElementById('btn-advisor-max')?.setAttribute('title', 'Maximize AI Advisor');
+}
+
+// Click on phone header when minimized to restore
+document.addEventListener('DOMContentLoaded', () => {
+    const phoneHeader = document.getElementById('sim-phone-header');
+    if (phoneHeader) {
+        phoneHeader.addEventListener('click', (e) => {
+            const mockup = document.getElementById('sim-phone-mockup');
+            if (mockup && mockup.classList.contains('is-minimized')) {
+                if (e.target.closest('.btn-advisor-action')) return;
+                minimizeAiAdvisor(e);
+            }
+        });
+    }
+});
+
+// ==========================================
+// Window Controls: Floating AI Support & In-App Troubleshooter
+// ==========================================
 function toggleFloatingCopilot() {
     const drawer = document.getElementById('floating-copilot-drawer');
     if (!drawer) return;
     drawer.classList.toggle('d-none');
     if (!drawer.classList.contains('d-none')) {
+        drawer.classList.remove('is-minimized');
+        const minIcon = document.getElementById('copilot-min-icon');
+        if (minIcon) minIcon.className = 'fa-solid fa-minus';
+        document.getElementById('btn-copilot-min')?.setAttribute('title', 'Minimize Troubleshooter');
         const input = document.getElementById('floating-copilot-input');
         if (input) input.focus();
         scrollCopilotMessages('floating');
     }
 }
+
+function closeFloatingCopilot(event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    const drawer = document.getElementById('floating-copilot-drawer');
+    if (drawer) {
+        drawer.classList.add('d-none');
+        drawer.classList.remove('is-minimized', 'is-maximized');
+        const minIcon = document.getElementById('copilot-min-icon');
+        const maxIcon = document.getElementById('copilot-max-icon');
+        if (minIcon) minIcon.className = 'fa-solid fa-minus';
+        if (maxIcon) maxIcon.className = 'fa-solid fa-expand';
+    }
+}
+
+function minimizeFloatingCopilot(event) {
+    if (event) event.stopPropagation();
+    const drawer = document.getElementById('floating-copilot-drawer');
+    const minIcon = document.getElementById('copilot-min-icon');
+    const maxIcon = document.getElementById('copilot-max-icon');
+    const subTitle = document.getElementById('floating-copilot-subtitle');
+    if (!drawer) return;
+
+    const isMin = drawer.classList.toggle('is-minimized');
+    if (isMin) {
+        drawer.classList.remove('is-maximized');
+        if (minIcon) minIcon.className = 'fa-solid fa-window-restore';
+        if (maxIcon) maxIcon.className = 'fa-solid fa-expand';
+        if (subTitle) subTitle.textContent = 'Minimized • Click to expand';
+        document.getElementById('btn-copilot-min')?.setAttribute('title', 'Restore Troubleshooter');
+        document.getElementById('btn-copilot-max')?.setAttribute('title', 'Maximize Troubleshooter');
+    } else {
+        if (minIcon) minIcon.className = 'fa-solid fa-minus';
+        if (subTitle) subTitle.textContent = 'In-App Troubleshooter & Guide';
+        document.getElementById('btn-copilot-min')?.setAttribute('title', 'Minimize Troubleshooter');
+        const input = document.getElementById('floating-copilot-input');
+        if (input) input.focus();
+        scrollCopilotMessages('floating');
+    }
+}
+
+function maximizeFloatingCopilot(event) {
+    if (event) event.stopPropagation();
+    const drawer = document.getElementById('floating-copilot-drawer');
+    const maxIcon = document.getElementById('copilot-max-icon');
+    const minIcon = document.getElementById('copilot-min-icon');
+    const subTitle = document.getElementById('floating-copilot-subtitle');
+    if (!drawer) return;
+
+    const isMax = drawer.classList.toggle('is-maximized');
+    if (isMax) {
+        drawer.classList.remove('is-minimized');
+        if (maxIcon) maxIcon.className = 'fa-solid fa-compress';
+        if (minIcon) minIcon.className = 'fa-solid fa-minus';
+        if (subTitle) subTitle.textContent = 'In-App Troubleshooter & Guide (Full View)';
+        document.getElementById('btn-copilot-max')?.setAttribute('title', 'Restore Normal Size');
+        document.getElementById('btn-copilot-min')?.setAttribute('title', 'Minimize Troubleshooter');
+    } else {
+        if (maxIcon) maxIcon.className = 'fa-solid fa-expand';
+        if (subTitle) subTitle.textContent = 'In-App Troubleshooter & Guide';
+        document.getElementById('btn-copilot-max')?.setAttribute('title', 'Maximize Troubleshooter');
+    }
+    scrollCopilotMessages('floating');
+}
+
+function handleFloatingHeaderClick(event) {
+    const drawer = document.getElementById('floating-copilot-drawer');
+    if (drawer && drawer.classList.contains('is-minimized')) {
+        if (event.target.closest('.copilot-window-actions')) return;
+        minimizeFloatingCopilot(event);
+    }
+}
+
+// ==========================================
+// Window Controls: In-App Support Tab Chat Panel
+// ==========================================
+function maximizeTabCopilot() {
+    const grid = document.getElementById('copilot-grid');
+    const maxIcon = document.getElementById('tab-copilot-max-icon');
+    const btn = document.getElementById('btn-tab-copilot-max');
+    if (!grid) return;
+
+    const isMax = grid.classList.toggle('is-chat-maximized');
+    if (isMax) {
+        if (maxIcon) maxIcon.className = 'fa-solid fa-compress';
+        if (btn) btn.setAttribute('title', 'Restore Sidebar Health View');
+    } else {
+        if (maxIcon) maxIcon.className = 'fa-solid fa-expand';
+        if (btn) btn.setAttribute('title', 'Maximize Support View');
+    }
+    scrollCopilotMessages('tab');
+}
+
+// Escape key closes/restores maximized windows
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const simMockup = document.getElementById('sim-phone-mockup');
+        if (simMockup && simMockup.classList.contains('is-maximized')) {
+            maximizeAiAdvisor(e);
+        }
+        const drawer = document.getElementById('floating-copilot-drawer');
+        if (drawer && drawer.classList.contains('is-maximized')) {
+            maximizeFloatingCopilot(e);
+        }
+        const tabGrid = document.getElementById('copilot-grid');
+        if (tabGrid && tabGrid.classList.contains('is-chat-maximized')) {
+            maximizeTabCopilot();
+        }
+    }
+});
 
 function scrollCopilotMessages(mode) {
     const containerId = mode === 'floating' ? 'floating-copilot-messages' : 'tab-copilot-messages';
