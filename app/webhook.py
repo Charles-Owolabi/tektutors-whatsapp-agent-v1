@@ -150,6 +150,17 @@ async def process_webhook_message_in_background(conversation_id: int, phone: str
                             "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         }
                         logger.info(f"WhatsApp reply sent to {phone}. Result: {send_res}")
+
+                        # Automatically schedule personalized 3-step WhatsApp sequence for chat prospect
+                        try:
+                            from app.whatsapp_sequence import enroll_lead_in_3_step_sequence
+                            lead_stmt = select(Lead).where(Lead.phone == phone).order_by(desc(Lead.id)).limit(1)
+                            lead_res = await db.execute(lead_stmt)
+                            lead_obj = lead_res.scalars().first()
+                            if lead_obj:
+                                await enroll_lead_in_3_step_sequence(db, lead_obj, dispatch_all_now=False)
+                        except Exception as seq_err:
+                            logger.warning(f"Could not auto-enroll {phone} in WhatsApp sequence: {seq_err}")
                 else:
                     # AI is NOT active (Human mode). Generate background draft.
                     if ai_reply:

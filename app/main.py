@@ -21,7 +21,7 @@ from sqlalchemy import select
 
 from app.config import settings
 from app.database import engine, Base, AsyncSessionLocal
-from app.models import Course, FAQ, SystemConfig, EmailLog, Lead, ScheduledEmail
+from app.models import Course, FAQ, SystemConfig, EmailLog, Lead, ScheduledEmail, WhatsAppLog, ScheduledWhatsAppMessage
 from app.data import SEED_COURSES, SEED_FAQS
 from app.webhook import router as webhook_router
 from app.dashboard_routes import router as dashboard_router

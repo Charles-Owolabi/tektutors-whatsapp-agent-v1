@@ -157,3 +157,34 @@ class ScheduledEmail(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now())
     sent_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, nullable=True)
 
+class WhatsAppLog(Base):
+    __tablename__ = "whatsapp_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    lead_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("leads.id"), nullable=True)
+    recipient_phone: Mapped[str] = mapped_column(String(50), index=True, nullable=False)
+    recipient_name: Mapped[str] = mapped_column(String(100), default="Student")
+    message_type: Mapped[str] = mapped_column(String(50), default="broadcast")  # broadcast, direct, assistant, human, sequence
+    campaign_name: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(30), default="delivered")  # sent, delivered, failed
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    sent_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now())
+
+class ScheduledWhatsAppMessage(Base):
+    __tablename__ = "scheduled_whatsapp_messages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    lead_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("leads.id"), nullable=True)
+    recipient_phone: Mapped[str] = mapped_column(String(50), index=True, nullable=False)
+    recipient_name: Mapped[str] = mapped_column(String(100), default="Student")
+    sequence_step: Mapped[int] = mapped_column(Integer, default=1)  # 1, 2, or 3
+    step_title: Mapped[str] = mapped_column(String(150), default="Step 1: Curriculum & Roadmap")
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    buttons_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    scheduled_for: Mapped[datetime.datetime] = mapped_column(DateTime, index=True, nullable=False)
+    status: Mapped[str] = mapped_column(String(30), default="pending", index=True)  # pending, sent, delivered, failed, cancelled
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now())
+    sent_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, nullable=True)
+

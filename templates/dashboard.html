@@ -133,6 +133,9 @@
                 </div>
 
                 <div class="top-header-right">
+                    <button class="btn btn-sm btn-quick" onclick="openDeliveryAuditModal()" id="btn-delivery-telemetry-top" title="View Sent, Delivered &amp; Failed WhatsApp and Email Logs with 1 Click" style="border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-weight: 600;">
+                        <i class="fa-solid fa-list-check" style="color: #38bdf8;"></i> Delivery Status
+                    </button>
                     <button class="btn btn-sm btn-demo-glow" onclick="runInteractiveDemo()" title="Experience full 10-second agent walkthrough">
                         <i class="fa-solid fa-wand-magic-sparkles"></i> ✨ 10s Demo
                     </button>
@@ -226,6 +229,7 @@
                                         <span class="slider round"></span>
                                     </label>
                                 </div>
+                                <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.35rem 0.6rem; border-color: rgba(37,211,102,0.4); color: #25D366;" onclick="trigger3StepWhatsAppForCurrentLead()" title="Intelligently craft and send 3-step WhatsApp sequence to this user"><i class="fa-brands fa-whatsapp"></i> Send 3 AI Messages</button>
                                 <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.6rem;" onclick="toggleCustomer360Drawer()"><i class="fa-solid fa-id-badge"></i> Dossier</button>
                             </div>
                         </div>
@@ -719,10 +723,44 @@
             <!-- TAB 4: BROADCASTS & MARKETING CAMPAIGNS -->
             <section id="tab-campaigns" class="tab-pane">
                 <div class="glass-card panel-full" style="height: calc(100vh - 3rem); overflow-y: auto;">
-                    <div class="panel-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                    <div class="panel-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
                         <div>
-                            <h2><i class="fa-solid fa-bullhorn glow-icon"></i> WhatsApp Broadcasts & Campaign Manager</h2>
+                            <h2><i class="fa-solid fa-bullhorn glow-icon"></i> WhatsApp Broadcasts &amp; Campaign Manager</h2>
                             <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Send interactive WhatsApp promotional templates to prospects in seconds. Boost enrollment with 1-click campaigns.</p>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button class="btn btn-primary btn-sm" onclick="openWhatsAppSequenceModal()" style="display: flex; align-items: center; gap: 0.45rem; background: #25D366; border-color: #25D366; color: #0b141a; font-weight: 700;">
+                                <i class="fa-solid fa-paper-plane"></i> Send 3 AI Messages to Chat Users
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="openDeliveryAuditModal('whatsapp')" style="display: flex; align-items: center; gap: 0.45rem; border-color: rgba(37,211,102,0.4); background: rgba(37,211,102,0.08); color: #25D366; font-weight: 600;">
+                                <i class="fa-solid fa-list-check"></i> WhatsApp Delivery Status
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Automated 3-Touch WhatsApp AI Sequence Banner -->
+                    <div class="glass-card" style="background: linear-gradient(135deg, rgba(37, 211, 102, 0.08) 0%, rgba(15, 23, 42, 0.85) 100%); border: 1px solid rgba(37, 211, 102, 0.35); border-radius: 12px; padding: 1rem 1.25rem; margin-top: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <div style="max-width: 680px;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
+                                <span class="badge" style="background: rgba(37, 211, 102, 0.2); color: #25D366; font-weight: 700; border: 1px solid rgba(37, 211, 102, 0.4);">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> WHATSAPP CLOUD AUTOMATION
+                                </span>
+                                <span style="font-size: 0.72rem; color: #94a3b8;"><i class="fa-solid fa-circle-check" style="color: #25D366;"></i> 100% Meta Cloud API Compliant</span>
+                            </div>
+                            <h3 style="font-size: 1.05rem; margin: 0; color: #fff; display: flex; align-items: center; gap: 0.45rem;">
+                                <i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> Send 3 Tailored WhatsApp Messages to Chat Users
+                            </h3>
+                            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.3rem 0 0 0; line-height: 1.4;">
+                                Automatically sends a 3-touch personalized sequence to prospects who chat with Tara at a strict <strong>10-hour interval</strong>: <strong>Step 1: Immediate Roadmap (T+0h)</strong> &rarr; <strong>Step 2: Social Proof &amp; Capstones (+10 Hours)</strong> &rarr; <strong>Step 3: Admissions Urgency (+20 Hours)</strong>. Compliant with Meta WhatsApp Cloud API standards within the 24-hour service window.
+                            </p>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0;">
+                            <button class="btn btn-secondary btn-sm" onclick="openWhatsAppSequenceModal()" style="border-color: rgba(37, 211, 102, 0.4); color: #25D366;">
+                                <i class="fa-solid fa-eye"></i> Preview 3 Messages
+                            </button>
+                            <button class="btn btn-primary btn-sm" onclick="launch3StepWhatsAppSequence()" style="background: #25D366; border-color: #25D366; color: #0b141a; font-weight: 700;">
+                                <i class="fa-solid fa-paper-plane"></i> Send Now
+                            </button>
                         </div>
                     </div>
 
@@ -950,11 +988,13 @@
 
                     <!-- Dispatched Email Audit Trail & History -->
                     <div style="margin-top: 2rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
                             <h3 style="font-size: 1rem; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
                                 <i class="fa-solid fa-clock-rotate-left" style="color: #38bdf8;"></i> Dispatched Email History &amp; Audit Trail
                             </h3>
-                            <span style="font-size: 0.75rem; color: var(--text-muted);">Real-time delivery log</span>
+                            <button class="btn btn-secondary btn-sm" onclick="openDeliveryAuditModal('email')" style="display: flex; align-items: center; gap: 0.45rem; border-color: rgba(56,189,248,0.4); background: rgba(56,189,248,0.08); color: #38bdf8; font-weight: 600;">
+                                <i class="fa-solid fa-list-check"></i> Unified Delivery Status &amp; Logs
+                            </button>
                         </div>
                         <div class="table-responsive">
                             <table class="data-table">
@@ -1505,6 +1545,326 @@
                         <i class="fa-solid fa-paper-plane"></i> Send Email Now
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- INTELLIGENT 3-TOUCH WHATSAPP AI SEQUENCE MODAL                             -->
+    <!-- ========================================================================= -->
+    <div id="whatsapp-sequence-modal" class="modal-overlay" style="display: none; z-index: 1050;">
+        <div class="modal-content glass-card" style="max-width: 980px; width: 94vw; max-height: 90vh; display: flex; flex-direction: column;">
+            <!-- Modal Header -->
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                        <span class="badge" style="background: rgba(37, 211, 102, 0.2); color: #25D366; font-weight: 700; border: 1px solid rgba(37, 211, 102, 0.4);">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> WHATSAPP CLOUD API AUTOMATION
+                        </span>
+                        <span class="badge badge-roi"><i class="fa-solid fa-check"></i> Meta Graph API Compliant</span>
+                    </div>
+                    <h3 style="display: flex; align-items: center; gap: 0.6rem; font-size: 1.15rem; margin: 0; color: #fff;">
+                        <i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> 
+                        Intelligent 3-Touch WhatsApp AI Sequence
+                    </h3>
+                    <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.3rem 0 0 0;">
+                        Automatically crafts and sends 3 tailored WhatsApp messages suited to individual prospects who chat with Tara at a strict <strong>10-hour interval</strong> (T+0h, T+10h, T+20h).
+                    </p>
+                </div>
+                <button class="btn-icon" onclick="closeWhatsAppSequenceModal()" title="Close">&times;</button>
+            </div>
+
+            <!-- Target Selection & Compliance Banner -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; padding: 0.85rem 1rem; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px;">
+                <div>
+                    <label style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">
+                        Target Audience (Prospects who chatted with Tara)
+                    </label>
+                    <select id="wa-seq-audience-select" class="form-control" style="font-size: 0.85rem;" onchange="updateSequencePreviewForSelection()">
+                        <option value="all_chat_users">👥 All Prospects who Chatted with Tara</option>
+                        <option value="hot">🔥 Hot Leads Only (High Intent)</option>
+                        <option value="qualified">✅ Qualified Prospects (Curriculum Inquiries)</option>
+                        <option value="new">🆕 New Chat Inquiries</option>
+                    </select>
+                    <div style="margin-top: 0.5rem; font-size: 0.72rem; color: var(--text-muted);">
+                        Or preview for specific lead: 
+                        <select id="wa-seq-lead-select" style="background: rgba(30,41,59,0.8); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.72rem;" onchange="previewSequenceForLead(this.value)">
+                            <option value="">-- Choose Lead --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="background: rgba(37, 211, 102, 0.08); border: 1px solid rgba(37, 211, 102, 0.25); border-radius: 8px; padding: 0.65rem 0.85rem; font-size: 0.73rem;">
+                    <strong style="color: #25D366; display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.3rem;">
+                        <i class="fa-solid fa-shield-check"></i> WhatsApp Cloud Standards &amp; Timing:
+                    </strong>
+                    <ul style="margin: 0; padding-left: 1.1rem; color: #cbd5e1; line-height: 1.4;">
+                        <li><strong>10-Hour Interval:</strong> Step 1 (T+0h), Step 2 (T+10h), Step 3 (T+20h) within the 24h window.</li>
+                        <li><strong>Single-Asterisk Bolding:</strong> Uses <code>*bold*</code> (prevents broken double asterisks on mobile).</li>
+                        <li><strong>Interactive Quick-Reply Buttons:</strong> Max 3 buttons, titles &le; 20 chars.</li>
+                        <li><strong>Compliance Disclosures:</strong> Mandatory opt-out instruction included.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 3 Messages Sequence Cards Preview Grid -->
+            <div style="flex: 1; overflow-y: auto; padding-right: 0.25rem;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.85rem;" id="wa-seq-cards-grid">
+                    <!-- Step 1 Card -->
+                    <div class="glass-card" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; padding: 0.85rem; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <span class="badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; font-weight: 700;">MESSAGE 1 (Immediate)</span>
+                            <span style="font-size: 0.68rem; color: var(--text-muted);">T + 0h &bull; Discovery</span>
+                        </div>
+                        <h4 style="font-size: 0.85rem; color: #fff; margin: 0 0 0.4rem 0;">Roadmap &amp; Curriculum</h4>
+                        <div style="flex: 1; background: #0b141a; border-radius: 8px; padding: 0.65rem; color: #e9edef; font-size: 0.74rem; line-height: 1.4; white-space: pre-wrap; margin-bottom: 0.5rem; max-height: 230px; overflow-y: auto;" id="wa-seq-msg-1-text">
+                            Loading message 1...
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.3rem;" id="wa-seq-msg-1-buttons">
+                            <!-- Buttons rendered dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Step 2 Card -->
+                    <div class="glass-card" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 10px; padding: 0.85rem; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; font-weight: 700;">MESSAGE 2 (+10 Hours)</span>
+                            <span style="font-size: 0.68rem; color: var(--text-muted);">T + 10h &bull; 10h Interval</span>
+                        </div>
+                        <h4 style="font-size: 0.85rem; color: #fff; margin: 0 0 0.4rem 0;">Social Proof &amp; Capstones</h4>
+                        <div style="flex: 1; background: #0b141a; border-radius: 8px; padding: 0.65rem; color: #e9edef; font-size: 0.74rem; line-height: 1.4; white-space: pre-wrap; margin-bottom: 0.5rem; max-height: 230px; overflow-y: auto;" id="wa-seq-msg-2-text">
+                            Loading message 2...
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.3rem;" id="wa-seq-msg-2-buttons">
+                            <!-- Buttons rendered dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Step 3 Card -->
+                    <div class="glass-card" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(37, 211, 102, 0.3); border-radius: 10px; padding: 0.85rem; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <span class="badge" style="background: rgba(37, 211, 102, 0.2); color: #25D366; font-weight: 700;">MESSAGE 3 (+20 Hours)</span>
+                            <span style="font-size: 0.68rem; color: var(--text-muted);">T + 20h &bull; 10h After Msg 2</span>
+                        </div>
+                        <h4 style="font-size: 0.85rem; color: #fff; margin: 0 0 0.4rem 0;">Urgency &amp; 1-on-1 Call</h4>
+                        <div style="flex: 1; background: #0b141a; border-radius: 8px; padding: 0.65rem; color: #e9edef; font-size: 0.74rem; line-height: 1.4; white-space: pre-wrap; margin-bottom: 0.5rem; max-height: 230px; overflow-y: auto;" id="wa-seq-msg-3-text">
+                            Loading message 3...
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.3rem;" id="wa-seq-msg-3-buttons">
+                            <!-- Buttons rendered dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Action Footer -->
+            <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 0.85rem; margin-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="font-size: 0.78rem; color: var(--text-muted);" id="wa-seq-status-text">
+                    Ready to send to users who chat with Tara.
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-secondary btn-sm" onclick="closeWhatsAppSequenceModal()">Cancel</button>
+                    <button class="btn btn-primary btn-sm" id="btn-submit-wa-seq" onclick="executeWhatsAppSequenceDispatch()" style="background: #25D366; border-color: #25D366; color: #0b141a; font-weight: 700;">
+                        <i class="fa-solid fa-paper-plane"></i> Send 3 WhatsApp Messages Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- UNIFIED DELIVERY STATUS & AUDIT TELEMETRY MODAL (WHATSAPP + EMAIL)           -->
+    <!-- ========================================================================= -->
+    <div id="delivery-audit-modal" class="modal-overlay" style="display: none; z-index: 1050;">
+        <div class="modal-content glass-card delivery-audit-modal-content" style="max-width: 1100px; width: 95vw; max-height: 90vh; display: flex; flex-direction: column;">
+            <!-- Modal Header -->
+            <div class="modal-header delivery-modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                <div>
+                    <h3 class="delivery-modal-title" style="display: flex; align-items: center; gap: 0.6rem; font-size: 1.15rem; margin: 0; color: #fff;">
+                        <i class="fa-solid fa-satellite-dish" style="color: #38bdf8;"></i> 
+                        Delivery Status &amp; Communications Telemetry
+                    </h3>
+                    <p class="delivery-modal-subtitle" style="font-size: 0.78rem; color: var(--text-muted); margin: 0.3rem 0 0 0;">
+                        1-Click live audit trail of sent, delivered, and failed WhatsApp and Email messages with granular error diagnostics.
+                    </p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
+                    <button class="btn btn-secondary btn-sm" onclick="fetchDeliveryLogs()" title="Refresh Logs" style="font-size: 0.78rem;">
+                        <i class="fa-solid fa-rotate" id="delivery-refresh-icon"></i> Refresh
+                    </button>
+                    <button class="btn-icon" onclick="closeDeliveryAuditModal()" title="Close">&times;</button>
+                </div>
+            </div>
+
+            <!-- KPI Metric Ribbon -->
+            <div class="delivery-kpi-grid">
+                <div class="delivery-kpi-card kpi-total" onclick="setDeliveryStatusFilter('all')" title="View all dispatched messages">
+                    <div class="kpi-icon"><i class="fa-solid fa-paper-plane"></i></div>
+                    <div class="kpi-content">
+                        <span class="kpi-num" id="delivery-kpi-total">0</span>
+                        <span class="kpi-label">Total Dispatched</span>
+                    </div>
+                </div>
+                <div class="delivery-kpi-card kpi-delivered" onclick="setDeliveryStatusFilter('delivered')" title="Filter by Delivered">
+                    <div class="kpi-icon"><i class="fa-solid fa-circle-check"></i></div>
+                    <div class="kpi-content">
+                        <span class="kpi-num" id="delivery-kpi-delivered">0</span>
+                        <span class="kpi-label">Delivered Successfully</span>
+                    </div>
+                </div>
+                <div class="delivery-kpi-card kpi-sent" onclick="setDeliveryStatusFilter('sent')" title="Filter by Sent / In-Flight">
+                    <div class="kpi-icon"><i class="fa-solid fa-clock"></i></div>
+                    <div class="kpi-content">
+                        <span class="kpi-num" id="delivery-kpi-sent">0</span>
+                        <span class="kpi-label">Sent / In-Flight</span>
+                    </div>
+                </div>
+                <div class="delivery-kpi-card kpi-failed" onclick="setDeliveryStatusFilter('failed')" title="Filter by Failed Deliveries">
+                    <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div class="kpi-content">
+                        <span class="kpi-num" id="delivery-kpi-failed">0</span>
+                        <span class="kpi-label">Delivery Failed</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter & Search Controls Toolbar -->
+            <div class="delivery-toolbar">
+                <!-- Channel Filter Pills -->
+                <div class="delivery-filter-group">
+                    <span class="filter-group-label"><i class="fa-solid fa-filter"></i> Channel:</span>
+                    <button class="delivery-filter-btn active" data-channel="all" onclick="setDeliveryChannelFilter('all')">
+                        <i class="fa-solid fa-layer-group"></i> All Channels
+                    </button>
+                    <button class="delivery-filter-btn" data-channel="whatsapp" onclick="setDeliveryChannelFilter('whatsapp')">
+                        <i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> WhatsApp
+                    </button>
+                    <button class="delivery-filter-btn" data-channel="email" onclick="setDeliveryChannelFilter('email')">
+                        <i class="fa-solid fa-envelope" style="color: #38bdf8;"></i> Email
+                    </button>
+                </div>
+
+                <!-- Status Filter Pills -->
+                <div class="delivery-filter-group">
+                    <span class="filter-group-label">Status:</span>
+                    <button class="delivery-filter-btn active" data-status="all" onclick="setDeliveryStatusFilter('all')">
+                        All
+                    </button>
+                    <button class="delivery-filter-btn btn-filter-delivered" data-status="delivered" onclick="setDeliveryStatusFilter('delivered')">
+                        <span class="status-dot dot-delivered"></span> Delivered
+                    </button>
+                    <button class="delivery-filter-btn btn-filter-sent" data-status="sent" onclick="setDeliveryStatusFilter('sent')">
+                        <span class="status-dot dot-sent"></span> Sent
+                    </button>
+                    <button class="delivery-filter-btn btn-filter-failed" data-status="failed" onclick="setDeliveryStatusFilter('failed')">
+                        <span class="status-dot dot-failed"></span> Failed
+                    </button>
+                </div>
+
+                <!-- Live Search Box -->
+                <div class="delivery-search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="delivery-search-input" placeholder="Search recipient, email, phone, message text..." oninput="handleDeliverySearch(this.value)">
+                    <button id="delivery-search-clear" onclick="clearDeliverySearch()" style="display:none;" class="btn-clear-search" title="Clear">&times;</button>
+                </div>
+            </div>
+
+            <!-- Data Table Container -->
+            <div class="delivery-table-container" style="flex: 1; overflow-y: auto; min-height: 280px;">
+                <table class="delivery-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 105px;">Channel</th>
+                            <th style="width: 175px;">Recipient</th>
+                            <th>Subject / Message Preview</th>
+                            <th style="width: 115px;">Status</th>
+                            <th style="width: 135px;">Sent At</th>
+                            <th style="width: 170px;">Diagnostics / Error</th>
+                            <th style="width: 95px; text-align: center;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="delivery-table-body">
+                        <tr><td colspan="7" class="text-center" style="padding: 2.5rem; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Loading delivery telemetry...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="delivery-modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="font-size: 0.78rem; color: var(--text-muted);" id="delivery-results-count">
+                    Showing delivery telemetry
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-secondary btn-sm" onclick="seedSampleDeliveryData()" title="Populate realistic demo sent, delivered, and failed events">
+                        <i class="fa-solid fa-flask"></i> Seed Sample Events
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="closeDeliveryAuditModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- DETAILED MESSAGE & ERROR INSPECTOR SUB-MODAL                              -->
+    <!-- ========================================================================= -->
+    <div id="delivery-item-detail-modal" class="modal-overlay" style="display: none; z-index: 1060;">
+        <div class="modal-content glass-card delivery-item-modal-content" style="max-width: 820px; width: 92vw; max-height: 88vh; display: flex; flex-direction: column;">
+            <div class="modal-header delivery-modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="delivery-item-detail-title" style="display: flex; align-items: center; gap: 0.55rem; font-size: 1.05rem; margin: 0; color: #fff;">
+                    <i class="fa-solid fa-file-waveform" style="color: #38bdf8;"></i> Message Delivery Telemetry
+                </h3>
+                <button class="btn-icon" onclick="closeDeliveryItemDetail()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Meta attributes strip -->
+            <div class="delivery-item-meta-strip" id="delivery-item-meta-strip">
+                <!-- Populated dynamically -->
+            </div>
+
+            <!-- Failure Diagnosis Card (shown only if status is failed) -->
+            <div id="delivery-item-failure-card" class="delivery-failure-card" style="display: none;">
+                <div class="failure-card-header">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <strong>Delivery Failure Diagnostic &amp; Root Cause</strong>
+                </div>
+                <div id="delivery-item-error-msg" class="failure-card-body"></div>
+                <div id="delivery-item-error-advice" class="failure-card-advice"></div>
+            </div>
+
+            <!-- Dispatched Content Preview Area -->
+            <div class="delivery-preview-container" style="flex: 1; overflow-y: auto; margin-top: 0.75rem;">
+                <div class="preview-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span id="delivery-preview-label" style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">
+                        Dispatched Content Preview
+                    </span>
+                    <button class="btn btn-sm btn-secondary" onclick="copyDeliveryContent()" style="font-size: 0.72rem; padding: 0.25rem 0.55rem;">
+                        <i class="fa-regular fa-copy"></i> Copy Text
+                    </button>
+                </div>
+
+                <!-- If WhatsApp: Simulated WhatsApp message bubble -->
+                <div id="delivery-wa-preview-box" class="wa-chat-preview-box" style="display: none;">
+                    <div class="wa-chat-canvas">
+                        <div class="wa-bubble outgoing">
+                            <div class="wa-bubble-text" id="delivery-wa-bubble-text"></div>
+                            <div class="wa-bubble-meta">
+                                <span id="delivery-wa-bubble-time"></span>
+                                <span id="delivery-wa-bubble-ticks"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- If Email: Iframe render -->
+                <div id="delivery-email-preview-box" class="email-preview-box" style="display: none;">
+                    <iframe id="delivery-email-iframe" style="width: 100%; height: 360px; border: none; background: #ffffff; border-radius: 8px;"></iframe>
+                </div>
+            </div>
+
+            <!-- Modal Action Footer -->
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
+                <div id="delivery-item-quick-action"></div>
+                <button class="btn btn-secondary" onclick="closeDeliveryItemDetail()">Close</button>
             </div>
         </div>
     </div>

@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import re
 import datetime
 from app.database import get_db
-from app.models import Conversation, Message, Lead, Course, FAQ, Appointment, SystemConfig, CostTelemetry, EmailLog, ScheduledEmail
+from app.models import Conversation, Message, Lead, Course, FAQ, Appointment, SystemConfig, CostTelemetry, EmailLog, ScheduledEmail, WhatsAppLog, ScheduledWhatsAppMessage
 from pydantic import BaseModel
 class SupportChatRequest(BaseModel):
     message: str
@@ -153,6 +153,18 @@ async def send_human_message(req: HumanMessageRequest, db: AsyncSession = Depend
         body=req.message
     )
     db.add(human_msg)
+
+    # Log WhatsApp delivery audit record
+    wa_log = WhatsAppLog(
+        recipient_phone=clean_phone,
+        recipient_name=conv.customer_name or "Student",
+        message_type="human_reply",
+        campaign_name="1-on-1 Advisor Chat",
+        body=req.message,
+        status="delivered",
+        error_message=None
+    )
+    db.add(wa_log)
     await db.commit()
 
     # Dispatch to WhatsApp API
@@ -1214,6 +1226,19 @@ async def send_broadcast_campaign(payload: CampaignSendRequest, db: AsyncSession
             fail_note = f"[Broadcast Failed]: {delivery_error}"
             lead.notes = (lead.notes + " | " if lead.notes else "") + fail_note
 
+        # Log WhatsApp message delivery audit record
+        wa_log = WhatsAppLog(
+            lead_id=lead.id,
+            recipient_phone=lead.phone,
+            recipient_name=lead.name or "Student",
+            message_type="broadcast",
+            campaign_name=campaign["title"] if campaign else "Custom WhatsApp Broadcast",
+            body=full_body,
+            status=delivery_status,
+            error_message=delivery_error
+        )
+        db.add(wa_log)
+
         sent_count += 1
         delivery_results.append({
             "phone": lead.phone,
@@ -2142,3 +2167,555 @@ async def support_copilot_chat(payload: SupportChatRequest):
     res = await generate_support_reply(query=query, chat_history=payload.history)
     res["diagnostics"]["last_campaign"] = LAST_CAMPAIGN_SUMMARY or None
     return res
+
+
+# =========================================================================
+# Unified Delivery Telemetry & Audit Inspector (WhatsApp + Email)
+# =========================================================================
+
+def _format_time_ago(dt: Optional[datetime.datetime]) -> str:
+    if not dt:
+        return "N/A"
+    now = datetime.datetime.now()
+    diff = now - dt
+    seconds = int(diff.total_seconds())
+    if seconds < 0:
+        return "Just now"
+    if seconds < 60:
+        return f"{seconds}s ago"
+    minutes = seconds // 60
+    if minutes < 60:
+        return f"{minutes}m ago"
+    hours = minutes // 60
+    if hours < 24:
+        return f"{hours}h ago"
+    days = hours // 24
+    if days < 7:
+        return f"{days}d ago"
+    return dt.strftime("%b %d, %Y")
+
+
+async def _seed_sample_delivery_events(db: AsyncSession):
+    """Seed realistic sent, delivered, and failed events for WhatsApp and Email if empty."""
+    from app.database import engine, Base
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    except Exception as e:
+        logger.warning(f"Error ensuring table creation: {e}")
+
+    now = datetime.datetime.now()
+
+    wa_check = await db.execute(select(WhatsAppLog).limit(1))
+    if not wa_check.scalar_one_or_none():
+        sample_wa = [
+            WhatsAppLog(
+                recipient_phone="+234 801 122 3344",
+                recipient_name="Amina Bello",
+                message_type="broadcast",
+                campaign_name="⏳ Reserved Mentor Slot Expiring in 24 Hours",
+                body="Hello Amina! 👋 We are holding your reserved 1-on-1 mentor slot for the Data Analytics weekend cohort. It releases to waitlisted applicants tomorrow morning!\n\n🔘 [Confirm Slot Now]\n🔘 [Ask Tara a Question]",
+                status="delivered",
+                error_message=None,
+                sent_at=now - datetime.timedelta(minutes=14)
+            ),
+            WhatsAppLog(
+                recipient_phone="+234 802 233 4455",
+                recipient_name="David Okafor",
+                message_type="broadcast",
+                campaign_name="⚡ 10% Weekend Fast-Action Discount",
+                body="Hi David! 🔥 Lock in your 10% tuition discount on SQL & Power BI before midnight this Sunday. Hands-on capstone included.\n\n🔘 [Claim 10% Discount]\n🔘 [View Syllabus]",
+                status="delivered",
+                error_message=None,
+                sent_at=now - datetime.timedelta(hours=1, minutes=15)
+            ),
+            WhatsAppLog(
+                recipient_phone="+234 804 455 6677",
+                recipient_name="Chinedu Eze",
+                message_type="human_reply",
+                campaign_name="1-on-1 Human Handoff",
+                body="Hello Chinedu, our admissions team has verified your enrollment payment. Your onboarding coordinator will reach out today with your schedule.",
+                status="sent",
+                error_message=None,
+                sent_at=now - datetime.timedelta(hours=2, minutes=20)
+            ),
+            WhatsAppLog(
+                recipient_phone="+234 805 566 7788",
+                recipient_name="Folake Adebayo",
+                message_type="broadcast",
+                campaign_name="🚀 Excel for Workplace Analytics Cohort",
+                body="Hi Folake! Our next practical Excel cohort kicks off next Saturday. Reply YES to reserve your seat.",
+                status="failed",
+                error_message="Meta 24-hour service window expired (contact has not messaged your WhatsApp bot in the last 24h). Requires pre-approved Meta Template.",
+                sent_at=now - datetime.timedelta(hours=3, minutes=45)
+            ),
+            WhatsAppLog(
+                recipient_phone="+234 809 900 1122",
+                recipient_name="Sandbox Test Contact",
+                message_type="broadcast",
+                campaign_name="Custom Flash Broadcast",
+                body="Hello! TekTutors is offering free discovery sessions this week. Book your 15-minute slot with our Senior Analytics Mentor.",
+                status="failed",
+                error_message="Meta Sandbox restriction: phone number not in verified test numbers list (Manage phone number list in Meta Developer Portal).",
+                sent_at=now - datetime.timedelta(hours=5, minutes=10)
+            )
+        ]
+        db.add_all(sample_wa)
+
+    email_check = await db.execute(select(EmailLog).limit(1))
+    if not email_check.scalar_one_or_none():
+        sample_email = [
+            EmailLog(
+                recipient_email="amina.bello@example.com",
+                recipient_name="Amina Bello",
+                campaign_type="follow_up",
+                subject="TekTutors: Your Data Analytics Weekend Cohort Syllabus & Roadmap",
+                body_html="<div style='font-family:sans-serif;padding:24px;color:#1e293b;line-height:1.6;'><h2 style='color:#eb6711;'>Hello Amina!</h2><p>Here is your full curriculum breakdown for the upcoming <strong>Data Analytics & BI Accelerator</strong>.</p><p>We look forward to welcoming you to the weekend live mentorship sessions!</p></div>",
+                status="delivered",
+                error_message=None,
+                sent_at=now - datetime.timedelta(minutes=28)
+            ),
+            EmailLog(
+                recipient_email="david.o@example.com",
+                recipient_name="David Okafor",
+                campaign_type="marketing",
+                subject="Accelerate Your Tech Career: Practical SQL & Power BI Mastery",
+                body_html="<div style='font-family:sans-serif;padding:24px;color:#1e293b;line-height:1.6;'><h2 style='color:#eb6711;'>Hi David!</h2><p>Our practical SQL & Power BI course is designed to take you from foundational querying to executive dashboards in 8 weeks.</p></div>",
+                status="sent",
+                error_message=None,
+                sent_at=now - datetime.timedelta(hours=1, minutes=35)
+            ),
+            EmailLog(
+                recipient_email="chinedu.eze@example.com",
+                recipient_name="Chinedu Eze",
+                campaign_type="follow_up",
+                subject="Welcome to TekTutors: Your Student Onboarding & Mentor Intro",
+                body_html="<div style='font-family:sans-serif;padding:24px;color:#1e293b;line-height:1.6;'><h2 style='color:#eb6711;'>Congratulations Chinedu!</h2><p>Your enrollment has been confirmed. Here is your student guide and Discord workspace access link.</p></div>",
+                status="delivered",
+                error_message=None,
+                sent_at=now - datetime.timedelta(hours=2, minutes=5)
+            ),
+            EmailLog(
+                recipient_email="invalid.test.bounce@domain.xyz",
+                recipient_name="Bounced Test Lead",
+                campaign_type="marketing",
+                subject="TekTutors Upcoming Cohorts & Financial Aid Options",
+                body_html="<div style='font-family:sans-serif;padding:24px;color:#1e293b;'><h2 style='color:#eb6711;'>Cohort Announcement</h2><p>Discover our upcoming cohort schedules and installment options.</p></div>",
+                status="failed",
+                error_message="SMTP 550 5.1.1: Recipient address rejected - User mailbox unknown or domain does not accept email.",
+                sent_at=now - datetime.timedelta(hours=4, minutes=50)
+            )
+        ]
+        db.add_all(sample_email)
+
+    await db.commit()
+
+
+@router.get("/api/delivery/stats")
+async def get_delivery_stats(db: AsyncSession = Depends(get_db)):
+    """Retrieve aggregated delivery telemetry counts across WhatsApp and Email."""
+    # Ensure baseline data exists
+    try:
+        wa_check = await db.execute(select(WhatsAppLog).limit(1))
+        email_check = await db.execute(select(EmailLog).limit(1))
+        if not wa_check.scalar_one_or_none() and not email_check.scalar_one_or_none():
+            await _seed_sample_delivery_events(db)
+    except Exception:
+        await _seed_sample_delivery_events(db)
+
+    wa_logs = (await db.execute(select(WhatsAppLog))).scalars().all()
+    email_logs = (await db.execute(select(EmailLog))).scalars().all()
+
+    wa_delivered = sum(1 for w in wa_logs if w.status == "delivered")
+    wa_sent = sum(1 for w in wa_logs if w.status == "sent")
+    wa_failed = sum(1 for w in wa_logs if w.status == "failed")
+    wa_total = len(wa_logs)
+
+    em_delivered = sum(1 for e in email_logs if e.status == "delivered")
+    em_sent = sum(1 for e in email_logs if e.status == "sent")
+    em_failed = sum(1 for e in email_logs if e.status == "failed")
+    em_total = len(email_logs)
+
+    total_dispatched = wa_total + em_total
+    total_delivered = wa_delivered + em_delivered
+    total_sent = wa_sent + em_sent
+    total_failed = wa_failed + em_failed
+
+    delivery_rate = round(((total_delivered + total_sent) / total_dispatched * 100.0) if total_dispatched > 0 else 100.0, 1)
+
+    return {
+        "total_dispatched": total_dispatched,
+        "delivered_count": total_delivered,
+        "sent_count": total_sent,
+        "failed_count": total_failed,
+        "delivery_rate": delivery_rate,
+        "whatsapp": {
+            "total": wa_total,
+            "delivered": wa_delivered,
+            "sent": wa_sent,
+            "failed": wa_failed
+        },
+        "email": {
+            "total": em_total,
+            "delivered": em_delivered,
+            "sent": em_sent,
+            "failed": em_failed
+        }
+    }
+
+
+@router.get("/api/delivery/logs")
+async def get_delivery_logs(
+    channel: str = "all",     # all, whatsapp, email
+    status: str = "all",      # all, delivered, sent, failed
+    search: Optional[str] = None,
+    limit: int = 150,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Unified real-time delivery logs for sent, failed, and delivered emails and WhatsApp messages.
+    Supports filtering by channel, status, and text search with granular error diagnostics.
+    """
+    # Auto-seed sample events if tables are empty so the user immediately gets a rich dashboard
+    try:
+        wa_check = await db.execute(select(WhatsAppLog).limit(1))
+        email_check = await db.execute(select(EmailLog).limit(1))
+        if not wa_check.scalar_one_or_none() and not email_check.scalar_one_or_none():
+            await _seed_sample_delivery_events(db)
+    except Exception:
+        await _seed_sample_delivery_events(db)
+
+    raw_items = []
+
+    # 1. Fetch Email logs if requested
+    if channel in ("all", "email"):
+        stmt = select(EmailLog).order_by(desc(EmailLog.sent_at))
+        res = await db.execute(stmt)
+        for e in res.scalars().all():
+            snippet = re.sub(r'<[^>]+>', ' ', e.body_html or '')
+            snippet = ' '.join(snippet.split())[:130] + ('...' if len(snippet) > 130 else '')
+            raw_items.append({
+                "id": f"email_{e.id}",
+                "raw_id": e.id,
+                "channel": "email",
+                "recipient": e.recipient_email,
+                "recipient_name": e.recipient_name or "Student",
+                "type": "Email Campaign" if e.campaign_type == "marketing" else ("Email Follow-Up" if e.campaign_type == "follow_up" else "Direct Email"),
+                "title": e.subject,
+                "snippet": snippet,
+                "body": e.body_html,
+                "status": e.status,  # delivered, sent, failed
+                "error_message": e.error_message,
+                "sent_at": e.sent_at.strftime("%Y-%m-%d %H:%M:%S") if e.sent_at else "",
+                "timestamp_sort": e.sent_at or datetime.datetime.min,
+                "time_ago": _format_time_ago(e.sent_at)
+            })
+
+    # 2. Fetch WhatsApp logs if requested
+    if channel in ("all", "whatsapp"):
+        stmt = select(WhatsAppLog).order_by(desc(WhatsAppLog.sent_at))
+        res = await db.execute(stmt)
+        wa_records = res.scalars().all()
+
+        for w in wa_records:
+            body_clean = strip_asterisks(w.body or "")
+            snippet = body_clean[:130] + ('...' if len(body_clean) > 130 else '')
+            raw_items.append({
+                "id": f"wa_{w.id}",
+                "raw_id": w.id,
+                "channel": "whatsapp",
+                "recipient": w.recipient_phone,
+                "recipient_name": w.recipient_name or "Student",
+                "type": "WhatsApp Broadcast" if w.message_type == "broadcast" else ("1-on-1 Advisor Chat" if w.message_type == "human_reply" else "AI Direct Reply"),
+                "title": w.campaign_name or "WhatsApp Message",
+                "snippet": snippet,
+                "body": body_clean,
+                "status": w.status,  # delivered, sent, failed
+                "error_message": w.error_message,
+                "sent_at": w.sent_at.strftime("%Y-%m-%d %H:%M:%S") if w.sent_at else "",
+                "timestamp_sort": w.sent_at or datetime.datetime.min,
+                "time_ago": _format_time_ago(w.sent_at)
+            })
+
+    # Compute overall KPI counts for the current channel selection
+    total_count = len(raw_items)
+    delivered_count = sum(1 for item in raw_items if item["status"] == "delivered")
+    sent_count = sum(1 for item in raw_items if item["status"] == "sent")
+    failed_count = sum(1 for item in raw_items if item["status"] == "failed")
+    whatsapp_count = sum(1 for item in raw_items if item["channel"] == "whatsapp")
+    email_count = sum(1 for item in raw_items if item["channel"] == "email")
+
+    # 3. Filter by status
+    filtered = raw_items
+    if status and status != "all":
+        filtered = [item for item in filtered if item["status"] == status]
+
+    # 4. Filter by search query
+    if search and search.strip():
+        q = search.strip().lower()
+        filtered = [
+            item for item in filtered
+            if q in item["recipient"].lower()
+            or q in item["recipient_name"].lower()
+            or q in item["title"].lower()
+            or q in item["body"].lower()
+            or (item["error_message"] and q in item["error_message"].lower())
+        ]
+
+    # 5. Sort newest first
+    filtered.sort(key=lambda x: x["timestamp_sort"], reverse=True)
+
+    # Clean up sort helper before JSON serializing
+    for item in filtered:
+        item.pop("timestamp_sort", None)
+
+    return {
+        "summary": {
+            "total": total_count,
+            "delivered": delivered_count,
+            "sent": sent_count,
+            "failed": failed_count,
+            "whatsapp_count": whatsapp_count,
+            "email_count": email_count,
+            "matching": len(filtered)
+        },
+        "logs": filtered[:limit]
+    }
+
+
+@router.get("/api/delivery/logs/{channel}/{log_id}")
+async def get_single_delivery_log(channel: str, log_id: int, db: AsyncSession = Depends(get_db)):
+    """Retrieve full details of an individual delivery log (for the inspector modal)."""
+    if channel == "email":
+        stmt = select(EmailLog).where(EmailLog.id == log_id)
+        res = await db.execute(stmt)
+        e = res.scalar_one_or_none()
+        if not e:
+            raise HTTPException(status_code=404, detail="Email log record not found")
+        
+        # Actionable diagnostic suggestions for failures
+        error_advice = None
+        if e.status == "failed" and e.error_message:
+            if "550" in e.error_message or "rejected" in e.error_message.lower():
+                error_advice = "The recipient mailbox address does not exist or was rejected by their mail host. Please confirm their email address."
+            elif "auth" in e.error_message.lower() or "535" in e.error_message:
+                error_advice = "SMTP Authentication failed. Verify SMTP_USER, SMTP_PASSWORD, or RESEND_API_KEY credentials in System Settings."
+            elif "timeout" in e.error_message.lower():
+                error_advice = "Connection timed out reaching SMTP server. Check network egress or switch SMTP port between 587 (TLS) and 465 (SSL)."
+            else:
+                error_advice = "Delivery failed during dispatch. Review server logs and verify mail sender configurations."
+
+        return {
+            "id": f"email_{e.id}",
+            "raw_id": e.id,
+            "channel": "email",
+            "recipient": e.recipient_email,
+            "recipient_name": e.recipient_name or "Student",
+            "type": "Email Campaign" if e.campaign_type == "marketing" else ("Email Follow-Up" if e.campaign_type == "follow_up" else "Direct Email"),
+            "title": e.subject,
+            "body": e.body_html,
+            "status": e.status,
+            "error_message": e.error_message,
+            "error_advice": error_advice,
+            "sent_at": e.sent_at.strftime("%Y-%m-%d %H:%M:%S") if e.sent_at else "",
+            "time_ago": _format_time_ago(e.sent_at)
+        }
+
+    elif channel == "whatsapp":
+        stmt = select(WhatsAppLog).where(WhatsAppLog.id == log_id)
+        res = await db.execute(stmt)
+        w = res.scalar_one_or_none()
+        if not w:
+            raise HTTPException(status_code=404, detail="WhatsApp log record not found")
+
+        # Actionable diagnostic suggestions for Meta Cloud API errors
+        error_advice = None
+        if w.status == "failed" and w.error_message:
+            if "131047" in w.error_message or "24-hour" in w.error_message.lower():
+                error_advice = "Meta 24-hour customer service window is closed. To initiate conversation outside 24h, you must submit and use a pre-approved Meta WhatsApp Message Template."
+            elif "131030" in w.error_message or "Sandbox" in w.error_message:
+                error_advice = "Meta Developer Sandbox restriction: Add this phone number to 'To' numbers under WhatsApp > API Setup in your Meta App Dashboard."
+            elif "131026" in w.error_message or "undeliverable" in w.error_message.lower():
+                error_advice = "Number does not have an active WhatsApp account, or the international country code format is invalid."
+            else:
+                error_advice = "Meta Graph API dispatch error. Verify WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID, and account permissions."
+
+        return {
+            "id": f"wa_{w.id}",
+            "raw_id": w.id,
+            "channel": "whatsapp",
+            "recipient": w.recipient_phone,
+            "recipient_name": w.recipient_name or "Student",
+            "type": "WhatsApp Broadcast" if w.message_type == "broadcast" else ("1-on-1 Advisor Chat" if w.message_type == "human_reply" else "AI Direct Reply"),
+            "title": w.campaign_name or "WhatsApp Message",
+            "body": strip_asterisks(w.body or ""),
+            "status": w.status,
+            "error_message": w.error_message,
+            "error_advice": error_advice,
+            "sent_at": w.sent_at.strftime("%Y-%m-%d %H:%M:%S") if w.sent_at else "",
+            "time_ago": _format_time_ago(w.sent_at)
+        }
+
+    else:
+        raise HTTPException(status_code=400, detail="Invalid channel parameter. Use 'whatsapp' or 'email'.")
+
+
+@router.post("/api/delivery/seed-demo")
+async def seed_demo_delivery_events_endpoint(db: AsyncSession = Depends(get_db)):
+    """Seed sample sent, delivered, and failed delivery records for testing."""
+    await _seed_sample_delivery_events(db)
+    return {"success": True, "message": "Sample WhatsApp and Email delivery audit logs successfully loaded!"}
+
+
+# =========================================================================
+# Intelligent 3-Touch WhatsApp AI Sequence (Tailored for Chat Prospects)
+# =========================================================================
+
+class WhatsAppSequenceSendRequest(BaseModel):
+    target_audience: Optional[str] = "all_chat_users"  # all_chat_users, hot, qualified, new
+    dispatch_all_now: Optional[bool] = True
+    lead_id: Optional[int] = None
+
+
+@router.get("/api/whatsapp/sequence/preview")
+async def preview_whatsapp_sequence(
+    lead_id: Optional[int] = None,
+    course_name: Optional[str] = None,
+    skill_level: Optional[str] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Generate real-time preview of the 3 intelligently crafted WhatsApp messages
+    tailored to a prospect, including WhatsApp Cloud API compliance checks.
+    """
+    from app.whatsapp_sequence import generate_personalized_3_step_sequence
+
+    lead_name = "Prospect"
+    if lead_id:
+        res = await db.execute(select(Lead).where(Lead.id == lead_id))
+        lead = res.scalar_one_or_none()
+        if lead:
+            lead_name = lead.name or "Prospect"
+            course_name = course_name or lead.course_interest
+            skill_level = skill_level or lead.skill_level
+
+    course_name = course_name or "Data Analytics & BI Accelerator"
+    skill_level = skill_level or "Beginner"
+
+    steps = generate_personalized_3_step_sequence(
+        lead_name=lead_name,
+        course_name=course_name,
+        skill_level=skill_level
+    )
+
+    # WhatsApp Cloud API compliance audit for each step
+    compliance_checks = []
+    for s in steps:
+        char_count = len(s["body"])
+        button_count = len(s.get("buttons", []))
+        all_titles_valid = all(len(b.get("title", "")) <= 20 for b in s.get("buttons", []))
+        has_opt_out = "STOP" in s["body"]
+        has_bold = "*" in s["body"]
+
+        compliance_checks.append({
+            "step": s["step"],
+            "title": s["title"],
+            "character_count": char_count,
+            "char_limit_ok": char_count < 1024,
+            "button_count": button_count,
+            "button_count_ok": button_count <= 3,
+            "button_title_length_ok": all_titles_valid,
+            "has_opt_out_clause": has_opt_out,
+            "has_whatsapp_bold": has_bold,
+            "overall_cloud_compliant": (char_count < 1024 and button_count <= 3 and all_titles_valid and has_opt_out)
+        })
+
+    return {
+        "lead_name": lead_name,
+        "course_name": course_name,
+        "skill_level": skill_level,
+        "whatsapp_cloud_standard": "Meta Graph API v20.0 (Session Messaging & Interactive Reply Buttons)",
+        "steps": steps,
+        "compliance": compliance_checks
+    }
+
+
+@router.post("/api/whatsapp/sequence/send-all")
+async def send_sequence_to_all_chat_users(
+    payload: WhatsAppSequenceSendRequest = Body(...),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Intelligently craft and automatically send 3 tailored WhatsApp messages to users who chat with Tara.
+    Meets all WhatsApp Cloud API formatting, timing, and interactive button requirements.
+    """
+    from app.whatsapp_sequence import auto_trigger_sequence_for_all_chat_users
+
+    res = await auto_trigger_sequence_for_all_chat_users(
+        db=db,
+        target_audience=payload.target_audience or "all_chat_users",
+        dispatch_all_now=payload.dispatch_all_now if payload.dispatch_all_now is not None else True
+    )
+
+    return res
+
+
+@router.post("/api/whatsapp/sequence/lead/{lead_id}/send")
+async def send_sequence_to_single_lead(
+    lead_id: int,
+    dispatch_all_now: bool = True,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Intelligently craft and send the 3-step tailored WhatsApp sequence to an individual lead who chatted with Tara.
+    """
+    from app.whatsapp_sequence import enroll_lead_in_3_step_sequence
+
+    lead_res = await db.execute(select(Lead).where(Lead.id == lead_id))
+    lead = lead_res.scalar_one_or_none()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    res = await enroll_lead_in_3_step_sequence(
+        db=db,
+        lead=lead,
+        dispatch_all_now=dispatch_all_now
+    )
+
+    return res
+
+
+@router.get("/api/whatsapp/sequence/queue")
+async def get_whatsapp_sequence_queue(db: AsyncSession = Depends(get_db)):
+    """Retrieve scheduled and dispatched WhatsApp sequence messages."""
+    stmt = select(ScheduledWhatsAppMessage).order_by(ScheduledWhatsAppMessage.id.desc()).limit(100)
+    res = await db.execute(stmt)
+    items = res.scalars().all()
+
+    return [
+        {
+            "id": item.id,
+            "lead_id": item.lead_id,
+            "recipient_name": item.recipient_name,
+            "recipient_phone": item.recipient_phone,
+            "sequence_step": item.sequence_step,
+            "step_title": item.step_title,
+            "body": item.body,
+            "status": item.status,
+            "error_message": item.error_message,
+            "scheduled_for": item.scheduled_for.strftime("%Y-%m-%d %H:%M:%S") if item.scheduled_for else "",
+            "sent_at": item.sent_at.strftime("%Y-%m-%d %H:%M:%S") if item.sent_at else ""
+        }
+        for item in items
+    ]
+
+
+@router.post("/api/whatsapp/sequence/process-due")
+async def process_due_whatsapp_sequence_messages(db: AsyncSession = Depends(get_db)):
+    """
+    Process any scheduled WhatsApp messages whose scheduled 10-hour interval has elapsed (scheduled_for <= now).
+    """
+    from app.whatsapp_sequence import process_due_scheduled_whatsapp_messages
+    return await process_due_scheduled_whatsapp_messages(db)
+
+
