@@ -82,12 +82,12 @@
                 </button>
                         </nav>
 
-            <div class="user-guide-box" style="margin-top: 1.25rem; flex-shrink: 0; padding: 0.85rem; background: rgba(235, 103, 17, 0.08); border: 1px solid rgba(235, 103, 17, 0.25); border-radius: 10px; text-align: center; margin-bottom: 0.75rem;">
-                <div style="font-size: 0.8rem; font-weight: 600; color: #ff8c3a; margin-bottom: 0.25rem;">
-                    <i class="fa-solid fa-circle-question"></i> Non-Tech Quick Guide
+            <div class="user-guide-box" style="margin-top: auto; flex-shrink: 0; padding: 0.75rem 0.85rem; background: rgba(235, 103, 17, 0.06); border: 1px solid rgba(235, 103, 17, 0.2); border-radius: 10px; text-align: center; margin-bottom: 0.75rem;">
+                <div style="font-size: 0.78rem; font-weight: 700; color: #ff8c3a; margin-bottom: 0.2rem; display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
+                    <i class="fa-solid fa-circle-question"></i> Platform Guide
                 </div>
-                <p style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.5rem; line-height: 1.3;">Learn how to navigate and manage your AI in 1 minute.</p>
-                <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.35rem 0.65rem; width: 100%;" onclick="openHelpModal()">
+                <p style="font-size: 0.68rem; color: var(--text-muted); margin-bottom: 0.45rem; line-height: 1.3;">1-minute tour of your WhatsApp AI sales system.</p>
+                <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.35rem 0.65rem; width: 100%; border-color: rgba(255,255,255,0.1);" onclick="openHelpModal()">
                     <i class="fa-solid fa-book-open"></i> How It Works
                 </button>
             </div>
@@ -119,6 +119,10 @@
                         <div class="view-title-row">
                             <h2 id="header-view-title"><i class="fa-solid fa-headset" style="color: #ff8c3a;"></i> Live Handoff Console</h2>
                             <span class="sla-badge" title="Guaranteed Sub-Second Response Architecture"><i class="fa-solid fa-bolt"></i> Ultra-Fast &lt;50ms</span>
+                            <span class="system-live-pill" style="display: inline-flex; align-items: center; gap: 0.35rem; background: rgba(37, 211, 102, 0.12); border: 1px solid rgba(37, 211, 102, 0.3); color: #25D366; font-size: 0.68rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 20px; letter-spacing: 0.02em;">
+                                <span style="width: 6px; height: 6px; border-radius: 50%; background: #25D366; box-shadow: 0 0 8px #25D366; display: inline-block;"></span>
+                                TARA COPILOT ONLINE
+                            </span>
                         </div>
                         <p id="header-view-desc" class="view-subtext">Monitor active student WhatsApp conversations, take over manually, or inspect AI drafts in real-time.</p>
                     </div>
@@ -133,68 +137,17 @@
                 </div>
 
                 <div class="top-header-right">
-                    <button class="btn btn-sm btn-quick" onclick="openDeliveryAuditModal()" id="btn-delivery-telemetry-top" title="View Sent, Delivered &amp; Failed WhatsApp and Email Logs with 1 Click" style="border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-weight: 600;">
+                    <button class="btn btn-sm btn-quick" onclick="openDeliveryAuditModal()" id="btn-delivery-telemetry-top" title="View Sent, Delivered &amp; Failed WhatsApp and Email Logs" style="border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-weight: 600;">
                         <i class="fa-solid fa-list-check" style="color: #38bdf8;"></i> Delivery Status
                     </button>
                     <button class="btn btn-sm btn-demo-glow" onclick="runInteractiveDemo()" title="Experience full 10-second agent walkthrough">
                         <i class="fa-solid fa-wand-magic-sparkles"></i> ✨ 10s Demo
                     </button>
-                    <button class="btn btn-sm btn-quick" onclick="switchToTab('simulator')" title="Test chat with Tara AI">
-                        <i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> Simulator
-                    </button>
-                    <button class="btn btn-sm btn-quick" onclick="switchToTab('emails')" title="Open Email Hub & Composer">
-                        <i class="fa-solid fa-envelope" style="color: #38bdf8;"></i> Emails
-                    </button>
-                    <button class="btn btn-sm btn-quick" onclick="seedSampleData()" title="Populate demo data for testing">
-                        <i class="fa-solid fa-database" style="color: #10b981;"></i> Demo Data
-                    </button>
-                    <button class="btn btn-sm btn-quick" onclick="openHelpModal()" title="View quick start guide">
-                        <i class="fa-solid fa-circle-question" style="color: #f59e0b;"></i> Guide
+                    <button class="btn btn-sm btn-quick" onclick="openHelpModal()" title="View quick start guide" style="border-color: rgba(245, 158, 11, 0.3); background: rgba(245, 158, 11, 0.08); color: #f59e0b;">
+                        <i class="fa-solid fa-circle-question"></i> Guide
                     </button>
                 </div>
             </header>
-
-            <!-- Quick-Start Action Launchpad (Dismissible) -->
-            <div class="quick-start-strip" id="quick-start-strip">
-                <div class="qs-title-row">
-                    <span class="qs-label"><i class="fa-solid fa-compass" style="color: #ff8c3a;"></i> Quick Action Hub:</span>
-                    <button class="qs-close-btn" onclick="dismissQuickStart()" title="Hide quick launch bar">&times;</button>
-                </div>
-                <div class="qs-grid">
-                    <div class="qs-card" onclick="switchToTab('simulator')">
-                        <div class="qs-icon wa-green"><i class="fa-brands fa-whatsapp"></i></div>
-                        <div class="qs-text">
-                            <strong>Test AI Simulator</strong>
-                            <span>Simulate chats, questions & voice notes in &lt;1s</span>
-                        </div>
-                        <i class="fa-solid fa-chevron-right qs-arrow"></i>
-                    </div>
-                    <div class="qs-card" onclick="switchToTab('leads')">
-                        <div class="qs-icon lead-orange"><i class="fa-solid fa-user-tag"></i></div>
-                        <div class="qs-text">
-                            <strong>Manage Hot Leads</strong>
-                            <span>Qualify prospects, view buying scores & 1-click WhatsApp</span>
-                        </div>
-                        <i class="fa-solid fa-chevron-right qs-arrow"></i>
-                    </div>
-                    <div class="qs-card" onclick="switchToTab('emails')">
-                        <div class="qs-icon email-blue"><i class="fa-solid fa-paper-plane"></i></div>
-                        <div class="qs-text">
-                            <strong>Send Email Campaign</strong>
-                            <span>Branded follow-ups, curriculum & promo vouchers</span>
-                        </div>
-                        <i class="fa-solid fa-chevron-right qs-arrow"></i>
-                    </div>
-                    <div class="qs-card" onclick="switchToTab('analytics')">
-                        <div class="qs-icon roi-purple"><i class="fa-solid fa-chart-line"></i></div>
-                        <div class="qs-text">
-                            <strong>Sales & Cost ROI</strong>
-                            <span>Track conversion funnels & saved token telemetry</span>
-                        </div>
-                        <i class="fa-solid fa-chevron-right qs-arrow"></i>
-                    </div>
-                </div>
-            </div>
 
             <!-- TAB 1: LIVE HANDOFF CONSOLE -->
             <section id="tab-handoff" class="tab-pane active">
