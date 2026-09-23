@@ -3171,6 +3171,11 @@ textarea.form-control {
     box-shadow: 0 0 6px #10b981;
 }
 
+/* Utility */
+.d-none {
+    display: none !important;
+}
+
 /* Floating Drawer Window: High Contrast Boundary & Distinct Sections */
 .floating-copilot-drawer {
     position: fixed;
@@ -3186,10 +3191,14 @@ textarea.form-control {
     border: 2px solid rgba(14, 165, 233, 0.5) !important;
     border-radius: 16px;
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.65), 0 0 24px rgba(14, 165, 233, 0.2);
-    display: flex;
+    display: none; /* Hidden by default until AI Support button is clicked */
     flex-direction: column;
     overflow: hidden;
     animation: drawerSlideUp 0.22s ease-out;
+}
+
+.floating-copilot-drawer.is-open {
+    display: flex !important;
 }
 
 @keyframes drawerSlideUp {

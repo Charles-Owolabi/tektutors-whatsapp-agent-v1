@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="/static/images/tektutors-icon.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/static/css/dashboard.css?v=3.2.0">
+    <link rel="stylesheet" href="/static/css/dashboard.css?v=3.3.0">
 </head>
 <body>
     <div class="app-layout">
@@ -1787,7 +1787,7 @@
     <!-- Toast Notification Container (Positioned top-right to prevent overlap with floating triggers) -->
     <div id="toast-container" style="position: fixed; top: 1.5rem; right: 1.5rem; z-index: 10050; display: flex; flex-direction: column; gap: 0.5rem; pointer-events: none;"></div>
 
-    <script src="/static/js/dashboard.js?v=1.0.5"></script>
+    <script src="/static/js/dashboard.js?v=1.0.6"></script>
 
     <!-- Floating AI Support Copilot Trigger & Drawer -->
     <div id="floating-copilot-container">
@@ -1798,16 +1798,16 @@
             <span class="btn-text">AI Support</span>
         </button>
 
-        <!-- Floating Drawer Window -->
-        <div id="floating-copilot-drawer" class="floating-copilot-drawer d-none">
+        <!-- Floating Drawer Window (Completely hidden by default until AI Support button is clicked) -->
+        <div id="floating-copilot-drawer" class="floating-copilot-drawer d-none" style="display: none;">
             <div class="floating-header d-flex justify-content-between align-items-center p-3 border-bottom" id="floating-copilot-header">
                 <div class="d-flex align-items-center gap-2">
                     <div class="copilot-avatar-sm">
                         <i class="fa-solid fa-robot text-primary"></i>
                     </div>
                     <div>
-                        <div class="fw-bold text-sm">TekTutors AI Support Copilot</div>
-                        <div class="text-xs text-muted" id="floating-copilot-subtitle">In-App Troubleshooter & Guide</div>
+                        <div class="fw-bold text-sm">AI Support</div>
+                        <div class="text-xs text-muted" id="floating-copilot-subtitle">Troubleshooter &amp; Guide</div>
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-1 copilot-window-actions">
@@ -1987,12 +1987,18 @@ document.addEventListener('DOMContentLoaded', () => {
 function toggleFloatingCopilot() {
     const drawer = document.getElementById('floating-copilot-drawer');
     if (!drawer) return;
-    drawer.classList.remove('is-minimized');
-    drawer.classList.toggle('d-none');
-    if (!drawer.classList.contains('d-none')) {
+    const isHidden = drawer.style.display === 'none' || drawer.classList.contains('d-none') || !drawer.classList.contains('is-open');
+    if (isHidden) {
+        drawer.style.display = 'flex';
+        drawer.classList.remove('d-none');
+        drawer.classList.add('is-open');
         const input = document.getElementById('floating-copilot-input');
         if (input) input.focus();
         scrollCopilotMessages('floating');
+    } else {
+        drawer.style.display = 'none';
+        drawer.classList.add('d-none');
+        drawer.classList.remove('is-open');
     }
 }
 
@@ -2003,8 +2009,9 @@ function closeFloatingCopilot(event) {
     }
     const drawer = document.getElementById('floating-copilot-drawer');
     if (drawer) {
+        drawer.style.display = 'none';
         drawer.classList.add('d-none');
-        drawer.classList.remove('is-minimized', 'is-maximized');
+        drawer.classList.remove('is-open', 'is-minimized', 'is-maximized');
         const maxIcon = document.getElementById('copilot-max-icon');
         if (maxIcon) maxIcon.className = 'fa-solid fa-expand';
     }
@@ -2078,10 +2085,9 @@ function clearCopilotChat(mode) {
 function askCopilot(question) {
     const drawer = document.getElementById('floating-copilot-drawer');
     if (drawer) {
+        drawer.style.display = 'flex';
         drawer.classList.remove('d-none');
-        drawer.classList.remove('is-minimized');
-        const minIcon = document.getElementById('copilot-min-icon');
-        if (minIcon) minIcon.className = 'fa-solid fa-minus';
+        drawer.classList.add('is-open');
         const input = document.getElementById('floating-copilot-input');
         if (input) {
             input.value = question;
