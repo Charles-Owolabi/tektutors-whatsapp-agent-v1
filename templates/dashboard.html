@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="/static/images/tektutors-icon.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/static/css/dashboard.css?v=3.1.0">
+    <link rel="stylesheet" href="/static/css/dashboard.css?v=3.2.0">
 </head>
 <body>
     <div class="app-layout">
@@ -1221,14 +1221,26 @@
         
             <!-- AI Copilot & System Support Tab -->
             <section id="tab-copilot" class="tab-pane">
-                <div class="tab-header d-flex justify-content-between align-items-center">
-                    <div>
-                        <h2 class="tab-title"><i class="fa-solid fa-wand-magic-sparkles text-primary me-2"></i> TekTutors In-App AI Support & Troubleshooter</h2>
-                        <p class="tab-subtitle">Real-time troubleshooting, operational diagnostics, and step-by-step guidance for WhatsApp, campaigns, and CRM.</p>
+                <div class="tab-header copilot-screen-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="copilot-header-info">
+                        <div class="d-flex align-items-center gap-2">
+                            <h2 class="tab-title mb-0"><i class="fa-solid fa-wand-magic-sparkles text-primary me-2"></i> TekTutors AI Support & Guide</h2>
+                            <span class="badge badge-copilot-live"><span class="pulse-dot-sm"></span> Operational</span>
+                        </div>
+                        <p class="tab-subtitle mb-0 mt-1">Real-time troubleshooting, operational diagnostics, and interactive AI guidance for WhatsApp, campaigns, and CRM.</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-secondary btn-sm" id="btn-refresh-diagnostics" onclick="refreshSupportDiagnostics()">
-                            <i class="fa-solid fa-arrows-rotate me-1"></i> Refresh Health Check
+                    <div class="d-flex align-items-center gap-2 copilot-screen-controls">
+                        <button class="btn btn-secondary btn-sm btn-copilot-action" id="btn-refresh-diagnostics" onclick="refreshSupportDiagnostics()" title="Refresh All Service Health">
+                            <i class="fa-solid fa-arrows-rotate me-1"></i> Refresh Health
+                        </button>
+                        <button class="btn btn-copilot-ctrl btn-sm" id="btn-copilot-screen-min" onclick="minimizeCopilotScreen()" title="Minimize to bottom dock and return to workspace">
+                            <i class="fa-solid fa-minus me-1"></i> Minimize
+                        </button>
+                        <button class="btn btn-copilot-ctrl btn-sm" id="btn-copilot-screen-max" onclick="maximizeCopilotScreen()" title="Maximize full-screen console (Esc to exit)">
+                            <i class="fa-solid fa-expand me-1" id="screen-copilot-max-icon"></i> Maximize
+                        </button>
+                        <button class="btn btn-copilot-ctrl btn-copilot-ctrl-close btn-sm" id="btn-copilot-screen-close" onclick="closeCopilotScreen()" title="Close Support Guide and return to previous screen">
+                            <i class="fa-solid fa-xmark me-1"></i> Close Guide
                         </button>
                     </div>
                 </div>
@@ -1237,9 +1249,10 @@
                     <!-- Left Column: Diagnostic Health & Rules Telemetry -->
                     <div class="copilot-sidebar-panel">
                         <!-- Live Health Card -->
-                        <div class="card p-3 mb-3 bg-dark-glass">
-                            <h4 class="card-title text-sm text-uppercase text-muted mb-3">
-                                <i class="fa-solid fa-heart-pulse text-danger me-1"></i> Real-Time Service Health
+                        <div class="card p-3 mb-3 bg-dark-glass copilot-panel-card" id="copilot-health-card">
+                            <h4 class="card-title text-sm text-uppercase text-muted mb-3 d-flex align-items-center justify-content-between">
+                                <span><i class="fa-solid fa-heart-pulse text-danger me-1"></i> Real-Time Service Health</span>
+                                <span class="badge bg-success-subtle text-success text-xs">Live Telemetry</span>
                             </h4>
                             <div class="diag-status-list" id="diag-status-list">
                                 <div class="diag-status-item">
@@ -1262,9 +1275,10 @@
                         </div>
 
                         <!-- Last Broadcast Telemetry Card -->
-                        <div class="card p-3 mb-3 bg-dark-glass" id="diag-last-campaign-card">
-                            <h4 class="card-title text-sm text-uppercase text-muted mb-2">
-                                <i class="fa-solid fa-bullhorn text-warning me-1"></i> Latest WhatsApp Broadcast
+                        <div class="card p-3 mb-3 bg-dark-glass copilot-panel-card" id="diag-last-campaign-card">
+                            <h4 class="card-title text-sm text-uppercase text-muted mb-2 d-flex align-items-center justify-content-between">
+                                <span><i class="fa-solid fa-bullhorn text-warning me-1"></i> Latest WhatsApp Broadcast</span>
+                                <span class="badge bg-warning-subtle text-warning text-xs">Delivery Feed</span>
                             </h4>
                             <div id="diag-last-campaign-content" class="text-sm text-muted">
                                 No broadcast has been dispatched in the current session yet.
@@ -1272,9 +1286,10 @@
                         </div>
 
                         <!-- Meta WhatsApp Rules Quick Ref -->
-                        <div class="card p-3 bg-dark-glass">
-                            <h4 class="card-title text-sm text-uppercase text-muted mb-2">
-                                <i class="fa-solid fa-circle-info text-info me-1"></i> Why Campaigns May Fail
+                        <div class="card p-3 bg-dark-glass copilot-panel-card" id="diag-rules-card">
+                            <h4 class="card-title text-sm text-uppercase text-muted mb-2 d-flex align-items-center justify-content-between">
+                                <span><i class="fa-solid fa-circle-info text-info me-1"></i> Why Campaigns May Fail</span>
+                                <span class="badge bg-info-subtle text-info text-xs">Meta Rules</span>
                             </h4>
                             <ul class="text-xs text-muted ps-3 mb-0" style="line-height: 1.6;">
                                 <li><strong class="text-light">24-Hour Care Window:</strong> Meta forbids free-form text to contacts who haven't messaged you in 24 hours. Only recent contacts receive regular broadcasts.</li>
@@ -1297,12 +1312,16 @@
                                         <span class="pulse-dot-sm"></span> Online & Ready to Assist
                                     </div>
                                 </div>
+                            </div>
                             <div class="d-flex align-items-center gap-2">
-                                <button class="btn btn-outline-secondary btn-sm" onclick="clearCopilotChat('tab')">
+                                <button class="btn btn-outline-secondary btn-sm" onclick="clearCopilotChat('tab')" title="Clear conversation history">
                                     <i class="fa-solid fa-trash-can me-1"></i> Clear Chat
                                 </button>
-                                <button class="btn btn-outline-secondary btn-sm" id="btn-tab-copilot-max" onclick="maximizeTabCopilot()" title="Maximize Support View">
-                                    <i class="fa-solid fa-expand" id="tab-copilot-max-icon"></i>
+                                <button class="btn btn-outline-secondary btn-sm" id="btn-tab-copilot-max" onclick="maximizeTabCopilot()" title="Maximize / Restore Chat Column">
+                                    <i class="fa-solid fa-up-right-and-down-left-from-center" id="tab-copilot-max-icon"></i>
+                                </button>
+                                <button class="btn btn-copilot-ctrl btn-copilot-ctrl-close btn-sm" onclick="closeCopilotScreen()" title="Close Support Guide Screen">
+                                    <i class="fa-solid fa-xmark"></i>
                                 </button>
                             </div>
                         </div>
@@ -1927,7 +1946,25 @@
     <!-- Toast Notification Container -->
     <div id="toast-container" style="position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem;"></div>
 
-    <script src="/static/js/dashboard.js?v=1.0.2"></script>
+    <script src="/static/js/dashboard.js?v=1.0.3"></script>
+
+    <!-- Minimized AI Support & Guide Docked Bar -->
+    <div id="copilot-docked-bar" class="copilot-docked-bar" style="display: none;">
+        <div class="docked-bar-left">
+            <span class="pulse-dot-sm"></span>
+            <i class="fa-solid fa-wand-magic-sparkles text-primary"></i>
+            <span class="docked-title">AI Support &amp; Guide (Minimized)</span>
+            <span class="docked-status-badge">Operational</span>
+        </div>
+        <div class="docked-bar-actions">
+            <button class="btn-docked-action btn-docked-restore" onclick="restoreCopilotScreen()" title="Restore AI Support & Guide Screen">
+                <i class="fa-solid fa-window-restore me-1"></i> Restore Screen
+            </button>
+            <button class="btn-docked-action btn-docked-close" onclick="closeCopilotScreen()" title="Dismiss Support Guide">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
 
     <!-- Floating AI Support Copilot Trigger & Drawer -->
     <div id="floating-copilot-container">
@@ -2236,20 +2273,110 @@ function maximizeTabCopilot() {
     scrollCopilotMessages('tab');
 }
 
+// ==========================================
+// Window Controls: Main AI Support & Guide Screen (tab-copilot)
+// ==========================================
+function closeCopilotScreen() {
+    const copilotTab = document.getElementById('tab-copilot');
+    if (copilotTab) {
+        copilotTab.classList.remove('is-screen-maximized');
+    }
+    const maxIcon = document.getElementById('screen-copilot-max-icon');
+    if (maxIcon) maxIcon.className = 'fa-solid fa-expand me-1';
+    const btn = document.getElementById('btn-copilot-screen-max');
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-expand me-1" id="screen-copilot-max-icon"></i> Maximize';
+    document.body.classList.remove('copilot-screen-locked');
+
+    // Hide docked mini-bar
+    const dockBar = document.getElementById('copilot-docked-bar');
+    if (dockBar) dockBar.style.display = 'none';
+
+    // Switch back to previous tab or default 'handoff'
+    const targetTab = (window.previousTab && window.previousTab !== 'copilot') ? window.previousTab : 'handoff';
+    if (typeof switchToTab === 'function') {
+        switchToTab(targetTab);
+    }
+    if (typeof showToast === 'function') {
+        showToast('AI Support & Guide closed. Click AI Support in navigation to reopen.', 'info');
+    }
+}
+
+function minimizeCopilotScreen() {
+    const copilotTab = document.getElementById('tab-copilot');
+    if (copilotTab) {
+        copilotTab.classList.remove('is-screen-maximized');
+    }
+    const maxIcon = document.getElementById('screen-copilot-max-icon');
+    if (maxIcon) maxIcon.className = 'fa-solid fa-expand me-1';
+    const btn = document.getElementById('btn-copilot-screen-max');
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-expand me-1" id="screen-copilot-max-icon"></i> Maximize';
+    document.body.classList.remove('copilot-screen-locked');
+
+    // Display docked mini-bar
+    const dockBar = document.getElementById('copilot-docked-bar');
+    if (dockBar) dockBar.style.display = 'flex';
+
+    // Switch to previous tab
+    const targetTab = (window.previousTab && window.previousTab !== 'copilot') ? window.previousTab : 'handoff';
+    if (typeof switchToTab === 'function') {
+        switchToTab(targetTab);
+    }
+    if (typeof showToast === 'function') {
+        showToast('AI Support & Guide minimized to bottom dock. Click Restore to reopen.', 'info');
+    }
+}
+
+function maximizeCopilotScreen() {
+    const copilotTab = document.getElementById('tab-copilot');
+    const maxIcon = document.getElementById('screen-copilot-max-icon');
+    const btn = document.getElementById('btn-copilot-screen-max');
+    if (!copilotTab) return;
+
+    const isMax = copilotTab.classList.toggle('is-screen-maximized');
+    if (isMax) {
+        if (maxIcon) maxIcon.className = 'fa-solid fa-compress me-1';
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-compress me-1" id="screen-copilot-max-icon"></i> Restore';
+        btn.setAttribute('title', 'Restore standard view (Esc)');
+        document.body.classList.add('copilot-screen-locked');
+    } else {
+        if (maxIcon) maxIcon.className = 'fa-solid fa-expand me-1';
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-expand me-1" id="screen-copilot-max-icon"></i> Maximize';
+        btn.setAttribute('title', 'Maximize full-screen console');
+        document.body.classList.remove('copilot-screen-locked');
+    }
+    scrollCopilotMessages('tab');
+}
+
+function restoreCopilotScreen() {
+    const dockBar = document.getElementById('copilot-docked-bar');
+    if (dockBar) dockBar.style.display = 'none';
+    if (typeof switchToTab === 'function') {
+        switchToTab('copilot');
+    }
+}
+
 // Escape key closes/restores maximized windows
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+        const copilotTab = document.getElementById('tab-copilot');
+        if (copilotTab && copilotTab.classList.contains('is-screen-maximized')) {
+            maximizeCopilotScreen();
+            return;
+        }
         const simMockup = document.getElementById('sim-phone-mockup');
         if (simMockup && simMockup.classList.contains('is-maximized')) {
             maximizeAiAdvisor(e);
+            return;
         }
         const drawer = document.getElementById('floating-copilot-drawer');
         if (drawer && drawer.classList.contains('is-maximized')) {
             maximizeFloatingCopilot(e);
+            return;
         }
         const tabGrid = document.getElementById('copilot-grid');
         if (tabGrid && tabGrid.classList.contains('is-chat-maximized')) {
             maximizeTabCopilot();
+            return;
         }
     }
 });
