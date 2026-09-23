@@ -51,10 +51,6 @@ const TAB_METADATA = {
     settings: {
         title: '<i class="fa-solid fa-sliders" style="color: #e2e8f0;"></i> System Settings & AI Guardrails',
         desc: 'Tune AI personality, model temperature, WhatsApp phone number, and academy operating parameters.'
-    },
-    copilot: {
-        title: '<i class="fa-solid fa-wand-magic-sparkles" style="color: #0ea5e9;"></i> AI Support & Guide Console',
-        desc: 'Interactive CRM troubleshooter, real-time telemetry diagnostics, and operational support guide.'
     }
 };
 
@@ -154,17 +150,6 @@ function switchToTab(tabName) {
     }
     window.currentActiveTab = tabName;
 
-    // If switching away from copilot, exit maximized mode and docked bar
-    if (tabName !== 'copilot') {
-        const copilotTab = document.getElementById('tab-copilot');
-        if (copilotTab) copilotTab.classList.remove('is-screen-maximized');
-        document.body.classList.remove('copilot-screen-locked');
-    } else {
-        // Hide docked mini-bar when copilot tab is active
-        const dockBar = document.getElementById('copilot-docked-bar');
-        if (dockBar) dockBar.style.display = 'none';
-    }
-
     navButtons.forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
     tabPanes.forEach(p => p.classList.toggle('active', p.id === `tab-${tabName}`));
 
@@ -200,9 +185,6 @@ function switchToTab(tabName) {
     if (tabName === 'courses') fetchCourses();
     if (tabName === 'faqs') fetchFAQs();
     if (tabName === 'settings') fetchSettings();
-    if (tabName === 'copilot' && typeof refreshSupportDiagnostics === 'function') {
-        refreshSupportDiagnostics();
-    }
 }
 
 function dismissQuickStart() {
