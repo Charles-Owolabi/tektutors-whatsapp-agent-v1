@@ -3264,21 +3264,7 @@ textarea.form-control {
     color: #f8fafc;
 }
 
-/* Floating Drawer Minimized State */
-.floating-copilot-drawer.is-minimized {
-    height: 56px !important;
-    max-height: 56px !important;
-    overflow: hidden !important;
-    cursor: pointer;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
 
-.floating-copilot-drawer.is-minimized .floating-chips,
-.floating-copilot-drawer.is-minimized .floating-messages,
-.floating-copilot-drawer.is-minimized .floating-input-area {
-    display: none !important;
-}
 
 /* Floating Drawer Maximized State */
 .floating-copilot-drawer.is-maximized {

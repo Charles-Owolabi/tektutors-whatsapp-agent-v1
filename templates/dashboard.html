@@ -1787,7 +1787,7 @@
     <!-- Toast Notification Container (Positioned top-right to prevent overlap with floating triggers) -->
     <div id="toast-container" style="position: fixed; top: 1.5rem; right: 1.5rem; z-index: 10050; display: flex; flex-direction: column; gap: 0.5rem; pointer-events: none;"></div>
 
-    <script src="/static/js/dashboard.js?v=1.0.4"></script>
+    <script src="/static/js/dashboard.js?v=1.0.5"></script>
 
     <!-- Floating AI Support Copilot Trigger & Drawer -->
     <div id="floating-copilot-container">
@@ -1800,7 +1800,7 @@
 
         <!-- Floating Drawer Window -->
         <div id="floating-copilot-drawer" class="floating-copilot-drawer d-none">
-            <div class="floating-header d-flex justify-content-between align-items-center p-3 border-bottom" id="floating-copilot-header" onclick="handleFloatingHeaderClick(event)">
+            <div class="floating-header d-flex justify-content-between align-items-center p-3 border-bottom" id="floating-copilot-header">
                 <div class="d-flex align-items-center gap-2">
                     <div class="copilot-avatar-sm">
                         <i class="fa-solid fa-robot text-primary"></i>
@@ -1811,9 +1811,6 @@
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-1 copilot-window-actions">
-                    <button class="btn-icon-sm" id="btn-copilot-min" onclick="minimizeFloatingCopilot(event)" title="Minimize Troubleshooter">
-                        <i class="fa-solid fa-minus" id="copilot-min-icon"></i>
-                    </button>
                     <button class="btn-icon-sm" id="btn-copilot-max" onclick="maximizeFloatingCopilot(event)" title="Maximize Troubleshooter">
                         <i class="fa-solid fa-expand" id="copilot-max-icon"></i>
                     </button>
@@ -1990,12 +1987,9 @@ document.addEventListener('DOMContentLoaded', () => {
 function toggleFloatingCopilot() {
     const drawer = document.getElementById('floating-copilot-drawer');
     if (!drawer) return;
+    drawer.classList.remove('is-minimized');
     drawer.classList.toggle('d-none');
     if (!drawer.classList.contains('d-none')) {
-        drawer.classList.remove('is-minimized');
-        const minIcon = document.getElementById('copilot-min-icon');
-        if (minIcon) minIcon.className = 'fa-solid fa-minus';
-        document.getElementById('btn-copilot-min')?.setAttribute('title', 'Minimize Troubleshooter');
         const input = document.getElementById('floating-copilot-input');
         if (input) input.focus();
         scrollCopilotMessages('floating');
@@ -2011,36 +2005,8 @@ function closeFloatingCopilot(event) {
     if (drawer) {
         drawer.classList.add('d-none');
         drawer.classList.remove('is-minimized', 'is-maximized');
-        const minIcon = document.getElementById('copilot-min-icon');
         const maxIcon = document.getElementById('copilot-max-icon');
-        if (minIcon) minIcon.className = 'fa-solid fa-minus';
         if (maxIcon) maxIcon.className = 'fa-solid fa-expand';
-    }
-}
-
-function minimizeFloatingCopilot(event) {
-    if (event) event.stopPropagation();
-    const drawer = document.getElementById('floating-copilot-drawer');
-    const minIcon = document.getElementById('copilot-min-icon');
-    const maxIcon = document.getElementById('copilot-max-icon');
-    const subTitle = document.getElementById('floating-copilot-subtitle');
-    if (!drawer) return;
-
-    const isMin = drawer.classList.toggle('is-minimized');
-    if (isMin) {
-        drawer.classList.remove('is-maximized');
-        if (minIcon) minIcon.className = 'fa-solid fa-window-restore';
-        if (maxIcon) maxIcon.className = 'fa-solid fa-expand';
-        if (subTitle) subTitle.textContent = 'Minimized • Click to expand';
-        document.getElementById('btn-copilot-min')?.setAttribute('title', 'Restore Troubleshooter');
-        document.getElementById('btn-copilot-max')?.setAttribute('title', 'Maximize Troubleshooter');
-    } else {
-        if (minIcon) minIcon.className = 'fa-solid fa-minus';
-        if (subTitle) subTitle.textContent = 'In-App Troubleshooter & Guide';
-        document.getElementById('btn-copilot-min')?.setAttribute('title', 'Minimize Troubleshooter');
-        const input = document.getElementById('floating-copilot-input');
-        if (input) input.focus();
-        scrollCopilotMessages('floating');
     }
 }
 
@@ -2048,7 +2014,6 @@ function maximizeFloatingCopilot(event) {
     if (event) event.stopPropagation();
     const drawer = document.getElementById('floating-copilot-drawer');
     const maxIcon = document.getElementById('copilot-max-icon');
-    const minIcon = document.getElementById('copilot-min-icon');
     const subTitle = document.getElementById('floating-copilot-subtitle');
     if (!drawer) return;
 
@@ -2056,10 +2021,8 @@ function maximizeFloatingCopilot(event) {
     if (isMax) {
         drawer.classList.remove('is-minimized');
         if (maxIcon) maxIcon.className = 'fa-solid fa-compress';
-        if (minIcon) minIcon.className = 'fa-solid fa-minus';
         if (subTitle) subTitle.textContent = 'In-App Troubleshooter & Guide (Full View)';
         document.getElementById('btn-copilot-max')?.setAttribute('title', 'Restore Normal Size');
-        document.getElementById('btn-copilot-min')?.setAttribute('title', 'Minimize Troubleshooter');
     } else {
         if (maxIcon) maxIcon.className = 'fa-solid fa-expand';
         if (subTitle) subTitle.textContent = 'In-App Troubleshooter & Guide';
@@ -2068,12 +2031,8 @@ function maximizeFloatingCopilot(event) {
     scrollCopilotMessages('floating');
 }
 
-function handleFloatingHeaderClick(event) {
-    const drawer = document.getElementById('floating-copilot-drawer');
-    if (drawer && drawer.classList.contains('is-minimized')) {
-        if (event.target.closest('.copilot-window-actions')) return;
-        minimizeFloatingCopilot(event);
-    }
+function minimizeFloatingCopilot(event) {
+    closeFloatingCopilot(event);
 }
 
 
