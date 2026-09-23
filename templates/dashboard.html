@@ -184,6 +184,7 @@
                                 </div>
                                 <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.35rem 0.6rem; border-color: rgba(37,211,102,0.4); color: #25D366;" onclick="trigger3StepWhatsAppForCurrentLead()" title="Intelligently craft and send 3-step WhatsApp sequence to this user"><i class="fa-brands fa-whatsapp"></i> Send 3 AI Messages</button>
                                 <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.6rem;" onclick="toggleCustomer360Drawer()"><i class="fa-solid fa-id-badge"></i> Dossier</button>
+                                <button class="btn btn-secondary" id="btn-toggle-chat-expand" style="font-size: 0.75rem; padding: 0.35rem 0.6rem; border-color: rgba(56,189,248,0.4); color: #38bdf8;" onclick="toggleHandoffExpand(event)" title="Toggle Expanded Chatting Space (Full Width &amp; Height Focus Mode)"><i class="fa-solid fa-up-right-and-down-left-from-center" id="chat-expand-icon"></i> <span id="chat-expand-label">Expand</span></button>
                             </div>
                         </div>
 
@@ -194,35 +195,35 @@
                             </div>
                         </div>
 
-                        <!-- Human Response Box -->
+                        <!-- Human Response Box (Compact & High-Density to maximize message thread length) -->
                         <div class="thread-input-area" id="human-input-area" style="display: none;">
                             <div class="takeover-banner-interactive ai-on" id="ai-active-banner">
                                 <span><i class="fa-solid fa-robot"></i> <strong>AI Auto-Pilot Active:</strong> Tara is auto-replying in 1s.</span>
-                                <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.25rem 0.6rem; background: rgba(239,68,68,0.2); color: #ef4444; border: 1px solid rgba(239,68,68,0.4);" onclick="takeOverConversation()"><i class="fa-solid fa-hand"></i> Take Over Chat</button>
+                                <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; background: rgba(239,68,68,0.2); color: #ef4444; border: 1px solid rgba(239,68,68,0.4);" onclick="takeOverConversation()"><i class="fa-solid fa-hand"></i> Take Over Chat</button>
                             </div>
                             <div class="takeover-banner-interactive ai-off" id="override-banner" style="display: none;">
                                 <span><i class="fa-solid fa-user-gear"></i> <strong>You Have Control:</strong> AI paused. You are chatting directly.</span>
-                                <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.25rem 0.6rem; background: rgba(37,211,102,0.2); color: #25D366; border: 1px solid rgba(37,211,102,0.4);" onclick="resumeAiConversation()"><i class="fa-solid fa-robot"></i> Hand Back to AI</button>
+                                <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; background: rgba(37,211,102,0.2); color: #25D366; border: 1px solid rgba(37,211,102,0.4);" onclick="resumeAiConversation()"><i class="fa-solid fa-robot"></i> Hand Back to AI</button>
                             </div>
                             
                             <!-- Co-Pilot Draft Box -->
-                            <div class="copilot-draft-box" id="copilot-draft-container" style="display: none; margin-bottom: 0.5rem;">
-                                <div class="copilot-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
-                                    <span style="font-size: 0.8rem; font-weight: 600; color: #ff8c3a;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Co-Pilot Suggestion</span>
-                                    <button class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.7rem; background: var(--primary); color: #fff;" onclick="useCopilotSuggestion()">Use Draft</button>
+                            <div class="copilot-draft-box" id="copilot-draft-container" style="display: none; margin-bottom: 0.35rem;">
+                                <div class="copilot-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
+                                    <span style="font-size: 0.76rem; font-weight: 600; color: #ff8c3a;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Co-Pilot Suggestion</span>
+                                    <button class="btn" style="padding: 0.2rem 0.45rem; font-size: 0.68rem; background: var(--primary); color: #fff;" onclick="useCopilotSuggestion()">Use Draft</button>
                                 </div>
-                                <div class="copilot-body" id="copilot-draft-text" style="font-size: 0.8rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 0.5rem; border-radius: 8px; color: var(--text-muted); max-height: 80px; overflow-y: auto; white-space: pre-wrap;">Generating suggested response...</div>
+                                <div class="copilot-body" id="copilot-draft-text" style="font-size: 0.76rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 0.4rem; border-radius: 8px; color: var(--text-muted); max-height: 60px; overflow-y: auto; white-space: pre-wrap;">Generating suggested response...</div>
                             </div>
 
                             <!-- Dynamic AI Copilot Suggestions -->
-                            <div id="copilot-dynamic-suggestions" style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.5rem;"></div>
+                            <div id="copilot-dynamic-suggestions" style="display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.3rem;"></div>
 
-                            <!-- Quick Reply Templates -->
-                            <div class="quick-templates" style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.5rem;">
-                                <button class="chip" style="background: rgba(255,255,255,0.05); font-size: 0.75rem; border: 1px solid var(--border-color);" onclick="applyTemplate('Hi there! 👋 Welcome to TekTutors. How can I help you accelerate your career today?')">👋 Greeting</button>
-                                <button class="chip" style="background: rgba(255,255,255,0.05); font-size: 0.75rem; border: 1px solid var(--border-color);" onclick="applyTemplate('We offer a flexible month-to-month billing plan (₦100,000 per month) for all our courses.')">💳 Installments</button>
-                                <button class="chip" style="background: rgba(255,255,255,0.05); font-size: 0.75rem; border: 1px solid var(--border-color);" onclick="applyTemplate('Would you like to schedule a quick 1-on-1 discovery call with our Admissions Advisor to discuss details?')">📅 Book Call</button>
-                                <button class="chip" style="background: rgba(255,255,255,0.05); font-size: 0.75rem; border: 1px solid var(--border-color);" onclick="applyTemplate('Our programs feature live weekend classes with industry experts, lab assignments, and direct job referrals.')">🎓 Format</button>
+                            <!-- Quick Reply Templates (Sleek Single-Row Horizontal Scroll) -->
+                            <div class="quick-templates">
+                                <button class="chip" style="background: rgba(255,255,255,0.05); font-size: 0.72rem; padding: 0.2rem 0.55rem; border: 1px solid var(--border-color); white-space: nowrap; flex-shrink: 0;" onclick="applyTemplate('Hi there! 👋 Welcome to TekTutors. How can I help you accelerate your career today?')">👋 Greeting</button>
+                                <button class="chip" style="background: rgba(255,255,255,0.05); font-size: 0.72rem; padding: 0.2rem 0.55rem; border: 1px solid var(--border-color); white-space: nowrap; flex-shrink: 0;" onclick="applyTemplate('We offer a flexible month-to-month billing plan (₦100,000 per month) for all our courses.')">💳 Installments</button>
+                                <button class="chip" style="background: rgba(255,255,255,0.05); font-size: 0.72rem; padding: 0.2rem 0.55rem; border: 1px solid var(--border-color); white-space: nowrap; flex-shrink: 0;" onclick="applyTemplate('Would you like to schedule a quick 1-on-1 discovery call with our Admissions Advisor to discuss details?')">📅 Book Call</button>
+                                <button class="chip" style="background: rgba(255,255,255,0.05); font-size: 0.72rem; padding: 0.2rem 0.55rem; border: 1px solid var(--border-color); white-space: nowrap; flex-shrink: 0;" onclick="applyTemplate('Our programs feature live weekend classes with industry experts, lab assignments, and direct job referrals.')">🎓 Format</button>
                             </div>
 
                             <div class="input-row">

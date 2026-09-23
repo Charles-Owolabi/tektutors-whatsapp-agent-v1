@@ -415,12 +415,55 @@ body {
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-/* Tab 1: Live Handoff Console */
+/* Tab 1: Live Handoff Console (Optimized for deep chat visibility) */
 .handoff-grid {
     display: grid;
-    grid-template-columns: 340px 1fr;
-    gap: 1.5rem;
-    height: calc(100vh - 3rem);
+    grid-template-columns: 290px 1fr;
+    gap: 1.25rem;
+    height: calc(100vh - 128px);
+    min-height: 680px;
+    transition: grid-template-columns 0.3s cubic-bezier(0.16, 1, 0.3, 1), height 0.25s ease;
+}
+
+/* Expanded Full Focus Mode for Chat Thread */
+.handoff-grid.handoff-expanded {
+    grid-template-columns: 64px 1fr !important;
+    gap: 0.75rem;
+    height: calc(100vh - 90px) !important;
+}
+
+.handoff-grid.handoff-expanded.with-profile {
+    grid-template-columns: 64px 1fr 285px !important;
+}
+
+.handoff-grid.handoff-expanded .chat-list-panel .panel-header h3,
+.handoff-grid.handoff-expanded .chat-list-panel .chat-search,
+.handoff-grid.handoff-expanded .chat-list-panel .conv-preview,
+.handoff-grid.handoff-expanded .chat-list-panel .conv-tags,
+.handoff-grid.handoff-expanded .chat-list-panel .conv-time {
+    display: none !important;
+}
+
+.handoff-grid.handoff-expanded .chat-list-panel .panel-header {
+    padding: 0.6rem 0.4rem;
+    justify-content: center;
+}
+
+.handoff-grid.handoff-expanded .conv-item {
+    padding: 0.5rem 0.25rem;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-left: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.handoff-grid.handoff-expanded .conv-title {
+    font-size: 0.65rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 54px;
 }
 
 .chat-list-panel {
@@ -566,12 +609,13 @@ body {
 }
 
 .thread-header {
-    padding: 1rem 1.5rem;
+    padding: 0.65rem 1.25rem;
     background: #0f1a30;
     border-bottom: 1px solid rgba(255, 255, 255, 0.07);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-shrink: 0;
 }
 
 .sub-text {
@@ -609,88 +653,148 @@ body {
 input:checked + .slider { background-color: #10b981; }
 input:checked + .slider:before { transform: translateX(22px); }
 
+/* Chat Thread Messages: Expanded vertical height & high density to view far more messages */
 .thread-messages {
-    flex: 1;
-    padding: 1.5rem;
+    flex: 1 1 0;
+    min-height: 0;
+    padding: 0.85rem 1.25rem;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.5rem;
     background: #060b18;
+}
+
+.thread-messages::-webkit-scrollbar {
+    width: 6px;
+}
+.thread-messages::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+}
+.thread-messages::-webkit-scrollbar-thumb:hover {
+    background: rgba(235, 103, 17, 0.5);
 }
 
 .msg-row {
     display: flex;
     flex-direction: column;
-    max-width: 72%;
+    max-width: 80%;
+    animation: fadeIn 0.15s ease-out;
 }
 
 .msg-row.user { align-self: flex-start; }
 .msg-row.assistant, .msg-row.human { align-self: flex-end; }
 
-.bubble {
-    padding: 0.85rem 1.15rem;
-    border-radius: 16px;
-    font-size: 0.9rem;
-    line-height: 1.5;
+.bubble, .msg-content {
+    padding: 0.55rem 0.95rem;
+    border-radius: 14px;
+    font-size: 0.86rem;
+    line-height: 1.44;
     white-space: pre-wrap;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+    position: relative;
 }
 
-.user .bubble {
+.user .bubble, .user .msg-content {
     background: #14223c;
-    border: 1px solid rgba(56, 189, 248, 0.28);
+    border: 1px solid rgba(56, 189, 248, 0.25);
     color: #f8fafc;
-    border-bottom-left-radius: 4px;
+    border-bottom-left-radius: 3px;
 }
 
-.assistant .bubble {
-    background: linear-gradient(135deg, #0f7a63, #065449);
-    border: 1px solid rgba(37, 211, 102, 0.4);
+.assistant .bubble, .assistant .msg-content {
+    background: linear-gradient(135deg, #0d6e59, #05483e);
+    border: 1px solid rgba(37, 211, 102, 0.38);
     color: #ffffff;
-    border-bottom-right-radius: 4px;
+    border-bottom-right-radius: 3px;
 }
 
-.human .bubble {
-    background: linear-gradient(135deg, #203178, #131e50);
-    border: 1px solid rgba(99, 102, 241, 0.45);
+.human .bubble, .human .msg-content {
+    background: linear-gradient(135deg, #1d2d6c, #111a47);
+    border: 1px solid rgba(99, 102, 241, 0.4);
     color: #ffffff;
-    border-bottom-right-radius: 4px;
+    border-bottom-right-radius: 3px;
+}
+
+.msg-sender {
+    font-size: 0.68rem;
+    font-weight: 700;
+    margin-bottom: 0.15rem;
+    letter-spacing: 0.01em;
+}
+
+.user .msg-sender { color: #38bdf8; }
+.assistant .msg-sender { color: #34d399; }
+.human .msg-sender { color: #a5b4fc; }
+
+.msg-text {
+    word-break: break-word;
+    font-size: 0.85rem;
+    line-height: 1.44;
+}
+
+.msg-timestamp {
+    font-size: 0.62rem;
+    color: rgba(255, 255, 255, 0.55);
+    margin-top: 0.2rem;
+    text-align: right;
 }
 
 .msg-meta {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     color: var(--text-muted);
-    margin-top: 0.25rem;
+    margin-top: 0.2rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
 }
 
 .user .msg-meta { justify-content: flex-start; }
 .assistant .msg-meta, .human .msg-meta { justify-content: flex-end; }
 
+/* Streamlined Input Area: Reclaims ~130px for message chatting space */
 .thread-input-area {
-    padding: 1rem 1.5rem;
+    padding: 0.55rem 1.15rem;
     background: #0b1222;
     border-top: 1px solid rgba(255, 255, 255, 0.07);
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.4rem;
+    flex-shrink: 0;
 }
 
 .human-override-banner {
     background: rgba(239, 68, 68, 0.12);
     border: 1px solid rgba(239, 68, 68, 0.3);
     color: #fca5a5;
-    padding: 0.5rem 1rem;
+    padding: 0.35rem 0.75rem;
     border-radius: 8px;
-    font-size: 0.8rem;
+    font-size: 0.76rem;
+}
+
+.quick-templates {
+    display: flex;
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    gap: 0.35rem;
+    margin-bottom: 0.2rem;
+    padding-bottom: 2px;
+    scrollbar-width: thin;
+}
+
+.quick-templates::-webkit-scrollbar {
+    height: 3px;
+}
+
+.quick-templates::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
 }
 
 .input-row {
     display: flex;
-    gap: 0.75rem;
+    gap: 0.65rem;
 }
 
 .input-row input {
@@ -1746,7 +1850,7 @@ textarea.form-control {
 
 /* Three-column Live Handoff Grid with Customer 360 Drawer */
 .handoff-grid.with-profile {
-    grid-template-columns: 300px 1fr 310px !important;
+    grid-template-columns: 260px 1fr 285px !important;
 }
 
 .chat-profile-panel {

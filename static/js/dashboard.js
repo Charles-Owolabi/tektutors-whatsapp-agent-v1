@@ -458,7 +458,7 @@ async function loadMessages(phone) {
             let toolBadge = m.tool_calls_log ? `<span style="font-size:0.65rem; color:#a7f3d0; margin-left:6px;">[Tools: ${m.tool_calls_log}]</span>` : '';
 
             row.innerHTML = `
-                <div class="msg-content">
+                <div class="msg-content bubble">
                     <div class="msg-sender">${senderLabel} ${toolBadge}</div>
                     <div class="msg-text">${formatWhatsAppText(m.body)}</div>
                     <div class="msg-timestamp">${m.timestamp}</div>
@@ -534,6 +534,30 @@ async function sendHumanMessage() {
         }
     } catch (err) {
         console.error('Error sending human message:', err);
+    }
+}
+
+// --- LIVE HANDOFF FULL VIEW / EXPAND CONTROLS ---
+function toggleHandoffExpand(event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    const grid = document.querySelector('.handoff-grid');
+    const icon = document.getElementById('chat-expand-icon');
+    const label = document.getElementById('chat-expand-label');
+    if (!grid) return;
+
+    const isExpanded = grid.classList.toggle('handoff-expanded');
+    if (icon) {
+        icon.className = isExpanded ? 'fa-solid fa-down-left-and-up-right-to-center' : 'fa-solid fa-up-right-and-down-left-from-center';
+    }
+    if (label) {
+        label.innerText = isExpanded ? 'Collapse' : 'Expand';
+    }
+    const container = document.getElementById('messages-container');
+    if (container) {
+        setTimeout(() => { container.scrollTop = container.scrollHeight; }, 150);
     }
 }
 
