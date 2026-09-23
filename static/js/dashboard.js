@@ -1158,13 +1158,16 @@ function renderKanbanBoard(leads) {
         const col = document.createElement('div');
         col.className = 'kanban-column';
         col.innerHTML = `
-            <div class="kanban-header" style="border-top: 3px solid ${st.color};">
-                <span>${st.name}</span>
+            <div class="kanban-header" style="border-top: 3px solid ${st.color}; cursor: pointer;" onclick="openStageCandidatesModal('${st.id}')" title="Click to view all ${st.name} candidates details">
+                <span style="display: flex; align-items: center; gap: 0.45rem;">
+                    ${st.name}
+                    <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.65rem; opacity: 0.6;"></i>
+                </span>
                 <span class="badge" style="background: rgba(255,255,255,0.08);">${matchingLeads.length}</span>
             </div>
             <div class="kanban-cards-list">
                 ${matchingLeads.map(l => createKanbanCardHtml(l)).join('')}
-                ${matchingLeads.length === 0 ? '<div style="font-size: 0.72rem; color: var(--text-muted); text-align: center; padding: 1.5rem 0;">No leads in stage</div>' : ''}
+                ${matchingLeads.length === 0 ? '<div style="font-size: 0.72rem; color: var(--text-muted); text-align: center; padding: 1.5rem 0;">No leads in stage<br><span style="font-size: 0.68rem; opacity: 0.7;">Click header to inspect</span></div>' : ''}
             </div>
         `;
         container.appendChild(col);
@@ -1182,22 +1185,23 @@ function createKanbanCardHtml(lead) {
     }
 
     return `
-        <div class="kanban-card">
+        <div class="kanban-card" onclick="openCandidateDetailsModal(${lead.id})" title="Click to view full candidate details dossier">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div class="kanban-card-title">${escapeHtml(lead.name || 'Student')}</div>
                 ${scoreBadge}
             </div>
             <div class="kanban-card-course"><i class="fa-solid fa-graduation-cap"></i> ${escapeHtml(lead.course_interest || 'General Tech')}</div>
-            <div class="kanban-card-meta" style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
-                <div style="display: flex; gap: 0.3rem;">
-                    <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; background: rgba(37,211,102,0.15); color: #25D366; border: 1px solid rgba(37,211,102,0.3);" onclick="openChatForLead('${lead.phone}', '${escapeHtml(lead.name || '')}')"><i class="fa-solid fa-comments"></i> Chat</button>
-                    <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3);" onclick="openEmailComposerForLead(${lead.id}, '${escapeHtml(lead.name || '')}', '${escapeHtml(lead.email || '')}', '${escapeHtml(lead.course_interest || '')}')" title="Compose Custom Email"><i class="fa-solid fa-envelope"></i></button>
-                    <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; background: rgba(235,103,17,0.15); color: #ff8c3a; border: 1px solid rgba(235,103,17,0.3);" onclick="promptQuickConversionEmail(${lead.id}, '${escapeHtml(lead.name || '')}', '${escapeHtml(lead.email || '')}')" title="1-Click Conversion Follow-Up"><i class="fa-solid fa-bolt"></i></button>
+            <div class="kanban-card-meta" style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;" onclick="event.stopPropagation()">
+                <div style="display: flex; gap: 0.25rem;">
+                    <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.45rem; background: rgba(37,211,102,0.15); color: #25D366; border: 1px solid rgba(37,211,102,0.3);" onclick="event.stopPropagation(); openChatForLead('${lead.phone}', '${escapeHtml(lead.name || '')}')" title="Open WhatsApp Chat"><i class="fa-solid fa-comments"></i> Chat</button>
+                    <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.45rem; background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3);" onclick="event.stopPropagation(); openEmailComposerForLead(${lead.id}, '${escapeHtml(lead.name || '')}', '${escapeHtml(lead.email || '')}', '${escapeHtml(lead.course_interest || '')}')" title="Compose Custom Email"><i class="fa-solid fa-envelope"></i></button>
+                    <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.45rem; background: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.3);" onclick="event.stopPropagation(); openCandidateDetailsModal(${lead.id})" title="View Complete Candidate Details Dossier"><i class="fa-solid fa-id-card"></i></button>
                 </div>
-                <select class="kanban-stage-select" onchange="updateLeadStage(${lead.id}, this.value)">
+                <select class="kanban-stage-select" onclick="event.stopPropagation()" onchange="updateLeadStage(${lead.id}, this.value)">
                     <option value="new" ${lead.status === 'new' ? 'selected' : ''}>New</option>
                     <option value="qualified" ${lead.status === 'qualified' ? 'selected' : ''}>Qualified</option>
                     <option value="hot" ${lead.status === 'hot' ? 'selected' : ''}>Hot</option>
+                    <option value="call_booked" ${lead.status === 'call_booked' ? 'selected' : ''}>Call Booked</option>
                     <option value="enrolled" ${lead.status === 'enrolled' ? 'selected' : ''}>Enrolled</option>
                     <option value="cold" ${lead.status === 'cold' ? 'selected' : ''}>Cold</option>
                 </select>
@@ -1217,9 +1221,15 @@ function renderTableLeads(leads) {
     leads.forEach(l => {
         let scoreBadge = l.status === 'hot' ? '<span class="lead-score hot">🔥 95</span>' : (l.status === 'qualified' ? '<span class="lead-score warm">⚡ 75</span>' : '<span class="lead-score cold">❄️ 40</span>');
         const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.title = 'Click to view full candidate details dossier';
+        tr.onclick = (e) => {
+            if (e.target.closest('button') || e.target.closest('select') || e.target.closest('a')) return;
+            openCandidateDetailsModal(l.id);
+        };
         tr.innerHTML = `
             <td>#${l.id}</td>
-            <td><strong>${escapeHtml(l.name || 'Prospect')}</strong></td>
+            <td><strong style="color: #38bdf8; text-decoration: underline;" onclick="openCandidateDetailsModal(${l.id})">${escapeHtml(l.name || 'Prospect')}</strong></td>
             <td>+${l.phone}</td>
             <td>${escapeHtml(l.email || '—')}</td>
             <td>${escapeHtml(l.course_interest || 'Tech')}</td>
@@ -1227,21 +1237,283 @@ function renderTableLeads(leads) {
             <td>${scoreBadge}</td>
             <td style="max-width: 220px; font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(l.notes || '—')}</td>
             <td>
-                <div style="display: flex; gap: 0.35rem; align-items: center;">
-                    <button class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.45rem; background: rgba(37,211,102,0.15); color: #25D366; border: 1px solid rgba(37,211,102,0.3);" onclick="openChatForLead('${l.phone}', '${escapeHtml(l.name || '')}')" title="Open WhatsApp Chat"><i class="fa-solid fa-comments"></i></button>
-                    <button class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.45rem; background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3);" onclick="openEmailComposerForLead(${l.id}, '${escapeHtml(l.name || '')}', '${escapeHtml(l.email || '')}', '${escapeHtml(l.course_interest || '')}')" title="Compose Custom Email"><i class="fa-solid fa-envelope"></i></button>
-                    <button class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.45rem; background: rgba(235,103,17,0.15); color: #ff8c3a; border: 1px solid rgba(235,103,17,0.3);" onclick="promptQuickConversionEmail(${l.id}, '${escapeHtml(l.name || '')}', '${escapeHtml(l.email || '')}')" title="1-Click Conversion Follow-Up"><i class="fa-solid fa-bolt"></i></button>
-                    <select class="kanban-stage-select" onchange="updateLeadStage(${l.id}, this.value)">
+                <div style="display: flex; gap: 0.35rem; align-items: center;" onclick="event.stopPropagation()">
+                    <button class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.45rem; background: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.3);" onclick="event.stopPropagation(); openCandidateDetailsModal(${l.id})" title="View Complete Candidate Details Dossier"><i class="fa-solid fa-id-card"></i></button>
+                    <button class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.45rem; background: rgba(37,211,102,0.15); color: #25D366; border: 1px solid rgba(37,211,102,0.3);" onclick="event.stopPropagation(); openChatForLead('${l.phone}', '${escapeHtml(l.name || '')}')" title="Open WhatsApp Chat"><i class="fa-solid fa-comments"></i></button>
+                    <button class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.45rem; background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3);" onclick="event.stopPropagation(); openEmailComposerForLead(${l.id}, '${escapeHtml(l.name || '')}', '${escapeHtml(l.email || '')}', '${escapeHtml(l.course_interest || '')}')" title="Compose Custom Email"><i class="fa-solid fa-envelope"></i></button>
+                    <button class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.45rem; background: rgba(235,103,17,0.15); color: #ff8c3a; border: 1px solid rgba(235,103,17,0.3);" onclick="event.stopPropagation(); promptQuickConversionEmail(${l.id}, '${escapeHtml(l.name || '')}', '${escapeHtml(l.email || '')}')" title="1-Click Conversion Follow-Up"><i class="fa-solid fa-bolt"></i></button>
+                    <select class="kanban-stage-select" onclick="event.stopPropagation()" onchange="updateLeadStage(${l.id}, this.value)">
                         <option value="new" ${l.status === 'new' ? 'selected' : ''}>New</option>
                         <option value="qualified" ${l.status === 'qualified' ? 'selected' : ''}>Qualified</option>
                         <option value="hot" ${l.status === 'hot' ? 'selected' : ''}>Hot</option>
+                        <option value="call_booked" ${l.status === 'call_booked' ? 'selected' : ''}>Call Booked</option>
                         <option value="enrolled" ${l.status === 'enrolled' ? 'selected' : ''}>Enrolled</option>
+                        <option value="cold" ${l.status === 'cold' ? 'selected' : ''}>Cold</option>
                     </select>
                 </div>
             </td>
         `;
         tbody.appendChild(tr);
     });
+}
+
+// =========================================================================
+// CRM STAGE CANDIDATES INSPECTOR & CANDIDATE DETAILS DOSSIER MODALS
+// =========================================================================
+window.activeStageFilter = 'all';
+window.activeDetailsLeadId = null;
+
+const CRM_STAGES_META = {
+    new: { name: '🆕 New Leads', color: '#3b82f6', badgeClass: 'pill-new' },
+    qualified: { name: '✅ Qualified', color: '#10b981', badgeClass: 'pill-qualified' },
+    hot: { name: '🔥 Hot Prospects', color: '#ef4444', badgeClass: 'pill-hot' },
+    call_booked: { name: '📅 Call Booked', color: '#8b5cf6', badgeClass: 'pill-human' },
+    enrolled: { name: '🎉 Enrolled / Won', color: '#f59e0b', badgeClass: 'pill-ai' },
+    cold: { name: '❄️ Cold Prospects', color: '#64748b', badgeClass: 'pill-human' }
+};
+
+function openStageCandidatesModal(stageId) {
+    window.activeStageFilter = stageId;
+    const modal = document.getElementById('stage-candidates-modal');
+    const titleEl = document.getElementById('stage-modal-title');
+    const countBadge = document.getElementById('stage-modal-count-badge');
+    const bodyEl = document.getElementById('stage-modal-body');
+    if (!modal || !bodyEl) return;
+
+    const stageMeta = CRM_STAGES_META[stageId] || { name: stageId.toUpperCase(), color: '#38bdf8' };
+    const leads = window.leadsData || [];
+    const matchingLeads = leads.filter(l => {
+        if (stageId === 'call_booked') return l.status === 'call_booked' || (l.notes && l.notes.includes('Call Scheduled'));
+        return l.status === stageId;
+    });
+
+    if (titleEl) {
+        titleEl.innerHTML = `<span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:${stageMeta.color}; margin-right:8px;"></span> ${stageMeta.name} Candidates`;
+    }
+    if (countBadge) {
+        countBadge.innerText = `${matchingLeads.length} ${matchingLeads.length === 1 ? 'Candidate' : 'Candidates'}`;
+    }
+
+    if (matchingLeads.length === 0) {
+        bodyEl.innerHTML = `
+            <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+                <i class="fa-solid fa-users-slash fa-2x" style="margin-bottom: 0.5rem; opacity: 0.5;"></i>
+                <p style="font-size: 0.9rem; margin-bottom: 0.5rem;">No candidates currently in the <strong>${stageMeta.name}</strong> stage.</p>
+                <button class="btn btn-sm btn-primary" onclick="closeStageCandidatesModal(); setLeadView('kanban');">View All Stages</button>
+            </div>
+        `;
+    } else {
+        bodyEl.innerHTML = matchingLeads.map(l => {
+            let scoreBadge = l.status === 'hot' || l.budget_ready 
+                ? '<span class="lead-score hot">🔥 95/100</span>' 
+                : (l.status === 'qualified' || (l.email && l.email.includes('@')) 
+                    ? '<span class="lead-score warm">⚡ 75/100</span>' 
+                    : '<span class="lead-score cold">❄️ 40/100</span>');
+            
+            const initials = (l.name || 'ST').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+            return `
+                <div class="stage-candidate-card" onclick="openCandidateDetailsModal(${l.id})">
+                    <div style="display: flex; align-items: center; gap: 0.85rem; flex: 1; min-width: 220px;">
+                        <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, ${stageMeta.color}, #4f46e5); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;">
+                            ${initials}
+                        </div>
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <strong style="font-size: 0.95rem; color: #fff;">${escapeHtml(l.name || 'Prospect')}</strong>
+                                ${scoreBadge}
+                            </div>
+                            <div style="font-size: 0.76rem; color: var(--text-muted); display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 2px;">
+                                <span><i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> +${l.phone}</span>
+                                <span><i class="fa-solid fa-envelope" style="color: #38bdf8;"></i> ${escapeHtml(l.email || 'No email')}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.2rem; min-width: 170px;">
+                        <span style="font-size: 0.78rem; color: #ff8c3a; font-weight: 600;"><i class="fa-solid fa-graduation-cap"></i> ${escapeHtml(l.course_interest || 'Tech')}</span>
+                        <span style="font-size: 0.72rem; color: #10b981;">${l.budget_ready ? '✅ Verified ₦100k/mo' : '💳 Flexible Installments'}</span>
+                    </div>
+
+                    <div style="display: flex; gap: 0.35rem; align-items: center;" onclick="event.stopPropagation()">
+                        <button class="btn btn-sm btn-secondary" style="font-size: 0.72rem; padding: 0.25rem 0.6rem; background: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.3);" onclick="event.stopPropagation(); openCandidateDetailsModal(${l.id})" title="View Full Dossier">
+                            <i class="fa-solid fa-id-card"></i> Dossier
+                        </button>
+                        <button class="btn btn-sm btn-secondary" style="font-size: 0.72rem; padding: 0.25rem 0.6rem; background: rgba(37,211,102,0.15); color: #25D366; border: 1px solid rgba(37,211,102,0.3);" onclick="event.stopPropagation(); closeStageCandidatesModal(); openChatForLead('${l.phone}', '${escapeHtml(l.name || '')}')" title="Chat on Live Handoff">
+                            <i class="fa-solid fa-comments"></i>
+                        </button>
+                        <button class="btn btn-sm btn-secondary" style="font-size: 0.72rem; padding: 0.25rem 0.6rem; background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3);" onclick="event.stopPropagation(); openEmailComposerForLead(${l.id}, '${escapeHtml(l.name || '')}', '${escapeHtml(l.email || '')}', '${escapeHtml(l.course_interest || '')}')" title="Send Email">
+                            <i class="fa-solid fa-envelope"></i>
+                        </button>
+                        <select class="kanban-stage-select" onclick="event.stopPropagation()" onchange="updateLeadStage(${l.id}, this.value)">
+                            <option value="new" ${l.status === 'new' ? 'selected' : ''}>New</option>
+                            <option value="qualified" ${l.status === 'qualified' ? 'selected' : ''}>Qualified</option>
+                            <option value="hot" ${l.status === 'hot' ? 'selected' : ''}>Hot</option>
+                            <option value="call_booked" ${l.status === 'call_booked' ? 'selected' : ''}>Call Booked</option>
+                            <option value="enrolled" ${l.status === 'enrolled' ? 'selected' : ''}>Enrolled</option>
+                            <option value="cold" ${l.status === 'cold' ? 'selected' : ''}>Cold</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    modal.style.display = 'flex';
+}
+
+function closeStageCandidatesModal() {
+    const modal = document.getElementById('stage-candidates-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function switchFilterToCurrentStage() {
+    closeStageCandidatesModal();
+    const filterSelect = document.getElementById('lead-status-filter');
+    if (filterSelect && window.activeStageFilter) {
+        filterSelect.value = window.activeStageFilter;
+    }
+    setLeadView('table');
+    fetchLeads();
+}
+
+function openCandidateDetailsModal(leadId) {
+    window.activeDetailsLeadId = leadId;
+    const leads = window.leadsData || [];
+    const lead = leads.find(l => l.id === leadId);
+    if (!lead) {
+        showToast('Candidate record not found.', 'warning');
+        return;
+    }
+
+    const modal = document.getElementById('candidate-details-modal');
+    if (!modal) return;
+
+    // Populate data
+    document.getElementById('cd-id').innerText = `#${lead.id}`;
+    document.getElementById('cd-name').innerText = lead.name || 'Candidate';
+    document.getElementById('cd-phone').innerText = `+${lead.phone}`;
+    document.getElementById('cd-email').innerText = lead.email || 'No email provided';
+    document.getElementById('cd-course').innerText = lead.course_interest || 'TekTutors Tech Program';
+    document.getElementById('cd-skill').innerText = lead.skill_level || 'Beginner';
+    document.getElementById('cd-created-at').innerText = lead.created_at || 'Recently captured';
+
+    // Budget
+    document.getElementById('cd-budget').innerText = lead.budget_ready ? '✅ Verified ₦100,000/mo' : 'Exploring Tuition & Pricing';
+
+    // Avatar initials
+    const initials = (lead.name || 'ST').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    const avatarEl = document.getElementById('cd-avatar');
+    if (avatarEl) avatarEl.innerText = initials;
+
+    // WhatsApp link
+    const cleanPhone = String(lead.phone).replace(/[^0-9]/g, '');
+    const waLink = document.getElementById('cd-wa-link');
+    if (waLink) waLink.href = `https://wa.me/${cleanPhone}`;
+
+    // Stage badge
+    const stageBadge = document.getElementById('cd-stage-badge');
+    if (stageBadge) {
+        stageBadge.className = `pill pill-${lead.status}`;
+        stageBadge.innerText = (lead.status || 'NEW').toUpperCase();
+    }
+
+    // Score badge
+    const scoreBadge = document.getElementById('cd-score-badge');
+    if (scoreBadge) {
+        if (lead.status === 'hot' || lead.budget_ready) {
+            scoreBadge.className = 'lead-score hot';
+            scoreBadge.innerText = '🔥 95/100 (High Intent)';
+        } else if (lead.status === 'qualified' || (lead.email && lead.email.includes('@'))) {
+            scoreBadge = 'lead-score warm';
+            scoreBadge.innerText = '⚡ 75/100 (Qualified)';
+        } else {
+            scoreBadge = 'lead-score cold';
+            scoreBadge.innerText = '❄️ 40/100 (Inquiry)';
+        }
+    }
+
+    // Stage dropdown
+    const stageSelect = document.getElementById('cd-stage-select');
+    if (stageSelect) stageSelect.value = lead.status || 'new';
+
+    // Notes
+    const notesEl = document.getElementById('cd-notes');
+    if (notesEl) {
+        notesEl.innerText = lead.notes || 'Student engaged with Tara regarding curriculum modules, flexible month-to-month billing (₦100k/mo), and class schedules. No disqualifying factors observed.';
+    }
+
+    // Recommendation
+    const recEl = document.getElementById('cd-recommendation');
+    if (recEl) {
+        if (lead.status === 'hot' || lead.budget_ready) {
+            recEl.innerText = '🔥 High commercial propensity. Prioritize immediate 1-on-1 human takeover or trigger the 3-step WhatsApp sequence to secure enrollment.';
+        } else if (lead.status === 'qualified') {
+            recEl.innerText = '⚡ Qualified prospect with confirmed email. Send tailored course curriculum or schedule admissions discovery call.';
+        } else {
+            recEl.innerText = '🆕 Early stage inquiry. Send course catalog and offer flexible ₦100k/month installment breakdown.';
+        }
+    }
+
+    // Button actions
+    const chatBtn = document.getElementById('cd-action-chat');
+    if (chatBtn) {
+        chatBtn.onclick = () => {
+            closeCandidateDetailsModal();
+            closeStageCandidatesModal();
+            openChatForLead(lead.phone, lead.name);
+        };
+    }
+
+    const emailBtn = document.getElementById('cd-email-btn');
+    if (emailBtn) {
+        emailBtn.onclick = () => {
+            openEmailComposerForLead(lead.id, lead.name, lead.email, lead.course_interest);
+        };
+    }
+
+    const waSeqBtn = document.getElementById('cd-action-whatsapp-sequence');
+    if (waSeqBtn) {
+        waSeqBtn.onclick = () => {
+            closeCandidateDetailsModal();
+            trigger3StepWhatsAppForLead(lead.phone, lead.name);
+        };
+    }
+
+    const handoffChatBtn = document.getElementById('cd-chat-btn');
+    if (handoffChatBtn) {
+        handoffChatBtn.onclick = () => {
+            closeCandidateDetailsModal();
+            closeStageCandidatesModal();
+            openChatForLead(lead.phone, lead.name);
+        };
+    }
+
+    modal.style.display = 'flex';
+}
+
+function closeCandidateDetailsModal() {
+    const modal = document.getElementById('candidate-details-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function updateLeadStageFromModal(newStage) {
+    if (!window.activeDetailsLeadId) return;
+    await updateLeadStage(window.activeDetailsLeadId, newStage);
+    const stageBadge = document.getElementById('cd-stage-badge');
+    if (stageBadge) {
+        stageBadge.className = `pill pill-${newStage}`;
+        stageBadge.innerText = newStage.toUpperCase();
+    }
+}
+
+function trigger3StepWhatsAppForLead(phone, name) {
+    openWhatsAppSequenceModal();
+    const sel = document.getElementById('wa-seq-lead-select');
+    if (sel) {
+        sel.value = phone;
+        if (typeof previewSequenceForLead === 'function') previewSequenceForLead(phone);
+    }
 }
 
 async function updateLeadStage(leadId, newStage) {

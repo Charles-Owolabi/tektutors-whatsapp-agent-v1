@@ -1504,6 +1504,158 @@
     </div>
 
     <!-- ========================================================================= -->
+    <!-- STAGE CANDIDATES INSPECTOR MODAL (1-Click on Stage Header)                  -->
+    <!-- ========================================================================= -->
+    <div id="stage-candidates-modal" class="modal-overlay" style="display: none; z-index: 1045;">
+        <div class="modal-content glass-card" style="max-width: 960px; width: 95vw; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.85rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <h3 id="stage-modal-title" style="margin: 0; font-size: 1.2rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+                        Candidates in Stage
+                    </h3>
+                    <span id="stage-modal-count-badge" class="badge" style="background: rgba(255,255,255,0.12); font-size: 0.78rem; font-weight: 700;">0 Candidates</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <button class="btn btn-sm btn-secondary" onclick="switchFilterToCurrentStage()" style="font-size: 0.72rem; padding: 0.35rem 0.65rem;"><i class="fa-solid fa-table-list"></i> Filter in Table View</button>
+                    <button class="btn-icon" onclick="closeStageCandidatesModal()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+
+            <div id="stage-modal-body" style="overflow-y: auto; padding: 1.25rem 0; display: flex; flex-direction: column; gap: 0.75rem; flex: 1;">
+                <!-- Populated dynamically by JS -->
+            </div>
+
+            <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.75rem; color: var(--text-muted);"><i class="fa-solid fa-circle-info"></i> Click any candidate to open their full executive dossier.</span>
+                <button type="button" class="btn btn-secondary" onclick="closeStageCandidatesModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- CANDIDATE FULL PROFILE & DETAILS DOSSIER MODAL                              -->
+    <!-- ========================================================================= -->
+    <div id="candidate-details-modal" class="modal-overlay" style="display: none; z-index: 1050;">
+        <div class="modal-content glass-card" style="max-width: 760px; width: 95vw; max-height: 92vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.85rem; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 0.85rem;">
+                    <div id="cd-avatar" style="width: 46px; height: 46px; border-radius: 12px; background: linear-gradient(135deg, #0ea5e9, #6366f1); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; color: #fff; box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4); flex-shrink: 0;">
+                        ST
+                    </div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <h3 id="cd-name" style="margin: 0; font-size: 1.18rem; font-weight: 700; color: #fff;">Candidate Details</h3>
+                            <span id="cd-stage-badge" class="pill pill-new">NEW</span>
+                            <span id="cd-score-badge" class="lead-score hot">🔥 95/100</span>
+                        </div>
+                        <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">
+                            Candidate ID: <span id="cd-id" style="color: #fff; font-weight: 600;">#1</span> • Joined: <span id="cd-created-at">Recently</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-icon" onclick="closeCandidateDetailsModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div style="overflow-y: auto; padding: 1.25rem 0; display: flex; flex-direction: column; gap: 1rem; flex: 1;">
+                <!-- 4-Card Candidate Intelligence Grid -->
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.07); padding: 0.85rem; border-radius: 10px;">
+                        <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 0.25rem;">
+                            <i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> WhatsApp Phone
+                        </div>
+                        <div id="cd-phone" style="font-size: 0.98rem; font-weight: 700; color: #fff; margin-bottom: 0.45rem;">+234...</div>
+                        <div style="display: flex; gap: 0.4rem;">
+                            <a id="cd-wa-link" href="#" target="_blank" class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.25rem 0.55rem; background: rgba(37,211,102,0.15); color: #25D366; border: 1px solid rgba(37,211,102,0.3); text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <i class="fa-brands fa-whatsapp"></i> Chat on WhatsApp
+                            </a>
+                            <button id="cd-chat-btn" class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.25rem 0.55rem; background: rgba(14,165,233,0.15); color: #38bdf8; border: 1px solid rgba(14,165,233,0.3); display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <i class="fa-solid fa-headset"></i> Live Handoff
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.07); padding: 0.85rem; border-radius: 10px;">
+                        <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 0.25rem;">
+                            <i class="fa-solid fa-envelope" style="color: #38bdf8;"></i> Email Address
+                        </div>
+                        <div id="cd-email" style="font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.45rem; word-break: break-all;">student@...</div>
+                        <button id="cd-email-btn" class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.25rem 0.55rem; background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); display: inline-flex; align-items: center; gap: 0.35rem;">
+                            <i class="fa-solid fa-paper-plane"></i> Compose Custom Email
+                        </button>
+                    </div>
+
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.07); padding: 0.85rem; border-radius: 10px;">
+                        <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 0.25rem;">
+                            <i class="fa-solid fa-graduation-cap" style="color: #ff8c3a;"></i> Target Course &amp; Skill
+                        </div>
+                        <div id="cd-course" style="font-size: 0.95rem; font-weight: 700; color: #ff8c3a;">Data Analytics Bootcamp</div>
+                        <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 0.25rem;">
+                            Current Skill Level: <strong id="cd-skill" style="color: #e2e8f0;">Beginner</strong>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.07); padding: 0.85rem; border-radius: 10px;">
+                        <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 0.25rem;">
+                            <i class="fa-solid fa-credit-card" style="color: #10b981;"></i> Commercial Budget Readiness
+                        </div>
+                        <div id="cd-budget" style="font-size: 0.95rem; font-weight: 700; color: #10b981;">✅ Verified ₦100,000/mo</div>
+                        <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 0.25rem;">
+                            Financing: Flexible Month-to-Month Plan
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes & AI Transcript Analysis -->
+                <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.82rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-clipboard-list" style="color: #38bdf8;"></i> Counselor &amp; AI Qualification Notes
+                        </span>
+                        <span style="font-size: 0.7rem; color: var(--text-muted);">Verified Telemetry</span>
+                    </div>
+                    <div id="cd-notes" style="font-size: 0.85rem; line-height: 1.5; color: #cbd5e1; background: rgba(0,0,0,0.25); padding: 0.75rem 0.9rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); white-space: pre-wrap; max-height: 120px; overflow-y: auto;">
+                        Candidate notes loading...
+                    </div>
+                </div>
+
+                <!-- AI Next Recommended Action -->
+                <div style="background: linear-gradient(135deg, rgba(235,103,17,0.1), rgba(99,102,241,0.08)); border: 1px solid rgba(235,103,17,0.25); border-radius: 10px; padding: 0.85rem;">
+                    <div style="font-size: 0.76rem; font-weight: 700; color: #ff8c3a; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.4rem;">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> AI Next Recommended Action
+                    </div>
+                    <div id="cd-recommendation" style="font-size: 0.82rem; color: #e2e8f0; line-height: 1.45;">
+                        High propensity to enroll. Recommend booking a 15-minute admissions discovery call or dispatching the 3-step WhatsApp sequence.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.85rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 0.76rem; color: var(--text-muted);">Stage:</span>
+                    <select id="cd-stage-select" class="form-control" style="font-size: 0.78rem; width: auto; padding: 0.3rem 0.6rem;" onchange="updateLeadStageFromModal(this.value)">
+                        <option value="new">🆕 New</option>
+                        <option value="qualified">✅ Qualified</option>
+                        <option value="hot">🔥 Hot Prospect</option>
+                        <option value="call_booked">📅 Call Booked</option>
+                        <option value="enrolled">🎉 Enrolled</option>
+                        <option value="cold">❄️ Cold</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeCandidateDetailsModal()">Close</button>
+                    <button type="button" class="btn btn-secondary" id="cd-action-whatsapp-sequence" style="background: rgba(37,211,102,0.15); color: #25D366; border: 1px solid rgba(37,211,102,0.3); font-size: 0.78rem;">
+                        <i class="fa-brands fa-whatsapp"></i> Send 3 AI Messages
+                    </button>
+                    <button type="button" class="btn btn-primary" id="cd-action-chat" style="font-size: 0.78rem;">
+                        <i class="fa-solid fa-comments"></i> Open in Live Handoff
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
     <!-- INTELLIGENT 3-TOUCH WHATSAPP AI SEQUENCE MODAL                             -->
     <!-- ========================================================================= -->
     <div id="whatsapp-sequence-modal" class="modal-overlay" style="display: none; z-index: 1050;">

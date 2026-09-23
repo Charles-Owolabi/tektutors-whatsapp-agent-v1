@@ -1895,6 +1895,39 @@ textarea.form-control {
     align-items: center;
     font-size: 0.82rem;
     font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    user-select: none;
+}
+
+.kanban-header:hover {
+    background: #15223e;
+    box-shadow: inset 0 0 16px rgba(255, 255, 255, 0.05);
+}
+
+.kanban-header:hover .badge {
+    background: rgba(255, 255, 255, 0.22) !important;
+    transform: scale(1.08);
+}
+
+.stage-candidate-card {
+    background: #0d1527;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 0.85rem 1.15rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.stage-candidate-card:hover {
+    background: #121c35;
+    border-color: rgba(56, 189, 248, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
 
 .kanban-cards-list {
