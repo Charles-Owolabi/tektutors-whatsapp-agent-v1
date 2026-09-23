@@ -3406,39 +3406,94 @@ textarea.form-control {
    Floating AI Support Copilot Trigger & Drawer Styles
    ========================================================================== */
 
-/* Floating Trigger Button */
-.floating-copilot-btn {
+/* Floating Trigger Button Docked to Extreme Right (Collapsible) */
+.floating-copilot-wrapper {
     position: fixed;
-    bottom: 1.75rem;
-    right: 1.75rem;
+    bottom: 2rem;
+    right: 0;
     z-index: 9999;
-    background: linear-gradient(135deg, #0ea5e9, #6366f1);
-    color: #ffffff;
-    border: none;
-    border-radius: 999px;
-    padding: 0.75rem 1.25rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 8px 24px rgba(14, 165, 233, 0.45);
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+    filter: drop-shadow(0 6px 20px rgba(14, 165, 233, 0.35));
+}
+
+.floating-copilot-wrapper.is-collapsed {
+    /* Collapse flush into the extreme right margin, leaving only an elegant 34px icon handle */
+    transform: translateX(calc(100% - 34px));
+}
+
+.floating-copilot-wrapper.is-collapsed:hover {
+    transform: translateX(calc(100% - 44px));
+}
+
+.copilot-collapse-handle {
+    background: #0d1527;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-right: none;
+    color: #94a3b8;
+    height: 38px;
+    width: 22px;
+    border-radius: 8px 0 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.72rem;
+    transition: all 0.2s ease;
+    margin-right: -1px;
+    z-index: 2;
+}
+
+.copilot-collapse-handle:hover {
+    background: #111d36;
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.5);
+    width: 26px;
+}
+
+.floating-copilot-wrapper.is-collapsed .copilot-collapse-handle {
+    border-radius: 8px 0 0 8px;
+    height: 42px;
+    width: 34px;
+    background: linear-gradient(135deg, #0ea5e9, #6366f1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-right: none;
+    box-shadow: -4px 0 16px rgba(14, 165, 233, 0.4);
+}
+
+.floating-copilot-btn {
+    position: relative;
+    background: linear-gradient(135deg, #0ea5e9, #6366f1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-right: none;
+    border-radius: 20px 0 0 20px;
+    padding: 0.65rem 1.15rem 0.65rem 0.85rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: -4px 4px 18px rgba(14, 165, 233, 0.35);
+    white-space: nowrap;
 }
 
 .floating-copilot-btn:hover {
-    transform: translateY(-3px) scale(1.03);
-    box-shadow: 0 12px 30px rgba(14, 165, 233, 0.6);
+    background: linear-gradient(135deg, #0284c7, #4f46e5);
+    box-shadow: -6px 6px 24px rgba(14, 165, 233, 0.55);
 }
 
 .copilot-pulse-ring {
     position: absolute;
     top: -4px;
     left: -4px;
-    right: -4px;
+    right: 0;
     bottom: -4px;
-    border-radius: 999px;
+    border-radius: 20px 0 0 20px;
     border: 2px solid #38bdf8;
     animation: copilotPulse 2.4s infinite;
     pointer-events: none;

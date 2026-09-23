@@ -2104,12 +2104,17 @@
 
     <!-- Floating AI Support Copilot Trigger & Drawer -->
     <div id="floating-copilot-container">
-        <!-- Floating Pill Button -->
-        <button id="floating-copilot-btn" class="floating-copilot-btn" onclick="toggleFloatingCopilot()" title="Ask AI Support & Troubleshooter">
-            <span class="copilot-pulse-ring"></span>
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <span class="btn-text">AI Support</span>
-        </button>
+        <!-- Floating Pill Button Docked to Right Screen Edge with Collapse Handle -->
+        <div id="floating-copilot-wrapper" class="floating-copilot-wrapper" onclick="handleCopilotWrapperClick(event)">
+            <button id="floating-copilot-collapse-btn" class="copilot-collapse-handle" onclick="toggleCopilotButtonCollapse(event)" title="Collapse AI Support to right edge">
+                <i class="fa-solid fa-chevron-right" id="copilot-collapse-icon"></i>
+            </button>
+            <button id="floating-copilot-btn" class="floating-copilot-btn" onclick="handleCopilotBtnClick(event)" title="Ask AI Support & Troubleshooter">
+                <span class="copilot-pulse-ring"></span>
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span class="btn-text">AI Support</span>
+            </button>
+        </div>
 
         <!-- Floating Drawer Window (Completely hidden by default until AI Support button is clicked) -->
         <div id="floating-copilot-drawer" class="floating-copilot-drawer d-none" style="display: none;">
@@ -2292,6 +2297,56 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+});
+
+// ==========================================
+// Floating AI Support Button Collapse / Expand & Handlers
+// ==========================================
+function toggleCopilotButtonCollapse(event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    const wrapper = document.getElementById('floating-copilot-wrapper');
+    const icon = document.getElementById('copilot-collapse-icon');
+    if (!wrapper) return;
+    
+    const isCollapsed = wrapper.classList.toggle('is-collapsed');
+    if (icon) {
+        icon.className = isCollapsed ? 'fa-solid fa-chevron-left' : 'fa-solid fa-chevron-right';
+    }
+    try {
+        localStorage.setItem('copilotBtnCollapsed', isCollapsed ? 'true' : 'false');
+    } catch (e) { /* ignore storage errors */ }
+}
+
+function handleCopilotWrapperClick(event) {
+    const wrapper = document.getElementById('floating-copilot-wrapper');
+    if (wrapper && wrapper.classList.contains('is-collapsed')) {
+        toggleCopilotButtonCollapse(event);
+    }
+}
+
+function handleCopilotBtnClick(event) {
+    if (event) event.stopPropagation();
+    const wrapper = document.getElementById('floating-copilot-wrapper');
+    if (wrapper && wrapper.classList.contains('is-collapsed')) {
+        toggleCopilotButtonCollapse(event);
+    } else {
+        toggleFloatingCopilot();
+    }
+}
+
+// Restore user-preferred collapsed state on page load
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        if (localStorage.getItem('copilotBtnCollapsed') === 'true') {
+            const wrapper = document.getElementById('floating-copilot-wrapper');
+            const icon = document.getElementById('copilot-collapse-icon');
+            if (wrapper) wrapper.classList.add('is-collapsed');
+            if (icon) icon.className = 'fa-solid fa-chevron-left';
+        }
+    } catch (e) { /* ignore */ }
 });
 
 // ==========================================
