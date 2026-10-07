@@ -390,6 +390,152 @@ PREBUILT_EMAIL_TEMPLATES = [
         ),
         "cta_text": "Lock In Senior Mentor",
         "cta_url": "https://tektutors.com.ng/registration"
+    },
+
+    # =========================================================================
+    # 5. STRATEGIC CONVERSION, JAPA & MENTORSHIP SPECIAL CAMPAIGNS
+    # =========================================================================
+    {
+        "id": "japa_global_remote_blueprint",
+        "title": "🌍 Japa & Global Remote Career Blueprint ($/£ Salaries & Visas)",
+        "category": "marketing",
+        "badge": "Japa Blueprint",
+        "subject": "The Japa Blueprint: How {{course}} Unlocks Global Remote Roles & Tech Visa Sponsorship",
+        "body": (
+            "Hi {{name}},\n\n"
+            "Are you planning to relocate abroad or land high-paying global remote roles earning in foreign currency ($/£)?\n\n"
+            "Here is the unfiltered truth about tech hiring in the UK, Canada, the US, and Europe:\n"
+            "**Foreign recruiters and visa authorities don't care about certificates of completion.** What they demand is **verified proof of practical execution and production-grade projects.**\n\n"
+            "### 🌍 How TekTutors Prepares You for Japa & Global Remote Success:\n"
+            "• **International ATS-Compliant CV Optimization:** Tailored specifically for global platforms (LinkedIn, Wellfound, Otta, Indeed UK/Canada).\n"
+            "• **3 Enterprise-Grade GitHub Repositories:** Code reviews from active Senior Practitioners ensuring your GitHub looks like an experienced mid-level engineer.\n"
+            "• **Tech Visa Sponsorship Readiness:** Direct guidance on positioning your portfolio for UK Global Talent Visa or Canada Express Entry tech streams.\n"
+            "• **High-Yield Dollar Earnings:** Global junior-to-mid remote roles currently compensate **$1,500 – $3,500 / month (₦2,250,000+)**.\n\n"
+            "Whether your dream is relocating with your family or earning in hard currency from the comfort of your home, our 1-on-1 mentorship gives you the exact competitive edge needed.\n\n"
+            "Want to see our international placement roadmap or have questions about how we support your transition?\n\n"
+            "👉 **[Chat directly with Tara on WhatsApp to discuss your Japa goals]({{tara_chat_url}})**\n\n"
+            "Or secure your private mentor allocation before weekend onboarding closes:"
+        ),
+        "cta_text": "Explore Japa & Remote Curriculum",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "id": "mentorship_vs_bootcamp_advantage",
+        "title": "🤝 1-on-1 Mentorship Revolution: Why Solo Tutorials Fail",
+        "category": "conversion",
+        "badge": "1-on-1 Mentorship",
+        "subject": "Why 1-on-1 Screen Sharing Changes Everything ({{course}})",
+        "body": (
+            "Hi {{name}},\n\n"
+            "Have you ever spent 3 days stuck on a single syntax error in Python or a broken DAX calculation in Power BI — feeling so frustrated that you closed your laptop and gave up?\n\n"
+            "You are not alone. **Over 90% of students drop out of typical online courses.**\n\n"
+            "### ❌ The Old Bootcamp Trap:\n"
+            "You are dumped into a 50-person Zoom call with a lecturer rushing through 100 slides. When your code breaks, nobody stops to help you. You leave feeling inadequate and confused.\n\n"
+            "### ✅ The TekTutors 1-on-1 Screen-Sharing Advantage:\n"
+            "• **100% Private Video Sessions:** Every session is just you and a Senior Industry Practitioner working directly on your screen.\n"
+            "• **Live Line-by-Line Debugging:** Whenever an error pops up, your mentor guides you through fixing it immediately.\n"
+            "• **Zero Peer Intimidation:** Ask every question as many times as you need without feeling judged.\n"
+            "• **Custom Learning Pace:** Speed up through concepts you understand and take extra time on complex topics.\n\n"
+            "You don't need a math or computer science degree. You just need a patient, world-class mentor dedicated to your career.\n\n"
+            "Have questions about how our 1-on-1 sessions work?\n\n"
+            "👉 **[Chat directly with Tara on WhatsApp for instant answers]({{tara_chat_url}})**\n\n"
+            "Ready to get paired with your assigned senior practitioner?"
+        ),
+        "cta_text": "Meet Your Senior Mentor",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "id": "tektutors_irresistible_tuition_offer",
+        "title": "🎁 Irresistible Tuition Plan: ₦100k/Mo, ₦90k Upfront Rebate & ₦35k Bonus",
+        "category": "promotional",
+        "badge": "Tuition Offer",
+        "subject": "Our Flexible Tuition Plan & Free ₦35,000 Career Bonus ({{course}})",
+        "body": (
+            "Hi {{name}},\n\n"
+            "We believe acquiring high-income tech skills should empower you financially — never put you into crushing debt.\n\n"
+            "That is why TekTutors offers the most flexible, learner-friendly tuition structure in the market:\n\n"
+            "### 💳 1. Flexible Month-to-Month Tuition:\n"
+            "Invest just **₦100,000 / month** as you learn. No lock-in contracts. You have total freedom to pause or cancel anytime if your schedule changes.\n\n"
+            "### 🎁 2. Upfront 10% Cash Rebate (Save ₦10,000):\n"
+            "Choose full prepayment at checkout and pay just **₦90,000** today (save ₦10,000 immediately).\n\n"
+            "### 🌟 Fast-Action Career Bonus (Valued at ₦35,000):\n"
+            "Enroll this week and unlock a **Free 1-on-1 CV Optimization & LinkedIn Makeover** with our Senior Hiring Consultant to get you noticed by tech recruiters.\n\n"
+            "### 📊 The ROI Math:\n"
+            "Junior data and AI practitioners earn between **₦350,000 to ₦750,000/month** locally, and **$1,500 – $3,000/month** remotely. Your entire training investment pays for itself within **under 3 weeks** of your first salary.\n\n"
+            "Need help choosing a payment plan or setting up flexible installments?\n\n"
+            "👉 **[Chat directly with Tara on WhatsApp to claim your bonus]({{tara_chat_url}})**\n\n"
+            "Or lock in your upfront rebate and secure your mentor today:"
+        ),
+        "cta_text": "Claim Tuition Discount & Enroll",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "id": "non_tech_career_pivot_blueprint",
+        "title": "💼 Career Switch Blueprint for Bankers, Accountants & Ops Pros",
+        "category": "conversion",
+        "badge": "Career Pivot",
+        "subject": "Zero Coding Experience? How Finance & Ops Professionals Switch to ₦650k/mo Data Roles",
+        "body": (
+            "Hi {{name}},\n\n"
+            "Are you currently working in banking, accounting, customer service, operations, or marketing and feeling trapped in routine spreadsheets?\n\n"
+            "Here is a secret tech hiring managers won't tell you:\n"
+            "**You already possess the most difficult skill to teach — business commercial acumen.**\n\n"
+            "When you pair your commercial intuition with **SQL querying, Power BI interactive reporting, and automated Python workflows**, you become 5x more valuable than a pure computer science graduate with zero business context.\n\n"
+            "### 💼 How TekTutors Bridges Your Transition:\n"
+            "• **Tailored 1-on-1 Coaching:** We explain technical concepts using relatable business cases (customer churn, sales forecasting, revenue reporting).\n"
+            "• **Weekend & Evening Friendly:** Keep your full-time job while building your new portfolio.\n"
+            "• **100% Practical Screen-Shares:** You learn by building real dashboards, not memorizing abstract theory.\n"
+            "• **Risk-Free Month-to-Month:** Invest ₦100,000/month (or ₦90,000 upfront) with full control over your timeline.\n\n"
+            "Worried about your background or whether this is right for you?\n\n"
+            "👉 **[Chat directly with Tara on WhatsApp for a quick profile assessment]({{tara_chat_url}})**\n\n"
+            "Or take the leap and start your personalized 1-on-1 mentorship today:"
+        ),
+        "cta_text": "Start Your Non-Tech Career Switch",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "id": "cost_of_waiting_inflation",
+        "title": "⏳ The True Cost of Inaction: Inflation vs High-Income Tech Skills",
+        "category": "conversion",
+        "badge": "Emotional Wakeup",
+        "subject": "The True Cost of Waiting: Where Will You Be in 6 Months, {{name}}?",
+        "body": (
+            "Hi {{name}},\n\n"
+            "Let's have an honest conversation about time and money.\n\n"
+            "With rising inflation and currency devaluation, relying on a single static income stream is one of the riskiest positions in today's economy.\n\n"
+            "Six months from today, one of two things will happen:\n"
+            "**Scenario A:** You continue doing what you've always done. You watch prices climb while your earnings remain unchanged. Another year passes wishing you had made a move.\n"
+            "**Scenario B:** You invested 12 weeks into private 1-on-1 mentorship with a Senior Practitioner. You mastered SQL, Power BI, and Python. You have 3 verified enterprise projects on your GitHub and recruiters reaching out on LinkedIn.\n\n"
+            "The difference between Scenario A and Scenario B isn't talent or luck — it is the decision to take decisive action today.\n\n"
+            "With our flexible **₦100,000/month** plan (or **₦90,000 upfront**, saving ₦10,000), world-class tech mentorship has never been more accessible.\n\n"
+            "Ready to take control of your financial future?\n\n"
+            "👉 **[Chat directly with Tara on WhatsApp to take the first step]({{tara_chat_url}})**\n\n"
+            "Or enroll now and begin your live onboarding this weekend:"
+        ),
+        "cta_text": "Invest in Your Career Growth",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "id": "mentor_slot_expiring_final_notice",
+        "title": "⚡ Final Notice: Reserved 1-on-1 Mentor Slot Expiring",
+        "category": "conversion",
+        "badge": "Slot Expiring",
+        "subject": "Final Notice: Your Reserved Mentor Slot is Expiring, {{name}}",
+        "body": (
+            "Hi {{name}},\n\n"
+            "Because TekTutors is committed to **100% private 1-on-1 live screen-sharing**, our senior industry mentors can only work with a maximum of **4 new learners per month**.\n\n"
+            "Our admissions team has held an onboarding slot for you in **{{course}}**, but our system is scheduled to release unconfirmed seats to our waiting list tomorrow morning.\n\n"
+            "### Everything Included in Your Onboarding:\n"
+            "✅ Live private 1-on-1 mentorship with an active Senior Practitioner (flexible evening & weekend slots)\n"
+            "✅ 3 employer-grade portfolio capstone projects published on GitHub and LinkedIn\n"
+            "✅ Free ₦35,000 1-on-1 CV Optimization & Tech Interview Coaching\n"
+            "✅ Flexible ₦100,000/month or ₦90,000 upfront (save ₦10,000 immediately)\n\n"
+            "Don't let your slot slip away to the waitlist.\n\n"
+            "👉 **[Chat directly with Tara on WhatsApp to hold your mentor slot]({{tara_chat_url}})**\n\n"
+            "Or complete your registration immediately before your reservation expires:"
+        ),
+        "cta_text": "Lock In Your Mentor Slot Now",
+        "cta_url": "https://tektutors.com.ng/registration"
     }
 ]
 
@@ -462,11 +608,13 @@ def render_branded_email_html(
     footer_copyright: Optional[str] = None,
     footer_extra: Optional[str] = None,
     custom_header_html: Optional[str] = None,
-    custom_footer_html: Optional[str] = None
+    custom_footer_html: Optional[str] = None,
+    tara_chat_url: Optional[str] = None
 ) -> str:
     """
     Render modern, responsive HTML email matching TekTutors visual identity with
     fully editable and configurable header, footer, color accents, and custom HTML overrides.
+    Every email includes an intelligent, direct interactive link and callout to chat with Tara on WhatsApp.
     """
     cfg = get_email_branding_cache()
 
@@ -480,9 +628,15 @@ def render_branded_email_html(
     active_footer_extra = footer_extra if footer_extra is not None else (cfg.get("footer_extra") or "")
     active_custom_header = custom_header_html if custom_header_html is not None else cfg.get("custom_header_html")
     active_custom_footer = custom_footer_html if custom_footer_html is not None else cfg.get("custom_footer_html")
+    
+    # Resolve active Tara WhatsApp chat link
+    active_tara_chat_url = (tara_chat_url or "https://wa.me/2348063584517?text=Hi%20Tara%2C%20I%20have%20questions%20about%20learning%20with%20TekTutors.").strip()
 
-    # Format Markdown body paragraphs
-    paragraphs = [p.strip() for p in body_markdown.split("\n\n") if p.strip()]
+    # Pre-substitute tara_chat_url token if in body
+    rendered_body = body_markdown.replace("{{tara_chat_url}}", active_tara_chat_url)
+
+    # Format Markdown body paragraphs and list items
+    paragraphs = [p.strip() for p in rendered_body.split("\n\n") if p.strip()]
     formatted_paras = []
     
     for p in paragraphs:
@@ -492,11 +646,16 @@ def render_branded_email_html(
             for line in lines:
                 clean_line = re.sub(r'^[•\-\*✅\d\.]+\s*', '', line.strip())
                 clean_line = re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', clean_line)
+                clean_line = re.sub(r'\*([^*]+)\*', r'<em>\1</em>', clean_line)
+                # Convert markdown links [text](url) to styled anchor tags
+                clean_line = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2" target="_blank" style="color: ' + active_primary_color + r'; font-weight: 600; text-decoration: underline;">\1</a>', clean_line)
                 items.append(f'<li style="margin-bottom: 8px; line-height: 1.6;">{clean_line}</li>')
             formatted_paras.append(f'<ul style="padding-left: 20px; color: #334155; margin: 16px 0;">{"".join(items)}</ul>')
         else:
             p_html = re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', p)
             p_html = re.sub(r'\*([^*]+)\*', r'<em>\1</em>', p_html)
+            # Convert markdown links [text](url) to styled anchor tags
+            p_html = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2" target="_blank" style="color: ' + active_primary_color + r'; font-weight: 600; text-decoration: underline;">\1</a>', p_html)
             p_html = p_html.replace("\n", "<br>")
             formatted_paras.append(f'<p style="margin: 0 0 16px 0; line-height: 1.65; color: #334155; font-size: 15px;">{p_html}</p>')
 
@@ -598,12 +757,38 @@ def render_branded_email_html(
               {body_content_html}
 
               <!-- Primary CTA Button -->
-              <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 32px 0 24px 0;">
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 32px 0 16px 0;">
                 <tr>
                   <td align="left" style="border-radius: 8px; background: {active_primary_color};">
                     <a href="{cta_url}" target="_blank" style="display: inline-block; padding: 14px 28px; font-size: 15px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 8px; letter-spacing: 0.2px;">
                       {cta_text} &rarr;
                     </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Dedicated Chat with Tara on WhatsApp Action Box -->
+              <table role="presentation" width="100%" style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 1.5px solid #86efac; border-radius: 10px; margin: 20px 0 24px 0; padding: 18px 20px;">
+                <tr>
+                  <td>
+                    <table role="presentation" width="100%">
+                      <tr>
+                        <td width="36" valign="top" style="font-size: 26px; line-height: 1; padding-right: 12px;">
+                          💬
+                        </td>
+                        <td valign="top">
+                          <div style="font-size: 14px; font-weight: 700; color: #065f46; margin-bottom: 4px;">
+                            Have Questions? Chat Directly with Tara on WhatsApp
+                          </div>
+                          <div style="font-size: 13px; color: #047857; line-height: 1.5; margin-bottom: 12px;">
+                            Our AI Admissions &amp; Career Advisor <strong>Tara</strong> is available 24/7. Ask questions about course curriculum, Japa &amp; remote job assistance, flexible payment plans, or get matched with a senior mentor today.
+                          </div>
+                          <a href="{active_tara_chat_url}" target="_blank" style="display: inline-block; background-color: #25D366; color: #ffffff; font-size: 13px; font-weight: 700; padding: 10px 22px; border-radius: 6px; text-decoration: none; box-shadow: 0 2px 6px rgba(37,211,102,0.25);">
+                            💬 Chat with Tara on WhatsApp &rarr;
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
               </table>
@@ -842,13 +1027,15 @@ async def send_email_async(
     cta_url: str = "https://tektutors.com.ng/registration",
     course_name: str = "Data Analytics & AI",
     recipient_email: Optional[str] = None,
-    recipient_name: Optional[str] = None
+    recipient_name: Optional[str] = None,
+    tara_chat_url: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Send personalized follow-up, marketing, or promotional email.
     Substitutes tokens, renders branded HTML, dispatches via HTTPS API / SMTP (or simulated mode),
-    and records an audit log in EmailLog.
+    and records an audit log in EmailLog. Every email contains direct personalized links to chat with Tara.
     """
+    import urllib.parse
     target_email = to_email or recipient_email or ""
     target_name = to_name or recipient_name or "Student"
     clean_email = target_email.strip().lower()
@@ -857,16 +1044,29 @@ async def send_email_async(
     # 1. Personalize subject and body
     from app.cache import normalize_course_name
     clean_course = normalize_course_name(course_name) or "Data Analytics & BI Accelerator"
+
+    # Construct personalized Tara WhatsApp chat link
+    enc_course = urllib.parse.quote(clean_course)
+    enc_name = urllib.parse.quote(clean_name)
+    resolved_tara_url = (tara_chat_url or f"https://wa.me/2348063584517?text=Hi%20Tara%2C%20I%20am%20{enc_name}.%20I%20got%20your%20email%20about%20{enc_course}%20and%20I%20want%20to%20learn%20with%20TekTutors.").strip()
+
     personalized_subject = subject.replace("{{name}}", clean_name).replace("{{course}}", clean_course)
-    personalized_body = body_markdown.replace("{{name}}", clean_name).replace("{{course}}", clean_course).replace("{{registration_url}}", cta_url)
+    personalized_body = (
+        body_markdown
+        .replace("{{name}}", clean_name)
+        .replace("{{course}}", clean_course)
+        .replace("{{registration_url}}", cta_url)
+        .replace("{{tara_chat_url}}", resolved_tara_url)
+    )
     
-    # 2. Render branded HTML template
+    # 2. Render branded HTML template with Tara WhatsApp action card
     html_content = render_branded_email_html(
         subject=personalized_subject,
         body_markdown=personalized_body,
         cta_text=cta_text,
         cta_url=cta_url,
-        recipient_name=clean_name
+        recipient_name=clean_name,
+        tara_chat_url=resolved_tara_url
     )
 
     status = "sent"
@@ -1037,7 +1237,7 @@ async def dispatch_engagement_email(
 
 
 # =========================================================================
-# 4. DAILY AUTOMATED FOLLOW-UP DRIP SEQUENCE (DAYS 1-5)
+# 4. DAILY AUTOMATED FOLLOW-UP DRIP SEQUENCE (DAYS 1-7)
 # =========================================================================
 DAILY_DRIP_SEQUENCE = [
     {
@@ -1056,6 +1256,8 @@ DAILY_DRIP_SEQUENCE = [
             "• **Custom Learning Pace:** Fast-track areas you understand quickly, and spend extra time mastering difficult concepts.\n"
             "• **Flexible Scheduling:** Sessions fit your working lifestyle on weekday evenings or weekends.\n\n"
             "You don't need a computer science background. You just need a patient, world-class mentor dedicated to your career.\n\n"
+            "Have questions about how private mentor sessions work?\n\n"
+            "💬 **[Chat directly with Tara on WhatsApp to discuss your goals & schedule]({{tara_chat_url}})**\n\n"
             "Ready to meet your assigned mentor?"
         ),
         "cta_text": "Meet Your Mentor & Enroll",
@@ -1075,6 +1277,8 @@ DAILY_DRIP_SEQUENCE = [
             "Pay your full tuition upfront and pay just **₦90,000** today (save ₦10,000 immediately at checkout).\n\n"
             "### 🌟 Fast-Action Bonus (Valued at ₦35,000):\n"
             "Enroll this week and unlock a **Free 1-on-1 CV Optimization & LinkedIn Makeover** with our Senior Hiring Consultant to get you noticed by tech recruiters.\n\n"
+            "Need assistance selecting your tuition schedule or claiming your discount?\n\n"
+            "💬 **[Chat directly with Tara on WhatsApp to claim your bonus]({{tara_chat_url}})**\n\n"
             "Claim your discount and lock in your mentor today:"
         ),
         "cta_text": "Claim Tuition Discount & Enroll",
@@ -1094,7 +1298,9 @@ DAILY_DRIP_SEQUENCE = [
             "• **Global Remote Roles (UK, US, Canada, EU):** $1,500 – $3,500 / month (₦2,250,000+).\n"
             "• **Payback Period:** Under **3 weeks** of your first month's salary completely covers your entire training investment.\n\n"
             "Companies across banking, fintech, telecom, e-commerce, and logistics are drowning in raw data. They desperately need people who can turn numbers into actionable executive insights.\n\n"
-            "By investing in **{{course}}**, you are building recession-proof earning power for the rest of your career."
+            "By investing in **{{course}}**, you are building recession-proof earning power for the rest of your career.\n\n"
+            "Want to calculate your exact career return on investment?\n\n"
+            "💬 **[Chat directly with Tara on WhatsApp for personalized salary guidance]({{tara_chat_url}})**"
         ),
         "cta_text": "Invest in High-Income Skills",
         "cta_url": "https://tektutors.com.ng/registration"
@@ -1110,8 +1316,10 @@ DAILY_DRIP_SEQUENCE = [
             "At TekTutors, you graduate with **3 enterprise-grade capstone portfolio projects** hosted directly on your GitHub and LinkedIn:\n\n"
             "1. **Enterprise Data Pipeline & Diagnostic Scoping:** Ingest, clean, and validate messy real-world transaction data using SQL and Python.\n"
             "2. **Interactive Executive C-Suite Dashboard:** Automated KPI dashboard built in Power BI with dynamic DAX metrics, drill-throughs, and mobile layout.\n"
-            "3. **Predictive Analytics or Machine Learning Solution:** End-to-end model solving a real business problem (customer churn, sales forecasting, or sentiment classification).\n\n"
+            "3. **Predictive Analytics or Machine Learning Solution:** End-to-end model solving a real business problem (customer churn, sales forecasting, or credit risk).\n\n"
             "When recruiters ask: *\"Can you show me what you've built?\"*, you won't just talk about theory — you will screen-share live, working systems you created 1-on-1 with your mentor.\n\n"
+            "Want to preview sample capstones built by our graduates?\n\n"
+            "💬 **[Chat directly with Tara on WhatsApp to see live portfolio examples]({{tara_chat_url}})**\n\n"
             "Ready to build an unbeatable tech portfolio?"
         ),
         "cta_text": "Build Your Portfolio with a Mentor",
@@ -1119,6 +1327,47 @@ DAILY_DRIP_SEQUENCE = [
     },
     {
         "day": 5,
+        "title": "The Japa Blueprint: Global Remote Roles & Visa Sponsorship",
+        "subject": "The Japa Blueprint: How {{course}} Unlocks Global Remote Roles & Visa Sponsorship",
+        "body": (
+            "Hi {{name}},\n\n"
+            "Are you exploring relocation (Japa) or high-yield global remote roles earning in foreign currency ($/£)?\n\n"
+            "Here is the reality of foreign tech hiring in the UK, Canada, the US, and Europe:\n"
+            "International employers and visa sponsors do not care about paper certificates. What matters is **verified proof of code execution on GitHub and ATS-optimized international positioning.**\n\n"
+            "### 🌍 The TekTutors Japa Advantage:\n"
+            "• **International ATS CV Optimization:** Formatted for global recruiters and tech visa criteria (UK Global Talent, Canada Tech PR).\n"
+            "• **Verified GitHub Commits:** Code reviews by Senior Practitioners ensuring your GitHub looks like an experienced mid-level engineer.\n"
+            "• **Foreign Currency Earning Power:** Junior-to-mid global remote roles compensate **$1,500 – $3,500/month (₦2,250,000+)**.\n\n"
+            "Learn how our 1-on-1 mentorship equips you with the portfolio and technical interview skills that international recruiters look for.\n\n"
+            "💬 **[Chat directly with Tara on WhatsApp to discuss our Japa tech support]({{tara_chat_url}})**\n\n"
+            "Take the first step toward your global tech journey today:"
+        ),
+        "cta_text": "Explore Global Tech Roadmap",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "day": 6,
+        "title": "Zero Coding Experience: The Non-Tech Career Switch Blueprint",
+        "subject": "Zero Coding Experience? How Finance & Ops Professionals Switch to ₦650k/mo Data Roles",
+        "body": (
+            "Hi {{name}},\n\n"
+            "Are you working in banking, accounting, customer service, operations, or marketing and wondering if you have what it takes to break into tech?\n\n"
+            "Here is what top hiring managers know:\n"
+            "**You already possess the hardest skill to teach — business commercial acumen.**\n\n"
+            "When you combine your commercial intuition with **SQL queries, Power BI interactive reporting, and automated Python workflows**, you become 5x more valuable than a pure computer science graduate with zero business context.\n\n"
+            "### 💼 Why Our 1-on-1 Model Succeeds for Beginners:\n"
+            "• **Step-by-Step Private Screen Shares:** No jargon, no rushing — your mentor guides you through every tool line by line.\n"
+            "• **Real Business Datasets:** Analyze customer churn, branch profitability, and executive KPIs.\n"
+            "• **Weekend-Friendly Sessions:** Keep your current job while mastering your new skill set.\n\n"
+            "Worried about your background or where to start?\n\n"
+            "💬 **[Chat directly with Tara on WhatsApp for a personalized profile assessment]({{tara_chat_url}})**\n\n"
+            "Start your confident career transition today:"
+        ),
+        "cta_text": "Start Your Non-Tech Transition",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "day": 7,
         "title": "Limited Mentor Capacity: Reserving Your Weekend Onboarding Slot",
         "subject": "Final Notice: Your Reserved Mentor Slot is Expiring, {{name}}",
         "body": (
@@ -1130,6 +1379,8 @@ DAILY_DRIP_SEQUENCE = [
             "✅ 3 portfolio capstone projects for your resume and LinkedIn\n"
             "✅ Free ₦35,000 1-on-1 CV Optimization & Tech Interview Coaching\n"
             "✅ Flexible ₦100,000/month or ₦90,000 upfront (save ₦10,000)\n\n"
+            "Don't let your reserved slot be given away to the waiting list.\n\n"
+            "💬 **[Chat directly with Tara on WhatsApp to hold your mentor slot]({{tara_chat_url}})**\n\n"
             "Click below to secure your mentor and confirm your weekend onboarding before your reservation expires:"
         ),
         "cta_text": "Lock In Your Mentor Slot Now",
@@ -1242,12 +1493,14 @@ async def enroll_lead_in_daily_drip_sequence(
     lead_id: Optional[int],
     email: str,
     name: Optional[str] = "Student",
-    course_name: Optional[str] = "Data Analytics & BI Accelerator"
+    course_name: Optional[str] = "Data Analytics & BI Accelerator",
+    drip_days: Optional[int] = None
 ) -> Dict[str, Any]:
     """
-    Enroll a prospective student into the 5-day daily follow-up nurture drip.
-    Day 0 (Syllabus) is dispatched immediately if not already sent.
-    Days 1 through 5 are scheduled in ScheduledEmail with +1, +2, +3, +4, +5 day intervals.
+    Enroll a prospective student into the intelligent multi-day nurture sequence.
+    Days 1 through 7 (or custom drip_days) are scheduled in ScheduledEmail with +1, +2, +3... day intervals.
+    Every email is strategically crafted around 1-on-1 mentorship, TekTutors offers, Japa support,
+    and includes direct personalized links to chat with Tara on WhatsApp.
     """
     clean_email = email.strip().lower()
     clean_name = name.strip() if name and name.lower() not in ("prospect", "student", "") else "Student"
@@ -1271,15 +1524,17 @@ async def enroll_lead_in_daily_drip_sequence(
                 "recipient_email": clean_email
             }
 
+    sequence_items = DAILY_DRIP_SEQUENCE[:drip_days] if drip_days else DAILY_DRIP_SEQUENCE
     scheduled_records = []
-    # Schedule Days 1 through 5
-    for item in DAILY_DRIP_SEQUENCE:
+
+    # Schedule sequence days
+    for item in sequence_items:
         day_num = item["day"]
         delivery_time = now + datetime.timedelta(days=day_num)
         # Set morning delivery (e.g. 10:00 AM) for natural engagement
         delivery_time = delivery_time.replace(hour=10, minute=0, second=0, microsecond=0)
 
-        # Personalize
+        # Personalize subject & body
         p_subject = item["subject"].replace("{{name}}", clean_name).replace("{{course}}", target_course)
         p_body = item["body"].replace("{{name}}", clean_name).replace("{{course}}", target_course)
 
@@ -1298,13 +1553,210 @@ async def enroll_lead_in_daily_drip_sequence(
         )
         scheduled_records.append(rec)
 
-    logger.info(f"Successfully enrolled {clean_email} into 5-day daily follow-up drip sequence ({len(scheduled_records)} emails scheduled).")
+    logger.info(f"Successfully enrolled {clean_email} into {len(scheduled_records)}-day daily follow-up drip sequence.")
     return {
         "status": "enrolled",
         "recipient_email": clean_email,
         "course": target_course,
         "scheduled_emails_count": len(scheduled_records),
         "schedule": scheduled_records
+    }
+
+
+def parse_campaign_csv_data(csv_text_or_bytes: Any) -> Dict[str, Any]:
+    """
+    Intelligently parse external CSV / TSV / text data for email campaigns.
+    Handles multiple delimiters (comma, semicolon, tab, pipe), BOM encodings,
+    fuzzy column header recognition (email, name, course, phone, notes),
+    email validation, deduplication, and synthetic phone generation for CRM.
+    """
+    import csv
+    import io
+    import re
+
+    if isinstance(csv_text_or_bytes, bytes):
+        try:
+            raw_text = csv_text_or_bytes.decode('utf-8-sig')
+        except UnicodeDecodeError:
+            raw_text = csv_text_or_bytes.decode('latin-1', errors='ignore')
+    else:
+        raw_text = str(csv_text_or_bytes or '')
+
+    raw_text = raw_text.replace('\ufeff', '').strip()
+    if not raw_text:
+        return {
+            "total_rows": 0,
+            "valid_count": 0,
+            "invalid_count": 0,
+            "columns_detected": {},
+            "valid_recipients": [],
+            "invalid_recipients": [],
+            "preview": []
+        }
+
+    # Detect delimiter with fallback
+    sample = raw_text[:2048]
+    delimiter = ','
+    try:
+        sniffer = csv.Sniffer()
+        dialect = sniffer.sniff(sample, delimiters=',;\t|')
+        delimiter = dialect.delimiter
+    except Exception:
+        for d in [',', ';', '\t', '|']:
+            if d in sample:
+                delimiter = d
+                break
+
+    reader = csv.reader(io.StringIO(raw_text), delimiter=delimiter)
+    all_rows = [r for r in reader if any(field.strip() for field in r)]
+    if not all_rows:
+        return {
+            "total_rows": 0,
+            "valid_count": 0,
+            "invalid_count": 0,
+            "columns_detected": {},
+            "valid_recipients": [],
+            "invalid_recipients": [],
+            "preview": []
+        }
+
+    headers = [h.strip() for h in all_rows[0]]
+    # Check if first row is a header row (if ANY cell in row 0 has '@', it is data, NOT a header!)
+    row0_has_email = any('@' in field for field in headers)
+    has_header = False
+    
+    HEADER_KEYWORDS = {
+        'name', 'fullname', 'firstname', 'lastname', 'student', 'studentname', 'candidate', 'lead',
+        'email', 'mail', 'emailaddress', 'contactemail', 'recipientemail',
+        'course', 'track', 'program', 'class', 'subject', 'courseinterest',
+        'phone', 'phonenumber', 'whatsapp', 'mobile', 'tel', 'telephone',
+        'notes', 'note', 'comment', 'comments', 'remark', 'remarks'
+    }
+
+    if not row0_has_email:
+        for h in headers:
+            clean_h = re.sub(r'[^a-zA-Z0-9]', '', h.lower())
+            if clean_h in HEADER_KEYWORDS:
+                has_header = True
+                break
+
+    col_map = {}
+    data_rows = all_rows[1:] if has_header else all_rows
+
+    if has_header:
+        for idx, h in enumerate(headers):
+            clean_h = re.sub(r'[^a-zA-Z0-9]', '', h.lower())
+            if clean_h in ('email', 'mail', 'emailaddress', 'contactemail', 'recipientemail') or 'email' in clean_h:
+                col_map['email'] = idx
+            elif clean_h in ('name', 'fullname', 'firstname', 'student', 'studentname', 'candidate', 'lead', 'client', 'user'):
+                col_map['name'] = idx
+            elif clean_h in ('course', 'program', 'track', 'class', 'subject', 'interest', 'courseinterest'):
+                col_map['course'] = idx
+            elif clean_h in ('phone', 'mobile', 'whatsapp', 'tel', 'cell', 'phonenumber', 'whatsappnumber'):
+                col_map['phone'] = idx
+            elif clean_h in ('note', 'notes', 'comment', 'comments', 'remark', 'remarks', 'message'):
+                col_map['notes'] = idx
+
+    # If email column not found by header, auto-detect column containing '@' across data rows
+    if 'email' not in col_map and data_rows:
+        best_col = None
+        max_at_count = 0
+        num_cols = max(len(r) for r in data_rows[:20])
+        for col_idx in range(num_cols):
+            at_count = sum(1 for r in data_rows if len(r) > col_idx and '@' in r[col_idx])
+            if at_count > max_at_count:
+                max_at_count = at_count
+                best_col = col_idx
+        if best_col is not None and max_at_count > 0:
+            col_map['email'] = best_col
+
+    # Default name to column 0 or 1 if not email
+    if 'name' not in col_map and data_rows:
+        for idx in range(min(3, len(data_rows[0]))):
+            if idx != col_map.get('email'):
+                col_map['name'] = idx
+                break
+
+    # Default course to another text column if present
+    if 'course' not in col_map and data_rows and len(data_rows[0]) > 2:
+        for idx in range(len(data_rows[0])):
+            if idx != col_map.get('email') and idx != col_map.get('name'):
+                col_map['course'] = idx
+                break
+
+    valid_recipients = []
+    invalid_recipients = []
+    seen_emails = set()
+
+    for row_idx, row in enumerate(data_rows, start=1):
+        if not row or not any(field.strip() for field in row):
+            continue
+
+        email_idx = col_map.get('email', 0)
+        raw_email = row[email_idx].strip().lower() if len(row) > email_idx else ""
+
+        # Validate email
+        if not raw_email or not re.match(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$', raw_email):
+            invalid_recipients.append({
+                "row": row_idx,
+                "raw": row,
+                "reason": "Invalid or missing email address"
+            })
+            continue
+
+        if raw_email in seen_emails:
+            invalid_recipients.append({
+                "row": row_idx,
+                "raw": row,
+                "reason": f"Duplicate email address '{raw_email}'"
+            })
+            continue
+
+        seen_emails.add(raw_email)
+
+        # Extract name
+        raw_name = ""
+        if 'name' in col_map and len(row) > col_map['name']:
+            raw_name = row[col_map['name']].strip()
+        if not raw_name:
+            # Derive friendly name from email username (e.g. alex.smith -> Alex Smith)
+            username = raw_email.split('@')[0]
+            clean_derived = re.sub(r'[\._\-+0-9]+', ' ', username).strip().title()
+            raw_name = clean_derived if clean_derived else "Student"
+
+        # Extract course
+        raw_course = ""
+        if 'course' in col_map and len(row) > col_map['course']:
+            raw_course = row[col_map['course']].strip()
+        if not raw_course:
+            raw_course = "Data Analytics & BI Accelerator"
+
+        # Extract phone
+        raw_phone = ""
+        if 'phone' in col_map and len(row) > col_map['phone']:
+            raw_phone = row[col_map['phone']].strip()
+
+        # Extract notes
+        raw_notes = ""
+        if 'notes' in col_map and len(row) > col_map['notes']:
+            raw_notes = row[col_map['notes']].strip()
+
+        valid_recipients.append({
+            "email": raw_email,
+            "name": raw_name,
+            "course": raw_course,
+            "phone": raw_phone,
+            "notes": raw_notes
+        })
+
+    return {
+        "total_rows": len(data_rows),
+        "valid_count": len(valid_recipients),
+        "invalid_count": len(invalid_recipients),
+        "columns_detected": {k: f"Col {v}" for k, v in col_map.items()},
+        "valid_recipients": valid_recipients,
+        "invalid_recipients": invalid_recipients,
+        "preview": valid_recipients[:25]
     }
 
 

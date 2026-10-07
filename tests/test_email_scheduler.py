@@ -112,7 +112,7 @@ async def test_enroll_lead_in_daily_drip_sequence():
         await db.refresh(lead)
         lead_id = lead.id
 
-    # Enroll in 5-day daily follow-up drip
+    # Enroll in 7-day daily follow-up drip
     res = await enroll_lead_in_daily_drip_sequence(
         lead_id=lead_id,
         email=drip_email,
@@ -121,9 +121,9 @@ async def test_enroll_lead_in_daily_drip_sequence():
     )
 
     assert res["status"] == "enrolled"
-    assert res["scheduled_emails_count"] == 5
+    assert res["scheduled_emails_count"] == 7
 
-    # Verify 5 scheduled records created for Days 1 through 5
+    # Verify 7 scheduled records created for Days 1 through 7
     async with AsyncSessionLocal() as db:
         stmt = select(ScheduledEmail).where(
             ScheduledEmail.recipient_email == drip_email,
@@ -131,9 +131,9 @@ async def test_enroll_lead_in_daily_drip_sequence():
         ).order_by(ScheduledEmail.sequence_day.asc())
         records = (await db.execute(stmt)).scalars().all()
 
-        assert len(records) == 5
+        assert len(records) == 7
         days = [r.sequence_day for r in records]
-        assert days == [1, 2, 3, 4, 5]
+        assert days == [1, 2, 3, 4, 5, 6, 7]
 
         # Verify themes
         # Day 1: 1-on-1 Mentorship (What makes us different)
@@ -144,8 +144,16 @@ async def test_enroll_lead_in_daily_drip_sequence():
         assert "Math" in records[2].subject or "Pays for Itself" in records[2].subject
         # Day 4: Competitive advantages / 3 capstone projects
         assert "Projects" in records[3].subject or "Portfolio" in records[3].subject
-        # Day 5: Urgency & mentor reservation
-        assert "Reserved" in records[4].subject or "Expiring" in records[4].subject
+        # Day 5: Japa & Global Remote Roles
+        assert "Japa" in records[4].subject or "Remote" in records[4].subject
+        # Day 6: Non-Tech Career Switch
+        assert "Zero Coding" in records[5].subject or "Finance" in records[5].subject or "Switch" in records[5].subject
+        # Day 7: Urgency & mentor reservation
+        assert "Reserved" in records[6].subject or "Expiring" in records[6].subject
+
+        # Verify that all emails contain links to chat with Tara
+        for rec in records:
+            assert "tara" in rec.body_markdown.lower() or "tara_chat_url" in rec.body_markdown
 
 
 @pytest.mark.asyncio

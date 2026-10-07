@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Request, Body
+from fastapi import APIRouter, Depends, HTTPException, Request, Body, UploadFile, File, Form
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select, desc, delete
@@ -25,13 +25,15 @@ from app.schemas import (
     LeadNotesUpdate, CampaignSendRequest, CampaignUpdateRequest, AppointmentStatusUpdate,
     SingleEmailSendRequest, BroadcastEmailSendRequest,
     LeadBulkImportRequest, LeadBulkImportItem,
-    EmailBrandingResponse, EmailBrandingUpdate, EmailBrandingPreviewRequest
+    EmailBrandingResponse, EmailBrandingUpdate, EmailBrandingPreviewRequest,
+    EmailCsvPreviewRequest, EmailCsvCampaignRequest
 )
 from app.whatsapp import whatsapp_client
 from app.agent import agent_manager, SYSTEM_PROMPT_TEXT, strip_asterisks
 from app.email_service import (
     PREBUILT_EMAIL_TEMPLATES, send_email_async, render_branded_email_html,
-    get_email_branding_cache, update_email_branding_cache, sync_email_branding_from_db
+    get_email_branding_cache, update_email_branding_cache, sync_email_branding_from_db,
+    parse_campaign_csv_data, enroll_lead_in_daily_drip_sequence, DAILY_DRIP_SEQUENCE
 )
 
 logger = logging.getLogger(__name__)
@@ -1914,31 +1916,51 @@ async def trigger_lead_engagement_email(payload: dict = Body(...), db: AsyncSess
 
 @router.post("/api/emails/send-broadcast")
 async def send_broadcast_email(payload: BroadcastEmailSendRequest, db: AsyncSession = Depends(get_db)):
-    """Broadcast a marketing, follow-up, or promotional email to a segmented audience of leads."""
-    # Query leads that have an email address
-    stmt = select(Lead).where(Lead.email.isnot(None)).where(Lead.email != "")
-    
-    # Filter by target audience
-    if payload.target_audience == "hot":
-        stmt = stmt.where((Lead.lead_score >= 80) | (Lead.status.in_(["hot", "consultation_booked", "appointment_scheduled", "enrolled"])))
-    elif payload.target_audience == "qualified":
-        stmt = stmt.where((Lead.lead_score >= 60) | (Lead.status.in_(["qualified", "hot", "consultation_booked"])))
-    elif payload.target_audience == "new":
-        stmt = stmt.where(Lead.status == "new")
+    """Broadcast a marketing, follow-up, or promotional email to a segmented audience of leads or custom recipients."""
+    leads_to_send = []
 
-    res = await db.execute(stmt)
-    raw_leads = res.scalars().all()
+    # If custom recipients provided (e.g. from CSV upload)
+    if payload.custom_recipients:
+        seen_emails = set()
+        for cr in payload.custom_recipients:
+            clean_e = (cr.get("email") or "").strip().lower()
+            if clean_e and "@" in clean_e and clean_e not in seen_emails:
+                seen_emails.add(clean_e)
+                leads_to_send.append({
+                    "id": cr.get("id"),
+                    "email": clean_e,
+                    "name": cr.get("name") or "Student",
+                    "course_interest": cr.get("course") or cr.get("course_interest") or "Data Analytics & BI Accelerator"
+                })
+    else:
+        # Query leads that have an email address
+        stmt = select(Lead).where(Lead.email.isnot(None)).where(Lead.email != "")
+        
+        # Filter by target audience
+        if payload.target_audience == "hot":
+            stmt = stmt.where((Lead.lead_score >= 80) | (Lead.status.in_(["hot", "consultation_booked", "appointment_scheduled", "enrolled"])))
+        elif payload.target_audience == "qualified":
+            stmt = stmt.where((Lead.lead_score >= 60) | (Lead.status.in_(["qualified", "hot", "consultation_booked"])))
+        elif payload.target_audience == "new":
+            stmt = stmt.where(Lead.status == "new")
 
-    # Deduplicate leads by email to prevent duplicate sending
-    seen_emails = set()
-    leads = []
-    for l in raw_leads:
-        clean_e = (l.email or "").strip().lower()
-        if clean_e and "@" in clean_e and clean_e not in seen_emails:
-            seen_emails.add(clean_e)
-            leads.append(l)
+        res = await db.execute(stmt)
+        raw_leads = res.scalars().all()
 
-    if not leads:
+        # Deduplicate leads by email to prevent duplicate sending
+        seen_emails = set()
+        for l in raw_leads:
+            clean_e = (l.email or "").strip().lower()
+            if clean_e and "@" in clean_e and clean_e not in seen_emails:
+                seen_emails.add(clean_e)
+                leads_to_send.append({
+                    "id": l.id,
+                    "email": clean_e,
+                    "name": l.name or "Student",
+                    "course_interest": l.course_interest or "Data Analytics & BI Accelerator"
+                })
+
+    if not leads_to_send:
         return {
             "success": True,
             "dispatched_count": 0,
@@ -1951,17 +1973,18 @@ async def send_broadcast_email(payload: BroadcastEmailSendRequest, db: AsyncSess
     failed_count = 0
     dispatch_results = []
 
-    for lead in leads:
-        lead_course = lead.course_interest or "Data Analytics & BI Accelerator"
-        lead_name = lead.name or "Student"
+    for item in leads_to_send:
+        lead_course = item["course_interest"]
+        lead_name = item["name"]
+        lead_email = item["email"]
 
         res_item = await send_email_async(
-            recipient_email=lead.email,
+            recipient_email=lead_email,
             recipient_name=lead_name,
             subject=payload.subject,
             body_markdown=payload.body,
             campaign_type=payload.campaign_type,
-            lead_id=lead.id,
+            lead_id=item.get("id"),
             cta_text=payload.cta_text,
             cta_url=payload.cta_url,
             course_name=lead_course
@@ -1973,20 +1996,243 @@ async def send_broadcast_email(payload: BroadcastEmailSendRequest, db: AsyncSess
             failed_count += 1
 
         dispatch_results.append({
-            "lead_id": lead.id,
-            "email": lead.email,
+            "lead_id": item.get("id"),
+            "email": lead_email,
             "name": lead_name,
             "status": res_item.get("status")
         })
 
     return {
         "success": True,
-        "dispatched_count": len(leads),
+        "dispatched_count": len(leads_to_send),
         "success_count": success_count,
         "failed_count": failed_count,
         "message": f"Broadcast campaign completed: {success_count} sent successfully, {failed_count} failed.",
         "results": dispatch_results
     }
+
+
+# =========================================================================
+# CSV Email Campaign & Intelligent File Upload Endpoints
+# =========================================================================
+
+@router.post("/api/emails/csv-preview")
+async def preview_csv_campaign_file(
+    file: Optional[UploadFile] = File(None),
+    csv_text: Optional[str] = Form(None),
+    request: Request = None
+):
+    """
+    Parse and validate uploaded CSV/TSV/text file or pasted text for email campaigns.
+    Returns preview rows, total rows, valid emails, invalid records, and detected column mappings.
+    """
+    if file:
+        content_bytes = await file.read()
+        return parse_campaign_csv_data(content_bytes)
+    elif csv_text:
+        return parse_campaign_csv_data(csv_text)
+    elif request:
+        try:
+            body = await request.json()
+            if isinstance(body, dict) and body.get("csv_text"):
+                return parse_campaign_csv_data(body["csv_text"])
+        except Exception:
+            pass
+    raise HTTPException(status_code=400, detail="No CSV file or CSV text provided.")
+
+
+@router.post("/api/emails/csv-campaign")
+async def execute_csv_campaign(
+    payload: EmailCsvCampaignRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Execute high-impact email campaign on uploaded CSV recipients:
+    1. 'broadcast': Dispatches immediate personalized broadcast emails.
+    2. 'drip_enroll': Enrolls contacts into intelligent multi-day nurture drip (Days 1–7).
+    3. 'import_crm': Saves contacts directly to CRM Leads table.
+    """
+    recipients = payload.recipients or []
+    if not recipients and payload.csv_text:
+        parsed = parse_campaign_csv_data(payload.csv_text)
+        recipients = parsed.get("valid_recipients", [])
+
+    if not recipients:
+        raise HTTPException(status_code=400, detail="No valid recipients found to execute campaign.")
+
+    action = (payload.action or "broadcast").lower().strip()
+    results = {
+        "action": action,
+        "total_recipients": len(recipients),
+        "success_count": 0,
+        "failed_count": 0,
+        "items": []
+    }
+
+    # 1. Action: Direct Broadcast Campaign
+    if action == "broadcast":
+        subject = payload.subject or "Welcome to TekTutors Academy"
+        body = payload.body or "Hi {{name}},\n\nThank you for connecting with TekTutors."
+        cta_text = payload.cta_text or "Register Online"
+        cta_url = payload.cta_url or "https://tektutors.com.ng/registration"
+        campaign_type = payload.campaign_type or "marketing"
+
+        for item in recipients:
+            e = item.get("email", "").strip().lower()
+            n = item.get("name", "").strip() or "Student"
+            c = item.get("course", "").strip() or (payload.course_name or "Data Analytics & BI Accelerator")
+            p = item.get("phone", "").strip()
+
+            lead_id = None
+            if payload.save_to_crm:
+                clean_phone = clean_phone_number(p) if p else f"no-phone-{e}"
+                l_res = await db.execute(select(Lead).where((Lead.email == e) | (Lead.phone == clean_phone)))
+                existing_lead = l_res.scalars().first()
+                if existing_lead:
+                    if n and existing_lead.name in (None, "", "Student", "Unknown"):
+                        existing_lead.name = n
+                    if not existing_lead.email:
+                        existing_lead.email = e
+                    await db.commit()
+                    lead_id = existing_lead.id
+                else:
+                    new_l = Lead(
+                        phone=clean_phone,
+                        name=n,
+                        email=e,
+                        course_interest=c,
+                        status="new",
+                        notes=f"Imported from email campaign CSV ({item.get('notes', '')})".strip()
+                    )
+                    db.add(new_l)
+                    await db.commit()
+                    await db.refresh(new_l)
+                    lead_id = new_l.id
+
+            send_res = await send_email_async(
+                recipient_email=e,
+                recipient_name=n,
+                subject=subject,
+                body_markdown=body,
+                campaign_type=campaign_type,
+                lead_id=lead_id,
+                cta_text=cta_text,
+                cta_url=cta_url,
+                course_name=c
+            )
+
+            status = send_res.get("status", "failed")
+            if status in ("sent", "delivered"):
+                results["success_count"] += 1
+            else:
+                results["failed_count"] += 1
+
+            results["items"].append({
+                "email": e,
+                "name": n,
+                "status": status,
+                "error": send_res.get("error_message")
+            })
+
+        results["message"] = f"Broadcast campaign completed: {results['success_count']} sent successfully, {results['failed_count']} failed out of {len(recipients)} contacts."
+        return results
+
+    # 2. Action: Multi-Day Intelligent Drip Sequence Enrollment (Days 1–7)
+    elif action == "drip_enroll":
+        drip_days = payload.drip_days or 7
+        enrolled_count = 0
+        scheduled_emails_total = 0
+
+        for item in recipients:
+            e = item.get("email", "").strip().lower()
+            n = item.get("name", "").strip() or "Student"
+            c = item.get("course", "").strip() or (payload.course_name or "Data Analytics & BI Accelerator")
+            p = item.get("phone", "").strip()
+
+            clean_phone = clean_phone_number(p) if p else f"no-phone-{e}"
+            l_res = await db.execute(select(Lead).where((Lead.email == e) | (Lead.phone == clean_phone)))
+            existing_lead = l_res.scalars().first()
+            if not existing_lead:
+                existing_lead = Lead(
+                    phone=clean_phone,
+                    name=n,
+                    email=e,
+                    course_interest=c,
+                    status="new",
+                    notes="Enrolled in daily email drip from CSV campaign"
+                )
+                db.add(existing_lead)
+                await db.commit()
+                await db.refresh(existing_lead)
+            else:
+                if not existing_lead.email:
+                    existing_lead.email = e
+                    await db.commit()
+                    await db.refresh(existing_lead)
+
+            drip_res = await enroll_lead_in_daily_drip_sequence(
+                lead_id=existing_lead.id,
+                email=e,
+                name=n,
+                course_name=c,
+                drip_days=drip_days
+            )
+
+            if drip_res.get("status") in ("enrolled", "already_enrolled"):
+                enrolled_count += 1
+                scheduled_emails_total += drip_res.get("scheduled_emails_count", 0)
+                results["items"].append({
+                    "email": e,
+                    "name": n,
+                    "status": drip_res.get("status"),
+                    "scheduled_count": drip_res.get("scheduled_emails_count", 0)
+                })
+
+        results["success_count"] = enrolled_count
+        results["scheduled_total"] = scheduled_emails_total
+        results["message"] = f"Successfully enrolled {enrolled_count} contacts into the {drip_days}-day intelligent nurture sequence ({scheduled_emails_total} future emails scheduled)!"
+        return results
+
+    # 3. Action: CRM Contacts Import
+    elif action == "import_crm":
+        imported_count = 0
+        updated_count = 0
+        for item in recipients:
+            e = item.get("email", "").strip().lower()
+            n = item.get("name", "").strip() or "Student"
+            c = item.get("course", "").strip() or "Data Analytics & BI Accelerator"
+            p = item.get("phone", "").strip()
+            clean_phone = clean_phone_number(p) if p else f"no-phone-{e}"
+
+            l_res = await db.execute(select(Lead).where((Lead.email == e) | (Lead.phone == clean_phone)))
+            existing_lead = l_res.scalars().first()
+            if existing_lead:
+                if n and existing_lead.name in (None, "", "Student", "Unknown"):
+                    existing_lead.name = n
+                if not existing_lead.email:
+                    existing_lead.email = e
+                updated_count += 1
+            else:
+                new_l = Lead(
+                    phone=clean_phone,
+                    name=n,
+                    email=e,
+                    course_interest=c,
+                    status="new",
+                    notes="Imported via Email Campaign CSV"
+                )
+                db.add(new_l)
+                imported_count += 1
+
+        await db.commit()
+        results["success_count"] = imported_count + updated_count
+        results["imported"] = imported_count
+        results["updated"] = updated_count
+        results["message"] = f"CRM Import completed: {imported_count} new contacts created, {updated_count} existing updated."
+        return results
+
+    else:
+        raise HTTPException(status_code=400, detail=f"Unsupported campaign action: '{action}'")
 
 
 # =========================================================================

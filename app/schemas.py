@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 import datetime
 
 # --- Webhook Schemas ---
@@ -226,12 +226,31 @@ class SingleEmailSendRequest(BaseModel):
 
 class BroadcastEmailSendRequest(BaseModel):
     template_id: Optional[str] = None
-    target_audience: str = "all"  # all, hot, qualified, new
+    target_audience: str = "all"  # all, hot, qualified, new, csv_custom
     campaign_type: str = "marketing"  # follow_up, marketing, promotional
     subject: str
     body: str
     cta_text: Optional[str] = "Enroll Now"
     cta_url: Optional[str] = "https://tektutors.com.ng/registration"
+    custom_recipients: Optional[List[Dict[str, Any]]] = None
+
+class EmailCsvPreviewRequest(BaseModel):
+    csv_text: Optional[str] = None
+
+class EmailCsvCampaignRequest(BaseModel):
+    recipients: Optional[List[Dict[str, Any]]] = None
+    csv_text: Optional[str] = None
+    action: str = "broadcast"  # broadcast | drip_enroll | import_crm
+    template_id: Optional[str] = None
+    subject: Optional[str] = None
+    body: Optional[str] = None
+    cta_text: Optional[str] = "Register Online"
+    cta_url: Optional[str] = "https://tektutors.com.ng/registration"
+    campaign_type: Optional[str] = "marketing"
+    course_name: Optional[str] = "Data Analytics & BI Accelerator"
+    save_to_crm: bool = True
+    drip_days: Optional[int] = 7
+
 
 
 

@@ -848,6 +848,7 @@
                             <button class="btn btn-secondary" onclick="loadEmailHub()"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
                             <button class="btn btn-secondary" style="background: rgba(235,103,17,0.15); color: #ff8c3a; border: 1px solid rgba(235,103,17,0.35);" onclick="openEmailBrandingModal()"><i class="fa-solid fa-paint-roller"></i> Edit Header &amp; Footer</button>
                             <button class="btn btn-secondary" style="background: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.3);" onclick="openEmailComposer(null, null, 'broadcast')"><i class="fa-solid fa-bullhorn"></i> Broadcast Campaign</button>
+                            <button class="btn btn-primary" style="background: linear-gradient(135deg, #10b981, #059669); border: none; font-weight: 600; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);" onclick="openEmailCsvCampaignModal()"><i class="fa-solid fa-file-csv"></i> Upload CSV Campaign</button>
                             <button class="btn btn-primary" onclick="openEmailComposer()"><i class="fa-solid fa-plus"></i> Compose Email</button>
                         </div>
                     </div>
@@ -892,11 +893,12 @@
                             </h3>
                             <!-- Category Filter Pills -->
                             <div class="email-category-filters" style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
-                                <button class="btn btn-sm active email-cat-btn" data-cat="all" onclick="filterEmailTemplates('all')">All Templates (18)</button>
-                                <button class="btn btn-sm email-cat-btn" data-cat="conversion" onclick="filterEmailTemplates('conversion')">⚡ Conversion &amp; Closing</button>
-                                <button class="btn btn-sm email-cat-btn" data-cat="follow_up" onclick="filterEmailTemplates('follow_up')">📞 Follow-Up &amp; Objections</button>
-                                <button class="btn btn-sm email-cat-btn" data-cat="marketing" onclick="filterEmailTemplates('marketing')">📢 Authority &amp; Proof</button>
-                                <button class="btn btn-sm email-cat-btn" data-cat="promotional" onclick="filterEmailTemplates('promotional')">🎟️ Scholarships &amp; Offers</button>
+                                <button class="btn btn-sm active email-cat-btn" data-cat="all" onclick="filterEmailTemplates('all')">All Strategic Templates</button>
+                                <button class="btn btn-sm email-cat-btn" data-cat="japa" onclick="filterEmailTemplates('japa')">🌍 Japa &amp; Global Remote</button>
+                                <button class="btn btn-sm email-cat-btn" data-cat="mentorship" onclick="filterEmailTemplates('mentorship')">🤝 1-on-1 Mentorship</button>
+                                <button class="btn btn-sm email-cat-btn" data-cat="promotional" onclick="filterEmailTemplates('promotional')">🎟️ Offers &amp; Scholarships</button>
+                                <button class="btn btn-sm email-cat-btn" data-cat="conversion" onclick="filterEmailTemplates('conversion')">⚡ Closing &amp; Objections</button>
+                                <button class="btn btn-sm email-cat-btn" data-cat="follow_up" onclick="filterEmailTemplates('follow_up')">📞 Follow-Up</button>
                             </div>
                         </div>
 
@@ -2246,6 +2248,306 @@
                 <button class="btn btn-primary" id="btn-submit-lead-import" style="background: linear-gradient(135deg, #38bdf8, #0284c7); border: none;" onclick="submitLeadImport()">
                     <i class="fa-solid fa-cloud-arrow-up"></i> Import into CRM
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- INTELLIGENT CSV EMAIL CAMPAIGN & MULTI-DAY NURTURE MODAL                    -->
+    <!-- ========================================================================= -->
+    <div id="email-csv-campaign-modal" class="modal-overlay" style="display: none; z-index: 1060;">
+        <div class="modal-content glass-card" style="max-width: 1040px; width: 95vw; max-height: 92vh; display: flex; flex-direction: column;">
+            <!-- Modal Header -->
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.4);">
+                            <i class="fa-solid fa-file-csv"></i> CSV &amp; SPREADSHEET AUTOMATION
+                        </span>
+                        <span class="badge" style="background: rgba(37, 211, 102, 0.15); color: #25D366; font-weight: 700; border: 1px solid rgba(37, 211, 102, 0.3);">
+                            <i class="fa-brands fa-whatsapp"></i> Tara AI Advisor Embedded
+                        </span>
+                    </div>
+                    <h3 style="display: flex; align-items: center; gap: 0.6rem; font-size: 1.2rem; margin: 0; color: #fff;">
+                        <i class="fa-solid fa-wand-magic-sparkles" style="color: #10b981;"></i>
+                        Intelligent CSV Email Campaign &amp; Multi-Day Nurture Engine
+                    </h3>
+                    <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.3rem 0 0 0;">
+                        Upload external contacts from Excel, Google Sheets, or CRM. Launch immediate high-converting broadcasts, enroll prospects in intelligent 7-day drips, or import cleanly to CRM.
+                    </p>
+                </div>
+                <button class="btn-icon" onclick="closeEmailCsvCampaignModal()" title="Close">&times;</button>
+            </div>
+
+            <!-- Modal Body Container (Scrollable) -->
+            <div style="flex: 1; overflow-y: auto; padding: 1.15rem 0; display: flex; flex-direction: column; gap: 1.25rem;">
+                
+                <!-- 1. Strategy Selector (3 Cards) -->
+                <div>
+                    <label style="font-size: 0.78rem; font-weight: 700; color: #fff; text-transform: uppercase; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.6rem;">
+                        <i class="fa-solid fa-route" style="color: #38bdf8;"></i> Select Campaign Strategy
+                    </label>
+                    <div class="csv-strategy-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.85rem;">
+                        <!-- Strategy 1: Broadcast -->
+                        <div class="csv-strategy-card active" id="strat-card-broadcast" onclick="setEmailCsvStrategy('broadcast')">
+                            <div class="strat-header">
+                                <span class="strat-icon">🚀</span>
+                                <span class="badge badge-hot">IMMEDIATE BLAST</span>
+                            </div>
+                            <h4 class="strat-title">Instant Broadcast Blast</h4>
+                            <p class="strat-desc">Dispatches a high-impact, personalized email to all valid contacts immediately. Perfect for webinars, tuition discounts &amp; intake deadlines.</p>
+                        </div>
+
+                        <!-- Strategy 2: 7-Day Drip -->
+                        <div class="csv-strategy-card" id="strat-card-drip" onclick="setEmailCsvStrategy('drip_enroll')">
+                            <div class="strat-header">
+                                <span class="strat-icon">📅</span>
+                                <span class="badge" style="background: rgba(34,197,94,0.2); color: #4ade80;">INTELLIGENT DRIP</span>
+                            </div>
+                            <h4 class="strat-title">Every-Day Intelligent Nurture (Days 1–7)</h4>
+                            <p class="strat-desc">Enrolls contacts into TekTutors' 7-day psychological sequence: Japa blueprints, 1-on-1 mentorship proof, ₦100k flexible tuition, and direct Tara chats.</p>
+                        </div>
+
+                        <!-- Strategy 3: CRM Import -->
+                        <div class="csv-strategy-card" id="strat-card-crm" onclick="setEmailCsvStrategy('import_crm')">
+                            <div class="strat-header">
+                                <span class="strat-icon">📥</span>
+                                <span class="badge" style="background: rgba(148,163,184,0.2); color: #cbd5e1;">CRM PIPELINE</span>
+                            </div>
+                            <h4 class="strat-title">Import Contacts to CRM Only</h4>
+                            <p class="strat-desc">Sanitizes, deduplicates, and saves contacts into your Leads CRM database for later segmentation without sending emails right now.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. CSV Upload & Input Dropzone -->
+                <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <span style="font-size: 0.78rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-file-arrow-up" style="color: #10b981;"></i> Upload File or Paste Contact List
+                        </span>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="downloadSampleCsv()" style="font-size: 0.72rem; padding: 0.3rem 0.65rem;">
+                                <i class="fa-solid fa-download"></i> Download Sample CSV
+                            </button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="toggleCsvPasteArea()" id="btn-toggle-csv-paste" style="font-size: 0.72rem; padding: 0.3rem 0.65rem;">
+                                <i class="fa-solid fa-paste"></i> Or Paste Text
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Dropzone -->
+                    <div id="email-csv-dropzone" class="csv-dropzone" onclick="document.getElementById('email-csv-file-input').click()">
+                        <input type="file" id="email-csv-file-input" accept=".csv,.tsv,.txt" style="display: none;" onchange="handleEmailCsvFileSelected(event)">
+                        <div class="dropzone-content">
+                            <div class="dropzone-icon-circle">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                            </div>
+                            <div style="font-weight: 700; font-size: 0.95rem; color: #fff; margin-bottom: 0.25rem;">
+                                Drag &amp; drop your CSV or spreadsheet file here
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                                Supports comma-separated (.csv), tab-separated (.tsv), or semicolon text (.txt)
+                            </div>
+                            <button type="button" class="btn btn-sm btn-secondary" style="font-size: 0.75rem; pointer-events: none;">
+                                <i class="fa-solid fa-folder-open"></i> Browse Files on Computer
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Optional Paste Textarea (Hidden by default) -->
+                    <div id="email-csv-paste-area" style="display: none; margin-top: 0.85rem;">
+                        <label style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">
+                            Paste Raw Text (Columns: Full Name, Email, Course Track, WhatsApp Number):
+                        </label>
+                        <textarea id="email-csv-paste-input" class="form-control" rows="5" placeholder="Tunde Bakare, tunde@example.com, Data Analytics & BI Accelerator, 08012345678&#10;Ngozi Eze, ngozi.eze@globaltech.io, AI & Machine Learning Foundations, +2348098765432" style="font-family: monospace; font-size: 0.78rem;" oninput="onCsvPasteInputDebounced()"></textarea>
+                    </div>
+                </div>
+
+                <!-- 3. Live CSV Validation & Preview Table -->
+                <div id="email-csv-preview-container" style="display: none; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 0.82rem; font-weight: 700; color: #fff;">
+                                <i class="fa-solid fa-list-check" style="color: #38bdf8;"></i> CSV Parsing Telemetry
+                            </span>
+                            <span class="badge" id="csv-preview-file-badge" style="background: rgba(255,255,255,0.08); color: #cbd5e1; font-size: 0.72rem;">data.csv</span>
+                        </div>
+                        <!-- Counters -->
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span class="badge" style="background: rgba(56,189,248,0.15); color: #38bdf8; font-weight: 700;" id="csv-preview-total-badge">0 Rows</span>
+                            <span class="badge" style="background: rgba(34,197,94,0.2); color: #4ade80; font-weight: 700;" id="csv-preview-valid-badge">✅ 0 Valid Emails</span>
+                            <span class="badge" style="background: rgba(239,68,68,0.2); color: #f87171; font-weight: 700;" id="csv-preview-invalid-badge">⚠️ 0 Invalid</span>
+                        </div>
+                    </div>
+
+                    <!-- Column Mappings Indicator -->
+                    <div id="csv-detected-columns-bar" style="display: flex; gap: 0.4rem; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; font-size: 0.72rem; color: var(--text-muted);">
+                        <span>Detected Fields:</span>
+                        <!-- Rendered by JS -->
+                    </div>
+
+                    <!-- Table Preview -->
+                    <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                        <table class="data-table" style="font-size: 0.78rem;">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Email</th>
+                                    <th>Name</th>
+                                    <th>Course Track</th>
+                                    <th>Phone / WhatsApp</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="csv-preview-table-body">
+                                <tr><td colspan="6" class="text-center text-muted">Awaiting file upload...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 4. Broadcast Customization Panel (Only active when strategy == 'broadcast') -->
+                <div id="csv-broadcast-config-panel" style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 1.15rem; display: flex; flex-direction: column; gap: 0.85rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.82rem; font-weight: 700; color: #ff8c3a; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-envelope-open-text"></i> Broadcast Content &amp; Conversion Trigger
+                        </span>
+                        <span class="badge badge-hot">HIGH ROI</span>
+                    </div>
+
+                    <!-- Pre-built Template Quick Selector -->
+                    <div class="form-group" style="margin: 0;">
+                        <label for="csv-template-select" style="font-size: 0.74rem; font-weight: 700; color: #cbd5e1; margin-bottom: 0.25rem;">
+                            Load High-Converting Strategic Template:
+                        </label>
+                        <select id="csv-template-select" class="form-control" style="font-size: 0.82rem;" onchange="onCsvTemplateSelect(this.value)">
+                            <option value="">-- Choose High-Converting Campaign Template --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <div class="form-group" style="margin: 0;">
+                            <label for="csv-email-course-fallback" style="font-size: 0.74rem; font-weight: 600; color: #fff;">Default Course Context</label>
+                            <select id="csv-email-course-fallback" class="form-control">
+                                <option value="Data Analytics & BI Accelerator">Data Analytics &amp; BI Accelerator</option>
+                                <option value="Excel for Data Analysis">Excel for Data Analysis</option>
+                                <option value="SQL for Data Analysis">SQL for Data Analysis</option>
+                                <option value="Power BI & Business Intelligence">Power BI &amp; Business Intelligence</option>
+                                <option value="Applied Python for Data Analysis & AI">Applied Python for Data Analysis &amp; AI</option>
+                                <option value="AI & Machine Learning Foundations">AI &amp; Machine Learning Foundations</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label for="csv-email-campaign-type" style="font-size: 0.74rem; font-weight: 600; color: #fff;">Campaign Tag</label>
+                            <select id="csv-email-campaign-type" class="form-control">
+                                <option value="marketing">📢 Marketing &amp; Japa Blueprint</option>
+                                <option value="promotional">⚡ Tuition Offer &amp; Scholarship</option>
+                                <option value="follow_up">🤝 Mentorship &amp; Objections</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin: 0;">
+                        <label for="csv-email-subject" style="font-size: 0.74rem; font-weight: 600; color: #fff;">Subject Line</label>
+                        <input type="text" id="csv-email-subject" class="form-control" placeholder="The Japa Blueprint: How {{course}} Unlocks Global Remote Roles">
+                    </div>
+
+                    <div class="form-group" style="margin: 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                            <label for="csv-email-body" style="font-size: 0.74rem; font-weight: 600; color: #fff;">Email Body (Markdown supported)</label>
+                            <span style="font-size: 0.68rem; color: #38bdf8;">Tokens: {{name}}, {{course}}, {{tara_chat_url}}, {{registration_url}}</span>
+                        </div>
+                        <textarea id="csv-email-body" class="form-control" rows="8" placeholder="Craft your strategic email message here..."></textarea>
+                    </div>
+
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 0.75rem;">
+                        <div class="form-group" style="margin: 0;">
+                            <label for="csv-email-cta-text" style="font-size: 0.74rem; font-weight: 600; color: #fff;">CTA Button Text</label>
+                            <input type="text" id="csv-email-cta-text" class="form-control" value="Claim Tuition Rebate &amp; Enroll">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label for="csv-email-cta-url" style="font-size: 0.74rem; font-weight: 600; color: #fff;">CTA Button Destination URL</label>
+                            <input type="url" id="csv-email-cta-url" class="form-control" value="https://tektutors.com.ng/registration">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. 7-Day Drip Sequence Info Panel (Only active when strategy == 'drip_enroll') -->
+                <div id="csv-drip-config-panel" style="display: none; background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 1.15rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.85rem; font-weight: 700; color: #4ade80; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-calendar-days"></i> 7-Day Intelligent Everyday Nurture Sequence
+                        </span>
+                        <span class="badge" style="background: rgba(34,197,94,0.2); color: #4ade80;">Days 1–7 Automated</span>
+                    </div>
+                    <p style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.45; margin-bottom: 0.85rem;">
+                        Each contact will be automatically queued for an every-day psychological nurture journey designed to trigger emotional decisions and guide them directly into TekTutors:
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.6rem; font-size: 0.73rem;">
+                        <div style="background: rgba(0,0,0,0.3); padding: 0.5rem 0.7rem; border-radius: 6px; border-left: 3px solid #38bdf8;">
+                            <strong style="color: #38bdf8;">Day 1:</strong> Curriculum Roadmap &amp; Senior Practitioner Pairing
+                        </div>
+                        <div style="background: rgba(0,0,0,0.3); padding: 0.5rem 0.7rem; border-radius: 6px; border-left: 3px solid #a855f7;">
+                            <strong style="color: #c084fc;">Day 2:</strong> 1-on-1 Mentorship vs Crowded Bootcamps (No Peer Intimidation)
+                        </div>
+                        <div style="background: rgba(0,0,0,0.3); padding: 0.5rem 0.7rem; border-radius: 6px; border-left: 3px solid #22c55e;">
+                            <strong style="color: #4ade80;">Day 3:</strong> The Japa Blueprint (UK Global Talent, Canada Tech PR, $1.5k–$3.5k/mo)
+                        </div>
+                        <div style="background: rgba(0,0,0,0.3); padding: 0.5rem 0.7rem; border-radius: 6px; border-left: 3px solid #f59e0b;">
+                            <strong style="color: #fbbf24;">Day 4:</strong> Non-Tech Career Pivot (From Finance/Admin to High-Paying Tech)
+                        </div>
+                        <div style="background: rgba(0,0,0,0.3); padding: 0.5rem 0.7rem; border-radius: 6px; border-left: 3px solid #10b981;">
+                            <strong style="color: #34d399;">Day 5:</strong> ₦100k/mo Flexible Tuition + 10% Upfront Rebate &amp; ₦35k Career Bonus
+                        </div>
+                        <div style="background: rgba(0,0,0,0.3); padding: 0.5rem 0.7rem; border-radius: 6px; border-left: 3px solid #ec4899;">
+                            <strong style="color: #f472b6;">Day 6:</strong> The Cost of Waiting (Inflation Hedge &amp; Earning in Dollars)
+                        </div>
+                        <div style="background: rgba(0,0,0,0.3); padding: 0.5rem 0.7rem; border-radius: 6px; border-left: 3px solid #ef4444;">
+                            <strong style="color: #f87171;">Day 7:</strong> Mentor Slot Expiring &amp; VIP Admissions Reservation
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. Tara WhatsApp Integration Callout Banner -->
+                <div class="tara-whatsapp-callout-pill">
+                    <div style="font-size: 1.4rem; color: #25D366; flex-shrink: 0;"><i class="fa-brands fa-whatsapp"></i></div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700; font-size: 0.8rem; color: #25D366; display: flex; align-items: center; gap: 0.4rem;">
+                            Direct Link to Chat with Tara Embedded in Every Email
+                            <span class="badge" style="background: rgba(37,211,102,0.25); color: #fff; font-size: 0.65rem;">+234 806 358 4517</span>
+                        </div>
+                        <div style="font-size: 0.73rem; color: #cbd5e1; margin-top: 0.15rem; line-height: 1.35;">
+                            All outgoing emails contain a dedicated high-converting WhatsApp action callout button connecting the student directly with Tara to discuss course tracks, installment options, and syllabus roadmaps.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7. Save to CRM Checkbox -->
+                <div style="display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.75rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                    <input type="checkbox" id="csv-save-to-crm" checked style="width: 16px; height: 16px; accent-color: #10b981; cursor: pointer;">
+                    <label for="csv-save-to-crm" style="font-size: 0.78rem; font-weight: 600; color: #fff; cursor: pointer;">
+                        Automatically synchronize contacts into CRM Leads pipeline (updates existing records, creates new leads)
+                    </label>
+                </div>
+
+                <!-- 8. Campaign Results Status Box (Appears after submission) -->
+                <div id="csv-campaign-result-box" style="display: none; padding: 0.85rem 1rem; border-radius: 10px;">
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
+
+            <!-- Modal Action Footer -->
+            <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 0.85rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeEmailCsvCampaignModal()">Cancel</button>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="resetEmailCsvModal()" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-rotate-left"></i> Reset Form
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btn-submit-csv-campaign" style="background: linear-gradient(135deg, #10b981, #059669); border: none; font-weight: 700; padding: 0.55rem 1.4rem;" onclick="submitEmailCsvCampaign()">
+                        <i class="fa-solid fa-rocket" id="csv-submit-btn-icon"></i> <span id="csv-submit-btn-label">Launch Broadcast Campaign</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

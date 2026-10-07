@@ -3989,4 +3989,416 @@ function trigger3StepWhatsAppForCurrentLead() {
     openWhatsAppSequenceModal();
 }
 
+// =========================================================================
+// Intelligent CSV Email Campaign & Multi-Day Nurture Engine
+// =========================================================================
+
+window.currentEmailCsvStrategy = 'broadcast';
+window.parsedEmailCsvData = null;
+let csvPasteDebounceTimeout = null;
+
+function openEmailCsvCampaignModal() {
+    const modal = document.getElementById('email-csv-campaign-modal');
+    if (!modal) return;
+
+    modal.style.display = 'flex';
+    resetEmailCsvModal();
+
+    // Populate strategic templates in dropdown
+    populateEmailCsvTemplates();
+
+    // Setup Drag and Drop events once
+    setupEmailCsvDropzoneEvents();
+}
+
+function closeEmailCsvCampaignModal() {
+    const modal = document.getElementById('email-csv-campaign-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function setEmailCsvStrategy(strategy) {
+    window.currentEmailCsvStrategy = strategy;
+
+    // Update active card styling
+    document.querySelectorAll('.csv-strategy-card').forEach(card => card.classList.remove('active'));
+    const targetCard = document.getElementById(`strat-card-${strategy === 'drip_enroll' ? 'drip' : (strategy === 'import_crm' ? 'crm' : 'broadcast')}`);
+    if (targetCard) targetCard.classList.add('active');
+
+    // Toggle panels
+    const broadcastPanel = document.getElementById('csv-broadcast-config-panel');
+    const dripPanel = document.getElementById('csv-drip-config-panel');
+    const submitBtnLabel = document.getElementById('csv-submit-btn-label');
+    const submitBtnIcon = document.getElementById('csv-submit-btn-icon');
+
+    if (strategy === 'broadcast') {
+        if (broadcastPanel) broadcastPanel.style.display = 'flex';
+        if (dripPanel) dripPanel.style.display = 'none';
+        if (submitBtnLabel) submitBtnLabel.innerText = 'Launch Broadcast Blast';
+        if (submitBtnIcon) submitBtnIcon.className = 'fa-solid fa-rocket';
+    } else if (strategy === 'drip_enroll') {
+        if (broadcastPanel) broadcastPanel.style.display = 'none';
+        if (dripPanel) dripPanel.style.display = 'block';
+        if (submitBtnLabel) submitBtnLabel.innerText = 'Enroll Contacts in 7-Day Drip';
+        if (submitBtnIcon) submitBtnIcon.className = 'fa-solid fa-calendar-check';
+    } else if (strategy === 'import_crm') {
+        if (broadcastPanel) broadcastPanel.style.display = 'none';
+        if (dripPanel) dripPanel.style.display = 'none';
+        if (submitBtnLabel) submitBtnLabel.innerText = 'Import Contacts to CRM';
+        if (submitBtnIcon) submitBtnIcon.className = 'fa-solid fa-cloud-arrow-up';
+    }
+}
+
+async function populateEmailCsvTemplates() {
+    const select = document.getElementById('csv-template-select');
+    if (!select) return;
+
+    let templates = window.emailTemplates || [];
+    if (!templates.length) {
+        try {
+            const res = await fetch('/api/emails/templates');
+            if (res.ok) {
+                templates = await res.json();
+                window.emailTemplates = templates;
+            }
+        } catch (err) {
+            console.error('Error fetching templates:', err);
+        }
+    }
+
+    select.innerHTML = '<option value="">-- Choose High-Converting Campaign Template --</option>' +
+        templates.map(t => `<option value="${t.id}">${escapeHtml(t.badge || t.category || 'Strategic')}: ${escapeHtml(t.title)}</option>`).join('');
+
+    // Preselect Japa Blueprint if available
+    const japaTpl = templates.find(t => t.id === 'japa_global_remote_blueprint' || t.id.includes('japa'));
+    if (japaTpl) {
+        select.value = japaTpl.id;
+        onCsvTemplateSelect(japaTpl.id);
+    }
+}
+
+function onCsvTemplateSelect(templateId) {
+    if (!templateId) return;
+    const templates = window.emailTemplates || [];
+    const t = templates.find(item => item.id === templateId);
+    if (!t) return;
+
+    const subjEl = document.getElementById('csv-email-subject');
+    const bodyEl = document.getElementById('csv-email-body');
+    const ctaTextEl = document.getElementById('csv-email-cta-text');
+    const ctaUrlEl = document.getElementById('csv-email-cta-url');
+    const typeEl = document.getElementById('csv-email-campaign-type');
+
+    if (subjEl) subjEl.value = t.subject || '';
+    if (bodyEl) bodyEl.value = t.body || '';
+    if (ctaTextEl) ctaTextEl.value = t.cta_text || 'Claim Tuition Rebate & Enroll';
+    if (ctaUrlEl) ctaUrlEl.value = t.cta_url || 'https://tektutors.com.ng/registration';
+    if (typeEl && t.category) typeEl.value = t.category;
+}
+
+function downloadSampleCsv() {
+    const sampleCsvContent = `Full Name,Email Address,Course Track,WhatsApp Number
+Tunde Bakare,tunde.bakare@example.com,Data Analytics & BI Accelerator,08012345678
+Ngozi Eze,ngozi.eze@globaltech.io,AI & Machine Learning Foundations,+2348098765432
+Michael Obi,michael.obi@domain.com,Excel for Data Analysis,08033334444
+Bolanle Adeleke,bolanle.adeleke@corp.ng,Power BI & Business Intelligence,08022223333
+`;
+    const blob = new Blob([sampleCsvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tektutors_email_campaign_sample.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Downloaded sample campaign CSV!', 'info');
+}
+
+function toggleCsvPasteArea() {
+    const pasteArea = document.getElementById('email-csv-paste-area');
+    const btn = document.getElementById('btn-toggle-csv-paste');
+    if (!pasteArea) return;
+
+    const isHidden = pasteArea.style.display === 'none';
+    pasteArea.style.display = isHidden ? 'block' : 'none';
+    if (btn) btn.innerHTML = isHidden ? '<i class="fa-solid fa-cloud-arrow-up"></i> Hide Paste Area' : '<i class="fa-solid fa-paste"></i> Or Paste Text';
+}
+
+function onCsvPasteInputDebounced() {
+    clearTimeout(csvPasteDebounceTimeout);
+    csvPasteDebounceTimeout = setTimeout(() => {
+        const text = document.getElementById('email-csv-paste-input')?.value || '';
+        if (text.trim().length > 5) {
+            parseAndPreviewCsv({ csvText: text, fileName: 'Pasted Contact List' });
+        }
+    }, 400);
+}
+
+function setupEmailCsvDropzoneEvents() {
+    const dropzone = document.getElementById('email-csv-dropzone');
+    if (!dropzone || dropzone.dataset.initialized === 'true') return;
+
+    dropzone.dataset.initialized = 'true';
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.add('drag-over');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('drag-over');
+        });
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+        const files = e.dataTransfer?.files;
+        if (files && files.length > 0) {
+            handleEmailCsvFile(files[0]);
+        }
+    });
+}
+
+function handleEmailCsvFileSelected(event) {
+    const file = event.target?.files?.[0];
+    if (file) handleEmailCsvFile(file);
+}
+
+function handleEmailCsvFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const content = e.target?.result;
+        parseAndPreviewCsv({ csvText: content, fileName: file.name });
+    };
+    reader.onerror = () => {
+        showToast('Error reading uploaded file.', 'error');
+    };
+    reader.readAsText(file);
+}
+
+async function parseAndPreviewCsv({ csvText, fileName }) {
+    const previewContainer = document.getElementById('email-csv-preview-container');
+    const tableBody = document.getElementById('csv-preview-table-body');
+    const fileNameBadge = document.getElementById('csv-preview-file-badge');
+
+    if (fileNameBadge) fileNameBadge.innerText = fileName || 'Uploaded File';
+    if (tableBody) tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted"><i class="fa-solid fa-spinner fa-spin"></i> Parsing contact telemetry...</td></tr>';
+    if (previewContainer) previewContainer.style.display = 'block';
+
+    try {
+        const res = await fetch('/api/emails/csv-preview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ csv_text: csvText })
+        });
+
+        if (!res.ok) throw new Error('Failed to parse CSV');
+        const data = await res.json();
+        window.parsedEmailCsvData = data;
+
+        // Update badges
+        const totalBadge = document.getElementById('csv-preview-total-badge');
+        const validBadge = document.getElementById('csv-preview-valid-badge');
+        const invalidBadge = document.getElementById('csv-preview-invalid-badge');
+
+        if (totalBadge) totalBadge.innerText = `${data.total_rows || 0} Total Rows`;
+        if (validBadge) validBadge.innerText = `✅ ${data.valid_count || 0} Valid Emails`;
+        if (invalidBadge) invalidBadge.innerText = `⚠️ ${data.invalid_count || 0} Invalid`;
+
+        // Render detected columns
+        const colBar = document.getElementById('csv-detected-columns-bar');
+        if (colBar) {
+            const detectedKeys = Object.entries(data.column_indices || {})
+                .filter(([_, idx]) => idx !== null)
+                .map(([col, _]) => `<span class="badge" style="background: rgba(16,185,129,0.15); color: #10b981; font-size: 0.68rem;"><i class="fa-solid fa-check"></i> ${escapeHtml(col)}</span>`)
+                .join(' ');
+            colBar.innerHTML = `<span>Detected Fields:</span> ${detectedKeys || '<span class="text-muted">Auto-detected positional columns</span>'}`;
+        }
+
+        // Render preview rows
+        const validRecipients = data.valid_recipients || [];
+        if (!validRecipients.length) {
+            tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">No valid email records found. Please check column format.</td></tr>';
+            return;
+        }
+
+        const previewSlice = validRecipients.slice(0, 8);
+        tableBody.innerHTML = previewSlice.map((r, i) => `
+            <tr>
+                <td style="color: var(--text-muted); font-size: 0.72rem;">#${i + 1}</td>
+                <td style="font-family: monospace; font-weight: 600; color: #38bdf8;">${escapeHtml(r.email)}</td>
+                <td style="color: #fff; font-weight: 500;">${escapeHtml(r.name || 'Student')}</td>
+                <td><span class="badge" style="background: rgba(245,158,11,0.15); color: #fbbf24; font-size: 0.7rem;">${escapeHtml(r.course || 'General Track')}</span></td>
+                <td style="font-family: monospace; font-size: 0.72rem; color: #94a3b8;">${escapeHtml(r.phone || 'N/A')}</td>
+                <td><span class="badge" style="background: rgba(34,197,94,0.18); color: #4ade80; font-size: 0.68rem;"><i class="fa-solid fa-circle-check"></i> Ready</span></td>
+            </tr>
+        `).join('') + (validRecipients.length > 8 ? `<tr><td colspan="6" class="text-center text-muted" style="font-size: 0.72rem;">... and ${validRecipients.length - 8} more valid contacts queued for campaign</td></tr>` : '');
+
+        showToast(`Parsed ${data.valid_count} valid email contacts ready for campaign!`, 'success');
+
+    } catch (err) {
+        console.error('Error in parseAndPreviewCsv:', err);
+        tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Parsing error: ${escapeHtml(err.message)}</td></tr>`;
+        showToast('Error validating CSV records.', 'error');
+    }
+}
+
+function resetEmailCsvModal() {
+    window.parsedEmailCsvData = null;
+    const fileInput = document.getElementById('email-csv-file-input');
+    const pasteInput = document.getElementById('email-csv-paste-input');
+    const previewContainer = document.getElementById('email-csv-preview-container');
+    const resultBox = document.getElementById('csv-campaign-result-box');
+
+    if (fileInput) fileInput.value = '';
+    if (pasteInput) pasteInput.value = '';
+    if (previewContainer) previewContainer.style.display = 'none';
+    if (resultBox) {
+        resultBox.style.display = 'none';
+        resultBox.innerHTML = '';
+    }
+
+    setEmailCsvStrategy('broadcast');
+}
+
+async function submitEmailCsvCampaign() {
+    const validRecipients = window.parsedEmailCsvData?.valid_recipients || [];
+    const pasteText = document.getElementById('email-csv-paste-input')?.value?.trim();
+
+    if (!validRecipients.length && !pasteText) {
+        showToast('Please upload a CSV file or paste contacts first.', 'warning');
+        return;
+    }
+
+    const strategy = window.currentEmailCsvStrategy || 'broadcast';
+    const saveToCrm = document.getElementById('csv-save-to-crm')?.checked ?? true;
+    const submitBtn = document.getElementById('btn-submit-csv-campaign');
+    const resultBox = document.getElementById('csv-campaign-result-box');
+
+    const payload = {
+        action: strategy,
+        save_to_crm: saveToCrm,
+        recipients: validRecipients.length > 0 ? validRecipients : null,
+        csv_text: validRecipients.length === 0 ? pasteText : null
+    };
+
+    if (strategy === 'broadcast') {
+        const subject = document.getElementById('csv-email-subject')?.value?.trim();
+        const body = document.getElementById('csv-email-body')?.value?.trim();
+        const ctaText = document.getElementById('csv-email-cta-text')?.value?.trim();
+        const ctaUrl = document.getElementById('csv-email-cta-url')?.value?.trim();
+        const courseContext = document.getElementById('csv-email-course-fallback')?.value;
+        const campaignType = document.getElementById('csv-email-campaign-type')?.value;
+
+        if (!subject || !body) {
+            showToast('Please provide both subject line and email body.', 'warning');
+            return;
+        }
+
+        payload.subject = subject;
+        payload.body = body;
+        payload.cta_text = ctaText;
+        payload.cta_url = ctaUrl;
+        payload.course_name = courseContext;
+        payload.campaign_type = campaignType;
+    } else if (strategy === 'drip_enroll') {
+        payload.drip_days = 7;
+        payload.course_name = document.getElementById('csv-email-course-fallback')?.value || 'Data Analytics & BI Accelerator';
+    }
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Executing Campaign...';
+    }
+
+    try {
+        const res = await fetch('/api/emails/csv-campaign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.detail || 'Campaign execution failed');
+        }
+
+        const data = await res.json();
+
+        // Render result inside modal
+        if (resultBox) {
+            resultBox.style.display = 'block';
+            let resultHtml = '';
+            if (strategy === 'broadcast') {
+                resultHtml = `
+                    <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 10px; padding: 0.85rem 1rem;">
+                        <h4 style="color: #10b981; margin: 0 0 0.35rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-circle-check"></i> Broadcast Blast Successfully Completed!
+                        </h4>
+                        <p style="font-size: 0.8rem; color: #e2e8f0; margin: 0 0 0.5rem 0;">${escapeHtml(data.message || '')}</p>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; font-size: 0.74rem;">
+                            <span class="badge" style="background: rgba(34,197,94,0.2); color: #4ade80;">✅ ${data.success_count || 0} Delivered</span>
+                            ${data.failed_count > 0 ? `<span class="badge" style="background: rgba(239,68,68,0.2); color: #f87171;">⚠️ ${data.failed_count} Failed</span>` : ''}
+                            <span class="badge" style="background: rgba(37,211,102,0.2); color: #25D366;"><i class="fa-brands fa-whatsapp"></i> Tara Chat Embedded</span>
+                        </div>
+                    </div>
+                `;
+            } else if (strategy === 'drip_enroll') {
+                resultHtml = `
+                    <div style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.35); border-radius: 10px; padding: 0.85rem 1rem;">
+                        <h4 style="color: #4ade80; margin: 0 0 0.35rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-calendar-check"></i> 7-Day Nurture Sequence Enrolled!
+                        </h4>
+                        <p style="font-size: 0.8rem; color: #e2e8f0; margin: 0 0 0.5rem 0;">${escapeHtml(data.message || '')}</p>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; font-size: 0.74rem;">
+                            <span class="badge" style="background: rgba(34,197,94,0.2); color: #4ade80;">👥 ${data.success_count || 0} Contacts Active</span>
+                            <span class="badge" style="background: rgba(56,189,248,0.2); color: #38bdf8;">📬 ${data.scheduled_total || 0} Future Emails Queued</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultHtml = `
+                    <div style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 10px; padding: 0.85rem 1rem;">
+                        <h4 style="color: #38bdf8; margin: 0 0 0.35rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Contacts Synced to CRM!
+                        </h4>
+                        <p style="font-size: 0.8rem; color: #e2e8f0; margin: 0;">${escapeHtml(data.message || '')}</p>
+                    </div>
+                `;
+            }
+            resultBox.innerHTML = resultHtml;
+        }
+
+        showToast(data.message || 'Campaign processed successfully!', 'success');
+
+        // Refresh stats and tables
+        if (typeof loadEmailHub === 'function') loadEmailHub();
+        if (typeof loadScheduledEmails === 'function') loadScheduledEmails();
+
+    } catch (err) {
+        console.error('Error executing CSV campaign:', err);
+        showToast(err.message || 'Campaign dispatch failed.', 'error');
+        if (resultBox) {
+            resultBox.style.display = 'block';
+            resultBox.innerHTML = `
+                <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 10px; padding: 0.85rem 1rem; color: #f87171;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> <strong>Execution Failed:</strong> ${escapeHtml(err.message)}
+                </div>
+            `;
+        }
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-rocket" id="csv-submit-btn-icon"></i> <span id="csv-submit-btn-label">Launch Campaign Now</span>';
+            setEmailCsvStrategy(strategy);
+        }
+    }
+}
+
+
 
