@@ -779,12 +779,13 @@ def render_branded_email_html(
                         <td valign="top">
                           <div style="font-size: 14px; font-weight: 700; color: #065f46; margin-bottom: 4px;">
                             Have Questions? Chat Directly with Tara on WhatsApp
+                            <span style="font-size: 11px; background: rgba(37,211,102,0.22); color: #047857; padding: 2px 8px; border-radius: 12px; margin-left: 6px; font-weight: 700;">+234 806 358 4517</span>
                           </div>
                           <div style="font-size: 13px; color: #047857; line-height: 1.5; margin-bottom: 12px;">
-                            Our AI Admissions &amp; Career Advisor <strong>Tara</strong> is available 24/7. Ask questions about course curriculum, Japa &amp; remote job assistance, flexible payment plans, or get matched with a senior mentor today.
+                            Our Admissions Advisor <strong>Tara</strong> is available directly on WhatsApp at <strong>+234 806 358 4517</strong> to discuss course tracks, syllabus roadmaps, flexible installment options, or to get matched with your 1-on-1 mentor.
                           </div>
                           <a href="{active_tara_chat_url}" target="_blank" style="display: inline-block; background-color: #25D366; color: #ffffff; font-size: 13px; font-weight: 700; padding: 10px 22px; border-radius: 6px; text-decoration: none; box-shadow: 0 2px 6px rgba(37,211,102,0.25);">
-                            💬 Chat with Tara on WhatsApp &rarr;
+                            💬 Chat with Tara on WhatsApp (+234 806 358 4517) &rarr;
                           </a>
                         </td>
                       </tr>
@@ -1819,8 +1820,11 @@ async def enroll_lead_in_daily_drip_sequence(
             delivery_time = base_anchor + datetime.timedelta(days=day_num - 1)
 
         # Personalize subject & body
+        enc_c = urllib.parse.quote(target_course)
+        enc_n = urllib.parse.quote(clean_name)
+        step_tara_url = f"https://wa.me/2348063584517?text=Hi%20Tara%2C%20I%20am%20{enc_n}.%20I%20got%20your%20email%20about%20{enc_c}%20and%20I%20want%20to%20learn%20with%20TekTutors."
         p_subject = item["subject"].replace("{{name}}", clean_name).replace("{{course}}", target_course)
-        p_body = item["body"].replace("{{name}}", clean_name).replace("{{course}}", target_course)
+        p_body = item["body"].replace("{{name}}", clean_name).replace("{{course}}", target_course).replace("{{tara_chat_url}}", step_tara_url)
 
         rec = await schedule_email_async(
             to_email=clean_email,

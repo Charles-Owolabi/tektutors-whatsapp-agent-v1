@@ -1763,12 +1763,15 @@ async def preview_email_html(payload: dict = Body(...)):
     cta_url = payload.get("cta_url", "https://tektutors.com.ng/registration")
     recipient_name = payload.get("recipient_name", "Student")
 
+    tara_chat_url = payload.get("tara_chat_url") or "https://wa.me/2348063584517?text=Hi%20Tara%2C%20I%20have%20questions%20about%20learning%20with%20TekTutors."
+
     html = render_branded_email_html(
         subject=subject,
         body_markdown=body,
         cta_text=cta_text,
         cta_url=cta_url,
         recipient_name=recipient_name,
+        tara_chat_url=tara_chat_url,
         header_title=payload.get("header_title"),
         header_subtitle=payload.get("header_subtitle"),
         header_badge=payload.get("header_badge"),
@@ -2054,15 +2057,28 @@ async def get_drip_sequences_metadata(
     """
     sequence = get_nurture_sequence_for_duration(duration_days=duration_days, cadence=cadence)
     formatted = []
+    enc_course = urllib.parse.quote(course_name)
+    tara_url = f"https://wa.me/2348063584517?text=Hi%20Tara%2C%20I%20have%20questions%20about%20{enc_course}%20with%20TekTutors."
+
     for step in sequence:
+        full_text = (
+            step["body"]
+            .replace("{{course}}", course_name)
+            .replace("{{name}}", "Student")
+            .replace("{{tara_chat_url}}", tara_url)
+            .replace("{{registration_url}}", step.get("cta_url", "https://tektutors.com.ng/registration"))
+        )
+        preview_text = full_text[:240] + ("..." if len(full_text) > 240 else "")
+
         formatted.append({
             "day": step["day"],
             "step_index": step.get("step_index", 1),
             "total_steps": step.get("total_steps", len(sequence)),
             "title": step["title"],
             "subject": step["subject"].replace("{{course}}", course_name).replace("{{name}}", "Student"),
-            "body_preview": step["body"][:240].replace("{{course}}", course_name).replace("{{name}}", "Student") + "...",
-            "body_full": step["body"].replace("{{course}}", course_name).replace("{{name}}", "Student"),
+            "body_preview": preview_text,
+            "body_full": full_text,
+            "tara_chat_url": tara_url,
             "cta_text": step.get("cta_text", "Register Online"),
             "cta_url": step.get("cta_url", "https://tektutors.com.ng/registration")
         })

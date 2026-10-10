@@ -2677,11 +2677,12 @@ async function updateEmailLivePreview() {
     const ctaText = document.getElementById('composer-cta-text')?.value || "Enroll Now";
     const ctaUrl = document.getElementById('composer-cta-url')?.value || "https://tektutors.com.ng/registration";
     const recipientName = document.getElementById('composer-recipient-name')?.value || "Alex";
-    const courseName = document.getElementById('composer-course-name')?.value || "Data Analytics & BI Accelerator";
+    const taraChatUrl = `https://wa.me/2348063584517?text=${encodeURIComponent(`Hi Tara, I have questions about learning ${courseName} with TekTutors.`)}`;
 
     body = body.replace(/\{\{name\}\}/g, recipientName)
                .replace(/\{\{course\}\}/g, courseName)
-               .replace(/\{\{registration_url\}\}/g, ctaUrl);
+               .replace(/\{\{registration_url\}\}/g, ctaUrl)
+               .replace(/\{\{tara_chat_url\}\}/g, taraChatUrl);
 
     try {
         const res = await fetch('/api/emails/preview', {
@@ -2692,7 +2693,9 @@ async function updateEmailLivePreview() {
                 body: body,
                 cta_text: ctaText,
                 cta_url: ctaUrl,
-                recipient_name: recipientName
+                recipient_name: recipientName,
+                course_name: courseName,
+                tara_chat_url: taraChatUrl
             })
         });
         if (res.ok) {
