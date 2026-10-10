@@ -249,7 +249,9 @@ class EmailCsvCampaignRequest(BaseModel):
     campaign_type: Optional[str] = "marketing"
     course_name: Optional[str] = "Data Analytics & BI Accelerator"
     save_to_crm: bool = True
-    drip_days: Optional[int] = 7
+    drip_days: Optional[int] = 30  # e.g. 7, 14, 30, or custom days
+    cadence: Optional[str] = "smart_spaced"  # smart_spaced | daily | alternate | weekly
+    start_date: Optional[str] = "tomorrow_morning"  # tomorrow_morning | immediate | ISO timestamp
 
 
 

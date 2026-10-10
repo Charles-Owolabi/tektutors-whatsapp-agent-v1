@@ -33,7 +33,8 @@ from app.agent import agent_manager, SYSTEM_PROMPT_TEXT, strip_asterisks
 from app.email_service import (
     PREBUILT_EMAIL_TEMPLATES, send_email_async, render_branded_email_html,
     get_email_branding_cache, update_email_branding_cache, sync_email_branding_from_db,
-    parse_campaign_csv_data, enroll_lead_in_daily_drip_sequence, DAILY_DRIP_SEQUENCE
+    parse_campaign_csv_data, enroll_lead_in_daily_drip_sequence, DAILY_DRIP_SEQUENCE,
+    get_nurture_sequence_for_duration
 )
 
 logger = logging.getLogger(__name__)
@@ -2023,12 +2024,12 @@ async def preview_csv_campaign_file(
     request: Request = None
 ):
     """
-    Parse and validate uploaded CSV/TSV/text file or pasted text for email campaigns.
+    Parse and validate uploaded CSV/Excel (.xlsx)/TSV/text file or pasted text for email campaigns.
     Returns preview rows, total rows, valid emails, invalid records, and detected column mappings.
     """
     if file:
         content_bytes = await file.read()
-        return parse_campaign_csv_data(content_bytes)
+        return parse_campaign_csv_data(content_bytes, filename=file.filename)
     elif csv_text:
         return parse_campaign_csv_data(csv_text)
     elif request:
@@ -2038,7 +2039,39 @@ async def preview_csv_campaign_file(
                 return parse_campaign_csv_data(body["csv_text"])
         except Exception:
             pass
-    raise HTTPException(status_code=400, detail="No CSV file or CSV text provided.")
+    raise HTTPException(status_code=400, detail="No CSV/Excel file or contact text provided.")
+
+
+@router.get("/api/emails/drip-sequences")
+async def get_drip_sequences_metadata(
+    duration_days: int = 30,
+    cadence: str = "smart_spaced",
+    course_name: str = "Data Analytics & BI Accelerator"
+):
+    """
+    Return calculated sequence touchpoints, day offsets, subjects, and topics
+    for interactive timeline preview in the campaign builder.
+    """
+    sequence = get_nurture_sequence_for_duration(duration_days=duration_days, cadence=cadence)
+    formatted = []
+    for step in sequence:
+        formatted.append({
+            "day": step["day"],
+            "step_index": step.get("step_index", 1),
+            "total_steps": step.get("total_steps", len(sequence)),
+            "title": step["title"],
+            "subject": step["subject"].replace("{{course}}", course_name).replace("{{name}}", "Student"),
+            "body_preview": step["body"][:240].replace("{{course}}", course_name).replace("{{name}}", "Student") + "...",
+            "body_full": step["body"].replace("{{course}}", course_name).replace("{{name}}", "Student"),
+            "cta_text": step.get("cta_text", "Register Online"),
+            "cta_url": step.get("cta_url", "https://tektutors.com.ng/registration")
+        })
+    return {
+        "duration_days": duration_days,
+        "cadence": cadence,
+        "total_touchpoints": len(formatted),
+        "steps": formatted
+    }
 
 
 @router.post("/api/emails/csv-campaign")
@@ -2137,9 +2170,11 @@ async def execute_csv_campaign(
         results["message"] = f"Broadcast campaign completed: {results['success_count']} sent successfully, {results['failed_count']} failed out of {len(recipients)} contacts."
         return results
 
-    # 2. Action: Multi-Day Intelligent Drip Sequence Enrollment (Days 1–7)
+    # 2. Action: Multi-Day / 1-Month Intelligent Drip Sequence Enrollment
     elif action == "drip_enroll":
-        drip_days = payload.drip_days or 7
+        drip_days = payload.drip_days or 30
+        cadence = payload.cadence or "smart_spaced"
+        start_date = payload.start_date or "tomorrow_morning"
         enrolled_count = 0
         scheduled_emails_total = 0
 
@@ -2159,7 +2194,7 @@ async def execute_csv_campaign(
                     email=e,
                     course_interest=c,
                     status="new",
-                    notes="Enrolled in daily email drip from CSV campaign"
+                    notes=f"Enrolled in {drip_days}-day nurture drip from file campaign"
                 )
                 db.add(existing_lead)
                 await db.commit()
@@ -2175,7 +2210,9 @@ async def execute_csv_campaign(
                 email=e,
                 name=n,
                 course_name=c,
-                drip_days=drip_days
+                drip_days=drip_days,
+                cadence=cadence,
+                start_time=start_date
             )
 
             if drip_res.get("status") in ("enrolled", "already_enrolled"):
@@ -2190,7 +2227,10 @@ async def execute_csv_campaign(
 
         results["success_count"] = enrolled_count
         results["scheduled_total"] = scheduled_emails_total
-        results["message"] = f"Successfully enrolled {enrolled_count} contacts into the {drip_days}-day intelligent nurture sequence ({scheduled_emails_total} future emails scheduled)!"
+        results["duration_days"] = drip_days
+        results["cadence"] = cadence
+        duration_label = "1-Month (30-day)" if drip_days == 30 else f"{drip_days}-day"
+        results["message"] = f"Successfully enrolled {enrolled_count} contacts into the {duration_label} nurture sequence ({scheduled_emails_total} future emails scheduled across {cadence.replace('_', ' ')} timeline)!"
         return results
 
     # 3. Action: CRM Contacts Import

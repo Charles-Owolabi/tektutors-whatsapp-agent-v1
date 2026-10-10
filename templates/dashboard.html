@@ -2298,14 +2298,14 @@
                             <p class="strat-desc">Dispatches a high-impact, personalized email to all valid contacts immediately. Perfect for webinars, tuition discounts &amp; intake deadlines.</p>
                         </div>
 
-                        <!-- Strategy 2: 7-Day Drip -->
+                        <!-- Strategy 2: 1-Month / Multi-Day Conversion Nurture -->
                         <div class="csv-strategy-card" id="strat-card-drip" onclick="setEmailCsvStrategy('drip_enroll')">
                             <div class="strat-header">
-                                <span class="strat-icon">📅</span>
-                                <span class="badge" style="background: rgba(34,197,94,0.2); color: #4ade80;">INTELLIGENT DRIP</span>
+                                <span class="strat-icon">🗓️</span>
+                                <span class="badge" style="background: rgba(34,197,94,0.2); color: #4ade80;">1-MONTH &amp; MULTI-DAY DRIP</span>
                             </div>
-                            <h4 class="strat-title">Every-Day Intelligent Nurture (Days 1–7)</h4>
-                            <p class="strat-desc">Enrolls contacts into TekTutors' 7-day psychological sequence: Japa blueprints, 1-on-1 mentorship proof, ₦100k flexible tuition, and direct Tara chats.</p>
+                            <h4 class="strat-title">1-Month &amp; Multi-Day Conversion Nurture</h4>
+                            <p class="strat-desc">Woo prospects into subscribing or training with TekTutors over a month (30 days), 14 days, or custom period with high-converting psychology &amp; direct Tara WhatsApp links.</p>
                         </div>
 
                         <!-- Strategy 3: CRM Import -->
@@ -2320,13 +2320,13 @@
                     </div>
                 </div>
 
-                <!-- 2. CSV Upload & Input Dropzone -->
+                <!-- 2. CSV / Excel Upload & Input Dropzone -->
                 <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 1rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
                         <span style="font-size: 0.78rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.4rem;">
-                            <i class="fa-solid fa-file-arrow-up" style="color: #10b981;"></i> Upload File or Paste Contact List
+                            <i class="fa-solid fa-file-arrow-up" style="color: #10b981;"></i> Upload Email File (.csv, .xlsx, .tsv) or Paste Text
                         </span>
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                             <button type="button" class="btn btn-sm btn-secondary" onclick="downloadSampleCsv()" style="font-size: 0.72rem; padding: 0.3rem 0.65rem;">
                                 <i class="fa-solid fa-download"></i> Download Sample CSV
                             </button>
@@ -2338,16 +2338,16 @@
 
                     <!-- Dropzone -->
                     <div id="email-csv-dropzone" class="csv-dropzone" onclick="document.getElementById('email-csv-file-input').click()">
-                        <input type="file" id="email-csv-file-input" accept=".csv,.tsv,.txt" style="display: none;" onchange="handleEmailCsvFileSelected(event)">
+                        <input type="file" id="email-csv-file-input" accept=".csv,.tsv,.txt,.xlsx,.xls" style="display: none;" onchange="handleEmailCsvFileSelected(event)">
                         <div class="dropzone-content">
                             <div class="dropzone-icon-circle">
                                 <i class="fa-solid fa-cloud-arrow-up"></i>
                             </div>
                             <div style="font-weight: 700; font-size: 0.95rem; color: #fff; margin-bottom: 0.25rem;">
-                                Drag &amp; drop your CSV or spreadsheet file here
+                                Drag &amp; drop your CSV or Excel (.xlsx) file here
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-                                Supports comma-separated (.csv), tab-separated (.tsv), or semicolon text (.txt)
+                                Supports Excel spreadsheets (.xlsx, .xls), comma-separated (.csv), tab-separated (.tsv), or text (.txt)
                             </div>
                             <button type="button" class="btn btn-sm btn-secondary" style="font-size: 0.75rem; pointer-events: none;">
                                 <i class="fa-solid fa-folder-open"></i> Browse Files on Computer
@@ -2473,38 +2473,107 @@
                     </div>
                 </div>
 
-                <!-- 5. 7-Day Drip Sequence Info Panel (Only active when strategy == 'drip_enroll') -->
-                <div id="csv-drip-config-panel" style="display: none; background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 1.15rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <span style="font-size: 0.85rem; font-weight: 700; color: #4ade80; display: flex; align-items: center; gap: 0.4rem;">
-                            <i class="fa-solid fa-calendar-days"></i> 7-Day Intelligent Everyday Nurture Sequence
+                <!-- 5. Multi-Day & 1-Month Drip Sequence Configuration Panel (Only active when strategy == 'drip_enroll') -->
+                <div id="csv-drip-config-panel" style="display: none; background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 1.15rem; display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                        <span style="font-size: 0.88rem; font-weight: 700; color: #4ade80; display: flex; align-items: center; gap: 0.45rem;">
+                            <i class="fa-solid fa-calendar-days"></i> Nurture Campaign Period &amp; Psychological Sequence
                         </span>
-                        <span class="badge" style="background: rgba(34,197,94,0.2); color: #4ade80;">Days 1–7 Automated</span>
+                        <span class="badge" id="drip-total-scheduled-badge" style="background: rgba(34,197,94,0.2); color: #4ade80; font-weight: 700;">
+                            🌟 1-Month (30 Days) Active
+                        </span>
                     </div>
-                    <p style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.45; margin-bottom: 0.85rem;">
-                        Each contact will be automatically queued for an every-day psychological nurture journey designed to trigger emotional decisions and guide them directly into TekTutors:
+
+                    <p style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.45; margin: 0;">
+                        Initiate a sequence of persuasive emails designed to warm up cold prospects, overcome hesitations, highlight the 1-on-1 mentorship model, and woo them into enrolling or subscribing with TekTutors.
                     </p>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.6rem; font-size: 0.73rem;">
-                        <div style="background: rgba(0,0,0,0.3); padding: 0.5rem 0.7rem; border-radius: 6px; border-left: 3px solid #38bdf8;">
-                            <strong style="color: #38bdf8;">Day 1:</strong> Curriculum Roadmap &amp; Senior Practitioner Pairing
+
+                    <!-- A. Duration Selector -->
+                    <div>
+                        <label style="font-size: 0.74rem; font-weight: 700; color: #fff; text-transform: uppercase; margin-bottom: 0.45rem; display: flex; align-items: center; gap: 0.35rem;">
+                            <i class="fa-solid fa-hourglass-half" style="color: #38bdf8;"></i> 1. Select Campaign Duration:
+                        </label>
+                        <div class="drip-duration-pills" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-sm btn-secondary drip-dur-btn active" id="dur-btn-30" onclick="setDripDuration(30)" style="font-size: 0.76rem; padding: 0.4rem 0.85rem; border-color: rgba(34,197,94,0.5); background: rgba(34,197,94,0.18); color: #4ade80; font-weight: 700;">
+                                🌟 30 Days (1 Month) <span style="font-size: 0.65rem; opacity: 0.8; margin-left: 0.2rem;">POPULAR</span>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-secondary drip-dur-btn" id="dur-btn-14" onclick="setDripDuration(14)" style="font-size: 0.76rem; padding: 0.4rem 0.85rem;">
+                                ⚡ 14 Days (2 Weeks)
+                            </button>
+                            <button type="button" class="btn btn-sm btn-secondary drip-dur-btn" id="dur-btn-7" onclick="setDripDuration(7)" style="font-size: 0.76rem; padding: 0.4rem 0.85rem;">
+                                🚀 7 Days (Sprint)
+                            </button>
+                            <button type="button" class="btn btn-sm btn-secondary drip-dur-btn" id="dur-btn-custom" onclick="setDripDuration('custom')" style="font-size: 0.76rem; padding: 0.4rem 0.85rem;">
+                                ⚙️ Custom Period
+                            </button>
                         </div>
-                        <div style="background: rgba(0,0,0,0.3); padding: 0.5rem 0.7rem; border-radius: 6px; border-left: 3px solid #a855f7;">
-                            <strong style="color: #c084fc;">Day 2:</strong> 1-on-1 Mentorship vs Crowded Bootcamps (No Peer Intimidation)
+                        <!-- Custom Days Input (Hidden by default) -->
+                        <div id="csv-drip-custom-days-wrapper" style="display: none; margin-top: 0.6rem; align-items: center; gap: 0.6rem;">
+                            <span style="font-size: 0.75rem; color: #cbd5e1;">Duration:</span>
+                            <input type="number" id="csv-drip-custom-days-input" min="3" max="90" value="21" class="form-control" style="width: 100px; font-size: 0.8rem; padding: 0.3rem 0.6rem;" onchange="onCustomDripDaysChange(this.value)">
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Days (3 to 90 days supported)</span>
                         </div>
-                        <div style="background: rgba(0,0,0,0.3); padding: 0.5rem 0.7rem; border-radius: 6px; border-left: 3px solid #22c55e;">
-                            <strong style="color: #4ade80;">Day 3:</strong> The Japa Blueprint (UK Global Talent, Canada Tech PR, $1.5k–$3.5k/mo)
+                    </div>
+
+                    <!-- B. Cadence & Start Schedule Grid -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+                        <div class="form-group" style="margin: 0;">
+                            <label for="csv-drip-cadence-select" style="font-size: 0.74rem; font-weight: 600; color: #cbd5e1;">
+                                <i class="fa-solid fa-wave-square" style="color: #a855f7;"></i> 2. Delivery Cadence
+                            </label>
+                            <select id="csv-drip-cadence-select" class="form-control" style="font-size: 0.78rem;" onchange="onDripCadenceChange(this.value)">
+                                <option value="smart_spaced" selected>🎯 Conversion Spaced (Scientifically Paced)</option>
+                                <option value="daily">📅 Daily (Every Single Day)</option>
+                                <option value="alternate">⚡ Every 2 Days (Alternate Days)</option>
+                                <option value="weekly">📆 Weekly (Every 7 Days)</option>
+                            </select>
                         </div>
-                        <div style="background: rgba(0,0,0,0.3); padding: 0.5rem 0.7rem; border-radius: 6px; border-left: 3px solid #f59e0b;">
-                            <strong style="color: #fbbf24;">Day 4:</strong> Non-Tech Career Pivot (From Finance/Admin to High-Paying Tech)
+
+                        <div class="form-group" style="margin: 0;">
+                            <label for="csv-drip-start-schedule-select" style="font-size: 0.74rem; font-weight: 600; color: #cbd5e1;">
+                                <i class="fa-solid fa-clock" style="color: #f59e0b;"></i> 3. Delivery Start Anchor
+                            </label>
+                            <select id="csv-drip-start-schedule-select" class="form-control" style="font-size: 0.78rem;" onchange="onDripStartScheduleChange(this.value)">
+                                <option value="tomorrow_morning" selected>☀️ Tomorrow Morning at 10:00 AM (Recommended)</option>
+                                <option value="immediate">⚡ Immediate (First Email in 5 mins)</option>
+                                <option value="custom_date">📆 Custom Date &amp; Time</option>
+                            </select>
                         </div>
-                        <div style="background: rgba(0,0,0,0.3); padding: 0.5rem 0.7rem; border-radius: 6px; border-left: 3px solid #10b981;">
-                            <strong style="color: #34d399;">Day 5:</strong> ₦100k/mo Flexible Tuition + 10% Upfront Rebate &amp; ₦35k Career Bonus
+                    </div>
+
+                    <!-- Custom Start Date Picker (Hidden by default) -->
+                    <div id="csv-drip-custom-date-wrapper" style="display: none;">
+                        <label for="csv-drip-custom-datetime" style="font-size: 0.74rem; font-weight: 600; color: #cbd5e1;">Pick Sequence Start Date &amp; Time:</label>
+                        <input type="datetime-local" id="csv-drip-custom-datetime" class="form-control" style="font-size: 0.8rem; width: auto;">
+                    </div>
+
+                    <!-- C. Default Course Fallback Track -->
+                    <div class="form-group" style="margin: 0;">
+                        <label for="csv-drip-course-fallback" style="font-size: 0.74rem; font-weight: 600; color: #cbd5e1;">
+                            <i class="fa-solid fa-graduation-cap" style="color: #ff8c3a;"></i> 4. Featured Course Track (Used if contact has no course assigned):
+                        </label>
+                        <select id="csv-drip-course-fallback" class="form-control" style="font-size: 0.78rem;" onchange="refreshDripSequenceTimeline()">
+                            <option value="Data Analytics & BI Accelerator" selected>Data Analytics &amp; BI Accelerator (Full Track)</option>
+                            <option value="Excel for Data Analysis">Excel for Data Analysis (6-8 Weeks)</option>
+                            <option value="SQL for Data Analysis">SQL for Data Analysis (6-8 Weeks)</option>
+                            <option value="Power BI & Business Intelligence">Power BI &amp; Business Intelligence (6-8 Weeks)</option>
+                            <option value="Applied Python for Data Analysis & AI">Applied Python for Data Analysis &amp; AI (6-8 Weeks)</option>
+                            <option value="AI & Machine Learning Foundations">AI &amp; Machine Learning Foundations</option>
+                        </select>
+                    </div>
+
+                    <!-- D. Interactive Sequence Roadmap & Preview -->
+                    <div style="background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 0.85rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.4rem;">
+                            <span style="font-size: 0.78rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.4rem;">
+                                <i class="fa-solid fa-list-ol" style="color: #38bdf8;"></i> Sequence Roadmap: <span id="drip-steps-counter-text" style="color: #4ade80;">13 Touchpoints</span> across <span id="drip-duration-label-text" style="color: #38bdf8;">30 Days</span>
+                            </span>
+                            <span style="font-size: 0.68rem; color: var(--text-muted);"><i class="fa-solid fa-circle-info"></i> Click any email step to preview copy</span>
                         </div>
-                        <div style="background: rgba(0,0,0,0.3); padding: 0.5rem 0.7rem; border-radius: 6px; border-left: 3px solid #ec4899;">
-                            <strong style="color: #f472b6;">Day 6:</strong> The Cost of Waiting (Inflation Hedge &amp; Earning in Dollars)
-                        </div>
-                        <div style="background: rgba(0,0,0,0.3); padding: 0.5rem 0.7rem; border-radius: 6px; border-left: 3px solid #ef4444;">
-                            <strong style="color: #f87171;">Day 7:</strong> Mentor Slot Expiring &amp; VIP Admissions Reservation
+
+                        <!-- Stepper Timeline Items Container -->
+                        <div id="csv-drip-timeline-container" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 220px; overflow-y: auto; padding-right: 0.25rem;">
+                            <div class="empty-state" style="padding: 0.75rem;"><i class="fa-solid fa-spinner fa-spin"></i> Loading sequence roadmap...</div>
                         </div>
                     </div>
                 </div>

@@ -3997,12 +3997,20 @@ window.currentEmailCsvStrategy = 'broadcast';
 window.parsedEmailCsvData = null;
 let csvPasteDebounceTimeout = null;
 
+// State for email file campaigns
+window.selectedDripDuration = 30;
+window.currentEmailCsvStrategy = 'broadcast';
+window.parsedEmailCsvData = null;
+
 function openEmailCsvCampaignModal() {
     const modal = document.getElementById('email-csv-campaign-modal');
     if (!modal) return;
 
     modal.style.display = 'flex';
     resetEmailCsvModal();
+
+    // Default duration to 30 days (1 month)
+    setDripDuration(30);
 
     // Populate strategic templates in dropdown
     populateEmailCsvTemplates();
@@ -4037,15 +4045,154 @@ function setEmailCsvStrategy(strategy) {
         if (submitBtnIcon) submitBtnIcon.className = 'fa-solid fa-rocket';
     } else if (strategy === 'drip_enroll') {
         if (broadcastPanel) broadcastPanel.style.display = 'none';
-        if (dripPanel) dripPanel.style.display = 'block';
-        if (submitBtnLabel) submitBtnLabel.innerText = 'Enroll Contacts in 7-Day Drip';
+        if (dripPanel) dripPanel.style.display = 'flex';
+        const dur = window.selectedDripDuration || 30;
+        const durLabel = dur === 30 ? '1-Month (30-Day)' : `${dur}-Day`;
+        if (submitBtnLabel) submitBtnLabel.innerText = `Enroll Contacts in ${durLabel} Nurture`;
         if (submitBtnIcon) submitBtnIcon.className = 'fa-solid fa-calendar-check';
+        refreshDripSequenceTimeline();
     } else if (strategy === 'import_crm') {
         if (broadcastPanel) broadcastPanel.style.display = 'none';
         if (dripPanel) dripPanel.style.display = 'none';
         if (submitBtnLabel) submitBtnLabel.innerText = 'Import Contacts to CRM';
         if (submitBtnIcon) submitBtnIcon.className = 'fa-solid fa-cloud-arrow-up';
     }
+}
+
+function setDripDuration(duration) {
+    window.selectedDripDuration = duration;
+
+    // Update duration pills UI
+    document.querySelectorAll('.drip-dur-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.background = '';
+        btn.style.borderColor = '';
+        btn.style.color = '';
+        btn.style.fontWeight = '';
+    });
+
+    const activeBtn = document.getElementById(`dur-btn-${duration}`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.style.background = 'rgba(34,197,94,0.18)';
+        activeBtn.style.borderColor = 'rgba(34,197,94,0.5)';
+        activeBtn.style.color = '#4ade80';
+        activeBtn.style.fontWeight = '700';
+    }
+
+    const customWrapper = document.getElementById('csv-drip-custom-days-wrapper');
+    if (customWrapper) {
+        customWrapper.style.display = duration === 'custom' ? 'flex' : 'none';
+    }
+
+    const badge = document.getElementById('drip-total-scheduled-badge');
+    const labelText = document.getElementById('drip-duration-label-text');
+    const submitBtnLabel = document.getElementById('csv-submit-btn-label');
+
+    const effectiveDays = duration === 'custom' 
+        ? parseInt(document.getElementById('csv-drip-custom-days-input')?.value || 21) 
+        : duration;
+
+    const labelStr = effectiveDays === 30 ? '1-Month (30 Days)' : `${effectiveDays} Days`;
+    if (badge) badge.innerText = `🌟 ${labelStr} Active`;
+    if (labelText) labelText.innerText = labelStr;
+
+    if (window.currentEmailCsvStrategy === 'drip_enroll' && submitBtnLabel) {
+        submitBtnLabel.innerText = `Enroll Contacts in ${labelStr} Nurture`;
+    }
+
+    refreshDripSequenceTimeline();
+}
+
+function onCustomDripDaysChange(val) {
+    const days = parseInt(val) || 21;
+    const badge = document.getElementById('drip-total-scheduled-badge');
+    const labelText = document.getElementById('drip-duration-label-text');
+    const submitBtnLabel = document.getElementById('csv-submit-btn-label');
+
+    if (badge) badge.innerText = `🌟 ${days} Days Active`;
+    if (labelText) labelText.innerText = `${days} Days`;
+    if (window.currentEmailCsvStrategy === 'drip_enroll' && submitBtnLabel) {
+        submitBtnLabel.innerText = `Enroll Contacts in ${days}-Day Nurture`;
+    }
+    refreshDripSequenceTimeline();
+}
+
+function onDripCadenceChange() {
+    refreshDripSequenceTimeline();
+}
+
+function onDripStartScheduleChange(val) {
+    const wrapper = document.getElementById('csv-drip-custom-date-wrapper');
+    if (wrapper) {
+        wrapper.style.display = val === 'custom_date' ? 'block' : 'none';
+    }
+}
+
+async function refreshDripSequenceTimeline() {
+    const container = document.getElementById('csv-drip-timeline-container');
+    if (!container) return;
+
+    const effectiveDays = window.selectedDripDuration === 'custom'
+        ? parseInt(document.getElementById('csv-drip-custom-days-input')?.value || 21)
+        : (window.selectedDripDuration || 30);
+
+    const cadence = document.getElementById('csv-drip-cadence-select')?.value || 'smart_spaced';
+    const course = document.getElementById('csv-drip-course-fallback')?.value || 'Data Analytics & BI Accelerator';
+
+    container.innerHTML = '<div class="empty-state" style="padding: 0.75rem;"><i class="fa-solid fa-spinner fa-spin"></i> Calculating sequence touchpoints...</div>';
+
+    try {
+        const res = await fetch(`/api/emails/drip-sequences?duration_days=${effectiveDays}&cadence=${encodeURIComponent(cadence)}&course_name=${encodeURIComponent(course)}`);
+        if (!res.ok) throw new Error('Failed to load sequence metadata');
+
+        const data = await res.json();
+        const steps = data.steps || [];
+
+        const counterText = document.getElementById('drip-steps-counter-text');
+        if (counterText) counterText.innerText = `${steps.length} Touchpoints`;
+
+        if (!steps.length) {
+            container.innerHTML = '<div class="empty-state text-muted" style="padding: 0.5rem;">No sequence steps generated.</div>';
+            return;
+        }
+
+        container.innerHTML = steps.map((s, idx) => `
+            <div class="drip-step-timeline-card" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 0.65rem 0.85rem; display: flex; flex-direction: column; gap: 0.35rem; transition: all 0.2s ease;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.35rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="badge" style="background: rgba(34,197,94,0.22); color: #4ade80; font-size: 0.7rem; font-weight: 700;">
+                            Day ${s.day} (${s.day === 1 ? 'T+0' : `+${s.day - 1}d`})
+                        </span>
+                        <strong style="font-size: 0.78rem; color: #fff;">${escapeHtml(s.title)}</strong>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="toggleDripEmailStepCopy(${idx})" style="font-size: 0.68rem; padding: 0.2rem 0.5rem; border-color: rgba(56,189,248,0.3); color: #38bdf8;">
+                        <i class="fa-solid fa-envelope-open-text"></i> Preview Copy
+                    </button>
+                </div>
+                <div style="font-size: 0.74rem; color: #cbd5e1; font-weight: 500;">
+                    <span style="color: var(--text-muted);">Subject:</span> ${escapeHtml(s.subject)}
+                </div>
+                <div id="drip-step-body-${idx}" style="display: none; margin-top: 0.35rem; padding: 0.6rem 0.75rem; background: rgba(0,0,0,0.35); border: 1px dashed rgba(255,255,255,0.1); border-radius: 6px; font-size: 0.72rem; color: #94a3b8; line-height: 1.45; white-space: pre-wrap;">
+${escapeHtml(s.body_full || s.body_preview)}
+<div style="margin-top: 0.5rem; display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; font-size: 0.68rem;">
+    <span class="badge" style="background: rgba(235,103,17,0.2); color: #ff8c3a;">CTA: ${escapeHtml(s.cta_text)}</span>
+    <span class="badge" style="background: rgba(37,211,102,0.2); color: #25D366;"><i class="fa-brands fa-whatsapp"></i> Chat Tara Link Embedded</span>
+</div>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (err) {
+        console.error('Error in refreshDripSequenceTimeline:', err);
+        container.innerHTML = `<div class="empty-state text-danger" style="padding: 0.5rem;">Failed to load roadmap: ${escapeHtml(err.message)}</div>`;
+    }
+}
+
+function toggleDripEmailStepCopy(idx) {
+    const el = document.getElementById(`drip-step-body-${idx}`);
+    if (!el) return;
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
 async function populateEmailCsvTemplates() {
@@ -4125,8 +4272,8 @@ function toggleCsvPasteArea() {
 }
 
 function onCsvPasteInputDebounced() {
-    clearTimeout(csvPasteDebounceTimeout);
-    csvPasteDebounceTimeout = setTimeout(() => {
+    clearTimeout(window.csvPasteDebounceTimeout);
+    window.csvPasteDebounceTimeout = setTimeout(() => {
         const text = document.getElementById('email-csv-paste-input')?.value || '';
         if (text.trim().length > 5) {
             parseAndPreviewCsv({ csvText: text, fileName: 'Pasted Contact List' });
@@ -4169,16 +4316,40 @@ function handleEmailCsvFileSelected(event) {
     if (file) handleEmailCsvFile(file);
 }
 
-function handleEmailCsvFile(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const content = e.target?.result;
-        parseAndPreviewCsv({ csvText: content, fileName: file.name });
-    };
-    reader.onerror = () => {
-        showToast('Error reading uploaded file.', 'error');
-    };
-    reader.readAsText(file);
+async function handleEmailCsvFile(file) {
+    const previewContainer = document.getElementById('email-csv-preview-container');
+    const tableBody = document.getElementById('csv-preview-table-body');
+    const fileNameBadge = document.getElementById('csv-preview-file-badge');
+
+    if (fileNameBadge) fileNameBadge.innerText = file.name || 'Uploaded File';
+    if (tableBody) tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted"><i class="fa-solid fa-spinner fa-spin"></i> Parsing file and validating email telemetry...</td></tr>';
+    if (previewContainer) previewContainer.style.display = 'block';
+
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch('/api/emails/csv-preview', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || 'Failed to parse file');
+        }
+
+        const data = await res.json();
+        window.parsedEmailCsvData = data;
+        renderCsvPreviewTelemetry(data);
+
+        showToast(`Parsed ${data.valid_count} valid contacts from ${escapeHtml(file.name)}!`, 'success');
+
+    } catch (err) {
+        console.error('Error handling uploaded file:', err);
+        if (tableBody) tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Parsing error: ${escapeHtml(err.message)}</td></tr>`;
+        showToast('Error validating uploaded contact records: ' + err.message, 'error');
+    }
 }
 
 async function parseAndPreviewCsv({ csvText, fileName }) {
@@ -4197,55 +4368,59 @@ async function parseAndPreviewCsv({ csvText, fileName }) {
             body: JSON.stringify({ csv_text: csvText })
         });
 
-        if (!res.ok) throw new Error('Failed to parse CSV');
+        if (!res.ok) throw new Error('Failed to parse contacts');
         const data = await res.json();
         window.parsedEmailCsvData = data;
-
-        // Update badges
-        const totalBadge = document.getElementById('csv-preview-total-badge');
-        const validBadge = document.getElementById('csv-preview-valid-badge');
-        const invalidBadge = document.getElementById('csv-preview-invalid-badge');
-
-        if (totalBadge) totalBadge.innerText = `${data.total_rows || 0} Total Rows`;
-        if (validBadge) validBadge.innerText = `✅ ${data.valid_count || 0} Valid Emails`;
-        if (invalidBadge) invalidBadge.innerText = `⚠️ ${data.invalid_count || 0} Invalid`;
-
-        // Render detected columns
-        const colBar = document.getElementById('csv-detected-columns-bar');
-        if (colBar) {
-            const detectedKeys = Object.entries(data.column_indices || {})
-                .filter(([_, idx]) => idx !== null)
-                .map(([col, _]) => `<span class="badge" style="background: rgba(16,185,129,0.15); color: #10b981; font-size: 0.68rem;"><i class="fa-solid fa-check"></i> ${escapeHtml(col)}</span>`)
-                .join(' ');
-            colBar.innerHTML = `<span>Detected Fields:</span> ${detectedKeys || '<span class="text-muted">Auto-detected positional columns</span>'}`;
-        }
-
-        // Render preview rows
-        const validRecipients = data.valid_recipients || [];
-        if (!validRecipients.length) {
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">No valid email records found. Please check column format.</td></tr>';
-            return;
-        }
-
-        const previewSlice = validRecipients.slice(0, 8);
-        tableBody.innerHTML = previewSlice.map((r, i) => `
-            <tr>
-                <td style="color: var(--text-muted); font-size: 0.72rem;">#${i + 1}</td>
-                <td style="font-family: monospace; font-weight: 600; color: #38bdf8;">${escapeHtml(r.email)}</td>
-                <td style="color: #fff; font-weight: 500;">${escapeHtml(r.name || 'Student')}</td>
-                <td><span class="badge" style="background: rgba(245,158,11,0.15); color: #fbbf24; font-size: 0.7rem;">${escapeHtml(r.course || 'General Track')}</span></td>
-                <td style="font-family: monospace; font-size: 0.72rem; color: #94a3b8;">${escapeHtml(r.phone || 'N/A')}</td>
-                <td><span class="badge" style="background: rgba(34,197,94,0.18); color: #4ade80; font-size: 0.68rem;"><i class="fa-solid fa-circle-check"></i> Ready</span></td>
-            </tr>
-        `).join('') + (validRecipients.length > 8 ? `<tr><td colspan="6" class="text-center text-muted" style="font-size: 0.72rem;">... and ${validRecipients.length - 8} more valid contacts queued for campaign</td></tr>` : '');
+        renderCsvPreviewTelemetry(data);
 
         showToast(`Parsed ${data.valid_count} valid email contacts ready for campaign!`, 'success');
 
     } catch (err) {
         console.error('Error in parseAndPreviewCsv:', err);
-        tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Parsing error: ${escapeHtml(err.message)}</td></tr>`;
-        showToast('Error validating CSV records.', 'error');
+        if (tableBody) tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Parsing error: ${escapeHtml(err.message)}</td></tr>`;
+        showToast('Error validating contact records.', 'error');
     }
+}
+
+function renderCsvPreviewTelemetry(data) {
+    const totalBadge = document.getElementById('csv-preview-total-badge');
+    const validBadge = document.getElementById('csv-preview-valid-badge');
+    const invalidBadge = document.getElementById('csv-preview-invalid-badge');
+    const colBar = document.getElementById('csv-detected-columns-bar');
+    const tableBody = document.getElementById('csv-preview-table-body');
+
+    if (totalBadge) totalBadge.innerText = `${data.total_rows || 0} Total Rows`;
+    if (validBadge) validBadge.innerText = `✅ ${data.valid_count || 0} Valid Emails`;
+    if (invalidBadge) invalidBadge.innerText = `⚠️ ${data.invalid_count || 0} Invalid`;
+
+    // Render detected columns
+    if (colBar) {
+        const detected = Object.entries(data.columns_detected || {})
+            .map(([col, label]) => `<span class="badge" style="background: rgba(16,185,129,0.15); color: #10b981; font-size: 0.68rem;"><i class="fa-solid fa-check"></i> ${escapeHtml(col)} (${escapeHtml(label)})</span>`)
+            .join(' ');
+        colBar.innerHTML = `<span>Detected Fields:</span> ${detected || '<span class="text-muted">Auto-detected columns</span>'}`;
+    }
+
+    // Render preview rows
+    const validRecipients = data.valid_recipients || [];
+    if (!tableBody) return;
+
+    if (!validRecipients.length) {
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">No valid email records found. Please check column format.</td></tr>';
+        return;
+    }
+
+    const previewSlice = validRecipients.slice(0, 8);
+    tableBody.innerHTML = previewSlice.map((r, i) => `
+        <tr>
+            <td style="color: var(--text-muted); font-size: 0.72rem;">#${i + 1}</td>
+            <td style="font-family: monospace; font-weight: 600; color: #38bdf8;">${escapeHtml(r.email)}</td>
+            <td style="color: #fff; font-weight: 500;">${escapeHtml(r.name || 'Student')}</td>
+            <td><span class="badge" style="background: rgba(245,158,11,0.15); color: #fbbf24; font-size: 0.7rem;">${escapeHtml(r.course || 'General Track')}</span></td>
+            <td style="font-family: monospace; font-size: 0.72rem; color: #94a3b8;">${escapeHtml(r.phone || 'N/A')}</td>
+            <td><span class="badge" style="background: rgba(34,197,94,0.18); color: #4ade80; font-size: 0.68rem;"><i class="fa-solid fa-circle-check"></i> Ready</span></td>
+        </tr>
+    `).join('') + (validRecipients.length > 8 ? `<tr><td colspan="6" class="text-center text-muted" style="font-size: 0.72rem;">... and ${validRecipients.length - 8} more valid contacts queued for campaign</td></tr>` : '');
 }
 
 function resetEmailCsvModal() {
@@ -4271,7 +4446,7 @@ async function submitEmailCsvCampaign() {
     const pasteText = document.getElementById('email-csv-paste-input')?.value?.trim();
 
     if (!validRecipients.length && !pasteText) {
-        showToast('Please upload a CSV file or paste contacts first.', 'warning');
+        showToast('Please upload a CSV / Excel file or paste contacts first.', 'warning');
         return;
     }
 
@@ -4307,8 +4482,20 @@ async function submitEmailCsvCampaign() {
         payload.course_name = courseContext;
         payload.campaign_type = campaignType;
     } else if (strategy === 'drip_enroll') {
-        payload.drip_days = 7;
-        payload.course_name = document.getElementById('csv-email-course-fallback')?.value || 'Data Analytics & BI Accelerator';
+        const duration = window.selectedDripDuration === 'custom'
+            ? parseInt(document.getElementById('csv-drip-custom-days-input')?.value || 21)
+            : (window.selectedDripDuration || 30);
+
+        payload.drip_days = duration;
+        payload.cadence = document.getElementById('csv-drip-cadence-select')?.value || 'smart_spaced';
+
+        const startSchedule = document.getElementById('csv-drip-start-schedule-select')?.value || 'tomorrow_morning';
+        if (startSchedule === 'custom_date') {
+            payload.start_date = document.getElementById('csv-drip-custom-datetime')?.value || 'tomorrow_morning';
+        } else {
+            payload.start_date = startSchedule;
+        }
+        payload.course_name = document.getElementById('csv-drip-course-fallback')?.value || 'Data Analytics & BI Accelerator';
     }
 
     if (submitBtn) {
@@ -4349,15 +4536,18 @@ async function submitEmailCsvCampaign() {
                     </div>
                 `;
             } else if (strategy === 'drip_enroll') {
+                const durLabel = data.duration_days === 30 ? '1-Month (30 Days)' : `${data.duration_days || 30} Days`;
                 resultHtml = `
                     <div style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.35); border-radius: 10px; padding: 0.85rem 1rem;">
                         <h4 style="color: #4ade80; margin: 0 0 0.35rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
-                            <i class="fa-solid fa-calendar-check"></i> 7-Day Nurture Sequence Enrolled!
+                            <i class="fa-solid fa-calendar-check"></i> ${durLabel} Conversion Nurture Sequence Enrolled!
                         </h4>
                         <p style="font-size: 0.8rem; color: #e2e8f0; margin: 0 0 0.5rem 0;">${escapeHtml(data.message || '')}</p>
                         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; font-size: 0.74rem;">
                             <span class="badge" style="background: rgba(34,197,94,0.2); color: #4ade80;">👥 ${data.success_count || 0} Contacts Active</span>
                             <span class="badge" style="background: rgba(56,189,248,0.2); color: #38bdf8;">📬 ${data.scheduled_total || 0} Future Emails Queued</span>
+                            <span class="badge" style="background: rgba(168,85,247,0.2); color: #c084fc;">🗓️ ${durLabel} Timeline</span>
+                            <span class="badge" style="background: rgba(37,211,102,0.2); color: #25D366;"><i class="fa-brands fa-whatsapp"></i> Tara WhatsApp Links Embedded</span>
                         </div>
                     </div>
                 `;
@@ -4381,7 +4571,7 @@ async function submitEmailCsvCampaign() {
         if (typeof loadScheduledEmails === 'function') loadScheduledEmails();
 
     } catch (err) {
-        console.error('Error executing CSV campaign:', err);
+        console.error('Error executing campaign:', err);
         showToast(err.message || 'Campaign dispatch failed.', 'error');
         if (resultBox) {
             resultBox.style.display = 'block';
@@ -4399,6 +4589,7 @@ async function submitEmailCsvCampaign() {
         }
     }
 }
+
 
 
 

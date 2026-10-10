@@ -1385,8 +1385,274 @@ DAILY_DRIP_SEQUENCE = [
         ),
         "cta_text": "Lock In Your Mentor Slot Now",
         "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "day": 9,
+        "title": "Inside a Live 1-on-1 Session: Screen Share, Zero Jargon, Real Code",
+        "subject": "Behind the Scenes: What a 1-on-1 Screen Share Really Looks Like ({{course}})",
+        "body": (
+            "Hi {{name}},\n\n"
+            "If you've never experienced private technical mentorship, you might be wondering: *\"What actually happens during a 1-on-1 session at TekTutors?\"*\n\n"
+            "Here is the exact format:\n\n"
+            "### 🖥️ 1. Your Screen is Shared:\n"
+            "You don't just sit and watch a passive video lecture. You open your own IDE (VS Code, Power BI Desktop, pgAdmin) and write the code yourself with your mentor.\n\n"
+            "### 🔍 2. Real-Time Error Debugging:\n"
+            "When a SQL query throws a syntax error or a Python pandas merge behaves unexpectedly, you don't spend 3 days frustrated on StackOverflow. Your mentor spots the issue immediately, explains *why* it failed in simple English, and coaches you to the clean solution.\n\n"
+            "### 🎯 3. Commercial Logic & Best Practices:\n"
+            "We don't teach abstract textbook puzzles. Every session focuses on how senior engineers in multinational banks, fintechs, and tech startups structure production data.\n\n"
+            "Experience the relief and confidence of having a dedicated senior practitioner in your corner.\n\n"
+            "💬 **[Chat directly with Tara on WhatsApp to preview how we match you with a mentor]({{tara_chat_url}})**\n\n"
+            "Start your private 1-on-1 mentorship journey today:"
+        ),
+        "cta_text": "Experience 1-on-1 Mentorship",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "day": 11,
+        "title": "Capstone Breakdown: Building a ₦50M Customer Churn Pipeline",
+        "subject": "How Our Students Build ₦50M Business Intelligence Systems ({{course}})",
+        "body": (
+            "Hi {{name}},\n\n"
+            "When you apply for a high-paying Data or AI role, hiring managers will ask one question:\n\n"
+            "**\"What is the most impactful project you've built from scratch?\"**\n\n"
+            "Here is what TekTutors graduates present in technical interviews:\n\n"
+            "### 📊 Project Showcase: Enterprise Customer Churn Diagnostic\n"
+            "• **Business Problem:** A subscription company losing ₦50,000,000 annually to customer churn.\n"
+            "• **SQL Data Pipeline:** Aggregated 250,000 customer transaction records, segmented customer cohorts, and isolated drop-off touchpoints.\n"
+            "• **Power BI Executive Dashboard:** Built dynamic churn risk filters, DAX customer lifetime value (CLV) indicators, and automated email trigger alerts.\n"
+            "• **Actionable C-Suite Impact:** Pinpointed a 14% retention improvement that saved the business ₦18,000,000 in lost revenue.\n\n"
+            "When recruiters see this on your GitHub and LinkedIn, you immediately stand out from candidates who only have generic tutorial certificates.\n\n"
+            "💬 **[Chat directly with Tara on WhatsApp to explore our project capstone library]({{tara_chat_url}})**\n\n"
+            "Build portfolio projects that get you hired:"
+        ),
+        "cta_text": "Build Enterprise Portfolio Projects",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "day": 13,
+        "title": "Defeating Imposter Syndrome: You Don't Need to Be a Math Genius",
+        "subject": "Scared of Math or Coding? Read This Before Giving Up ({{course}})",
+        "body": (
+            "Hi {{name}},\n\n"
+            "One of the most common secrets our incoming students confess to Tara is:\n\n"
+            "*\"I really want to get into tech, but I was never good at math, and code feels intimidating.\"*\n\n"
+            "Here is the truth:\n"
+            "Modern Data Analytics and Business Intelligence is **not** about complex calculus or theoretical algorithms.\n\n"
+            "### 💡 What Data Analytics Actually Requires:\n"
+            "1. **Curiosity:** Asking why sales dropped in July, or which marketing channel delivered the best leads.\n"
+            "2. **Pattern Recognition:** Looking at trends, averages, and percentages.\n"
+            "3. **Clear Communication:** Explaining your findings to stakeholders who don't know code.\n\n"
+            "The technical tools (SQL, Power BI, Python) are just tools — and with a patient 1-on-1 mentor guiding you step-by-step, you'll be writing clean queries in your very first week.\n\n"
+            "Don't let self-doubt rob you of a lucrative career in tech.\n\n"
+            "💬 **[Chat directly with Tara on WhatsApp for a quick encouragement & skill evaluation]({{tara_chat_url}})**\n\n"
+            "Take the leap with a dedicated mentor today:"
+        ),
+        "cta_text": "Start Fearlessly with a Mentor",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "day": 15,
+        "title": "The Recruiter Magnet: How TekTutors Students Get Inbound Interview Invites",
+        "subject": "The Recruiter Magnet: How TekTutors Students Get Inbound Interview Invites",
+        "body": (
+            "Hi {{name}},\n\n"
+            "Most job seekers spend hours submitting resumes into online application portals, only to receive silence.\n\n"
+            "At TekTutors, we teach our students how to become **Recruiter Magnets** on LinkedIn:\n\n"
+            "### 🧲 The Inbound Positioning Strategy:\n"
+            "• **ATS-Optimized Headline:** Transforming generic titles into searchable practitioner keywords (e.g. *\"Data Analyst | SQL | Power BI | Financial Performance Modelling\"*).\n"
+            "• **Live Project Embeds:** Video walkthroughs of your interactive Power BI dashboards pinned directly to the Featured section of your profile.\n"
+            "• **Verified GitHub Commits:** A green GitHub activity board that proves hands-on code consistency.\n\n"
+            "Every TekTutors student receives our **Free ₦35,000 LinkedIn & CV Makeover** so international recruiters from the UK, Canada, and Nigeria find you directly.\n\n"
+            "💬 **[Chat directly with Tara on WhatsApp to claim your Free LinkedIn Makeover bonus]({{tara_chat_url}})**\n\n"
+            "Position yourself for high-paying inbound tech roles:"
+        ),
+        "cta_text": "Claim Your Free LinkedIn Makeover",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "day": 17,
+        "title": "Earning in Foreign Currency While Learning: The Freelance Roadmap",
+        "subject": "How to Land Your First $300 – $500 Data Gig While Still Training ({{course}})",
+        "body": (
+            "Hi {{name}},\n\n"
+            "Did you know that many TekTutors students start earning freelance income before they even graduate?\n\n"
+            "International small businesses and agencies on platforms like Upwork, Fiverr, and Contra frequently need quick data cleanups, dashboard builds, and Excel automations:\n\n"
+            "### 💵 High-Demand Micro-Gigs for Beginners:\n"
+            "• Cleaning and deduplicating messy CRM spreadsheets: **$150 – $300**\n"
+            "• Building a custom 3-page interactive Power BI dashboard: **$350 – $700**\n"
+            "• Writing SQL queries to extract monthly financial reports: **$250 – $500**\n\n"
+            "With exchange rates, landing just one $400 project brings in over **₦600,000** — more than covering your entire tuition!\n\n"
+            "Your mentor will guide you on how to package your training capstones into marketable client deliverables.\n\n"
+            "💬 **[Chat directly with Tara on WhatsApp to discuss remote freelance earning]({{tara_chat_url}})**\n\n"
+            "Start building international earning power today:"
+        ),
+        "cta_text": "Learn to Earn in Dollars",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "day": 20,
+        "title": "The True Cost of Waiting: Where Will Your Career Be in 6 Months?",
+        "subject": "The ₦1,200,000 Cost of Waiting Another Month, {{name}}",
+        "body": (
+            "Hi {{name}},\n\n"
+            "We all have career goals we promise ourselves we will start *\"next month\"*.\n\n"
+            "But let's look at the real financial math of delaying your tech transition:\n\n"
+            "If you start **{{course}}** today, in just 8 weeks you will have:\n"
+            "✅ 3 completed enterprise portfolio capstones on GitHub\n"
+            "✅ Fluency in SQL queries, Power BI reporting, and business analytics\n"
+            "✅ An optimized resume ready for roles paying ₦450k – ₦850k/month locally or $1.5k–$3.5k remotely\n\n"
+            "Every month you delay is another month working at your current income level while inflation rises.\n\n"
+            "Make this month the turning point where you invest in yourself.\n\n"
+            "💬 **[Chat directly with Tara on WhatsApp to structure your learning schedule]({{tara_chat_url}})**\n\n"
+            "Take control of your earning trajectory today:"
+        ),
+        "cta_text": "Invest in Your Career Trajectory",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "day": 22,
+        "title": "Special Admissions Grant: ₦15,000 Fast-Track Scholarship",
+        "subject": "Exclusive Admissions Grant: ₦15,000 Tuition Voucher (48 Hours Only)",
+        "body": (
+            "Hi {{name}},\n\n"
+            "Great news for your tech journey!\n\n"
+            "The TekTutors Academic Board has approved a limited **₦15,000 Fast-Track Tuition Grant** for prospective students ready to onboard with a mentor this week.\n\n"
+            "### 🎟️ Your Grant Details:\n"
+            "• **Standard Full Tuition:** ₦100,000\n"
+            "• **Fast-Track Grant Applied:** -₦15,000\n"
+            "• **Your Special Tuition:** **₦85,000 only** (or split into two payments of ₦45,000)\n"
+            "• **Includes:** Dedicated 1-on-1 live screen share mentorship, 3 GitHub capstones, and free ₦35k CV optimization.\n\n"
+            "This voucher expires in **48 hours** as mentor seats are strictly capped.\n\n"
+            "💬 **[Chat directly with Tara on WhatsApp to apply your ₦15,000 grant voucher]({{tara_chat_url}})**\n\n"
+            "Claim your tuition grant before it expires:"
+        ),
+        "cta_text": "Claim ₦15,000 Tuition Grant",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "day": 25,
+        "title": "From ₦85k Customer Support to ₦650k Business Intelligence Specialist",
+        "subject": "Meet Femi: From ₦85k Customer Care to ₦650k Data Lead in 4 Months",
+        "body": (
+            "Hi {{name}},\n\n"
+            "Meet Femi — four months ago, he was working long hours in customer service earning ₦85,000/month, wondering how to break into tech without a computer science degree.\n\n"
+            "### 🚀 How Femi Made the Leap with TekTutors:\n"
+            "1. **Weekend 1-on-1 Sessions:** He kept his day job and dedicated Saturday & Sunday mornings to private screen shares with his senior mentor.\n"
+            "2. **Built Real Telemetry Capstones:** Instead of watching passive videos, he built an executive sales performance dashboard using SQL and Power BI.\n"
+            "3. **Mock Technical Interviews:** His mentor drilled him on actual corporate interview scenarios until he could answer questions with authority.\n\n"
+            "Last month, Femi accepted an offer as a **Business Intelligence Specialist at a Lagos fintech firm earning ₦650,000/month**.\n\n"
+            "His story is not unique — it is the exact blueprint we guide our students through every day.\n\n"
+            "💬 **[Chat directly with Tara on WhatsApp to read more student success stories]({{tara_chat_url}})**\n\n"
+            "Start writing your own tech success story:"
+        ),
+        "cta_text": "Start Your Tech Success Story",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "day": 28,
+        "title": "Getting Ready for Day 1: Zero Setup Friction",
+        "subject": "Your Laptop Setup & 1-on-1 Schedule Checklist ({{course}})",
+        "body": (
+            "Hi {{name}},\n\n"
+            "Worried about technical setup or installing complex software?\n\n"
+            "At TekTutors, we make onboarding completely frictionless.\n\n"
+            "### 💻 What You Need for Your First Session:\n"
+            "• Any standard laptop (Windows or Mac, 8GB RAM recommended)\n"
+            "• Stable internet connection for screen sharing\n"
+            "• That's it! Zero pre-installation needed.\n\n"
+            "During your first private session, your mentor will screen-share with you and assist you in setting up Python, PostgreSQL, and Power BI step-by-step.\n\n"
+            "You won't have to troubleshoot installations alone.\n\n"
+            "💬 **[Chat directly with Tara on WhatsApp to confirm your laptop compatibility]({{tara_chat_url}})**\n\n"
+            "Get paired with your mentor this weekend:"
+        ),
+        "cta_text": "Get Paired with Your Mentor",
+        "cta_url": "https://tektutors.com.ng/registration"
+    },
+    {
+        "day": 30,
+        "title": "Final Admissions Call: Securing Your 1-on-1 Mentor Pairing This Month",
+        "subject": "Final Notice: Your Reserved Mentor Pairing is Closing Today, {{name}}",
+        "body": (
+            "Hi {{name}},\n\n"
+            "This is our final notification regarding your admissions reservation for **{{course}}**.\n\n"
+            "Our mentors are locking in their student pairing schedules for the upcoming cohort this evening. Because each practitioner can only coach **4 learners at a time**, unconfirmed slots will be released to prospective candidates on our waiting list.\n\n"
+            "### 🌟 Everything Waiting for You:\n"
+            "✅ 1-on-1 private screen share sessions with an active senior engineer\n"
+            "✅ 3 high-impact portfolio capstones deployed to GitHub\n"
+            "✅ Free ₦35,000 CV Optimization & LinkedIn Makeover\n"
+            "✅ Flexible ₦100,000/month or ₦90,000 upfront (save ₦10,000)\n\n"
+            "Don't spend another month wondering *\"what if\"*.\n\n"
+            "💬 **[Chat directly with Tara on WhatsApp right now to secure your mentor slot]({{tara_chat_url}})**\n\n"
+            "Lock in your mentor and start your career upgrade today:"
+        ),
+        "cta_text": "Lock In Your Mentor Slot Before It Closes",
+        "cta_url": "https://tektutors.com.ng/registration"
     }
 ]
+
+
+def get_nurture_sequence_for_duration(duration_days: int = 30, cadence: str = "smart_spaced") -> List[Dict[str, Any]]:
+    """
+    Intelligently construct a high-converting nurture campaign spanning a requested duration (e.g. 7, 14, 30 days, or custom).
+    Supports multiple delivery cadences:
+    - 'smart_spaced': Psychologically spaced across the duration (e.g. Days 1, 2, 4, 7, 9, 11, 13, 15, 17, 20, 22, 25, 28, 30).
+    - 'daily': Sends an email every single day up to duration_days.
+    - 'alternate': Sends an email every 2 days (Day 1, 3, 5, 7, 9...) up to duration_days.
+    - 'weekly': Sends an email once a week (Day 1, 8, 15, 22, 29...) up to duration_days.
+    """
+    duration = max(1, int(duration_days or 30))
+    cadence = (cadence or "smart_spaced").lower().strip()
+
+    # Pre-crafted optimal day-mappings for standard durations
+    if duration == 7:
+        target_days = [1, 2, 3, 4, 5, 6, 7]
+    elif duration == 14 and cadence == "smart_spaced":
+        target_days = [1, 2, 4, 6, 8, 11, 14]
+    elif duration == 30 and cadence == "smart_spaced":
+        target_days = [1, 2, 4, 7, 9, 11, 13, 15, 17, 20, 22, 25, 28, 30]
+    elif cadence == "daily":
+        target_days = list(range(1, duration + 1))
+    elif cadence == "alternate":
+        target_days = list(range(1, duration + 1, 2))
+        if target_days[-1] != duration and duration > 1:
+            target_days.append(duration)
+    elif cadence == "weekly":
+        target_days = list(range(1, duration + 1, 7))
+        if target_days[-1] != duration and duration > 3:
+            target_days.append(duration)
+    else:
+        # Default smart spacing: map up to 14 touchpoints proportionally across the duration
+        num_touches = min(14, max(3, duration // 2))
+        if num_touches >= duration:
+            target_days = list(range(1, duration + 1))
+        else:
+            step = (duration - 1) / (num_touches - 1)
+            raw_days = [round(1 + i * step) for i in range(num_touches)]
+            target_days = sorted(list(set(raw_days)))
+
+    # Match each target day with the most appropriate template from DAILY_DRIP_SEQUENCE
+    built_sequence = []
+    pool = DAILY_DRIP_SEQUENCE
+
+    for idx, day_num in enumerate(target_days):
+        # Pick template from pool (cycling or matching closest day)
+        if idx == 0:
+            tpl = pool[0]  # Welcome & Curriculum Roadmap
+        elif idx == len(target_days) - 1:
+            tpl = pool[-1]  # Final Admissions Urgency / Reserved Mentor Pairing
+        elif idx < len(pool) - 1:
+            tpl = pool[idx]
+        else:
+            tpl = pool[idx % (len(pool) - 1)]
+
+        item = dict(tpl)
+        item["day"] = day_num
+        item["step_index"] = idx + 1
+        item["total_steps"] = len(target_days)
+        built_sequence.append(item)
+
+    return built_sequence
+
 
 
 def parse_schedule_time(delay_or_time_str: str) -> datetime.datetime:
@@ -1494,13 +1760,15 @@ async def enroll_lead_in_daily_drip_sequence(
     email: str,
     name: Optional[str] = "Student",
     course_name: Optional[str] = "Data Analytics & BI Accelerator",
-    drip_days: Optional[int] = None
+    drip_days: Optional[int] = 30,
+    cadence: Optional[str] = "smart_spaced",
+    start_time: Optional[Any] = "tomorrow_morning"
 ) -> Dict[str, Any]:
     """
-    Enroll a prospective student into the intelligent multi-day nurture sequence.
-    Days 1 through 7 (or custom drip_days) are scheduled in ScheduledEmail with +1, +2, +3... day intervals.
+    Enroll a prospective student into the intelligent multi-day / 1-month nurture sequence.
+    Schedules future emails across the chosen period (e.g. 7, 14, 30 days, or custom) in ScheduledEmail.
     Every email is strategically crafted around 1-on-1 mentorship, TekTutors offers, Japa support,
-    and includes direct personalized links to chat with Tara on WhatsApp.
+    real portfolio capstones, and includes direct personalized links to chat with Tara on WhatsApp.
     """
     clean_email = email.strip().lower()
     clean_name = name.strip() if name and name.lower() not in ("prospect", "student", "") else "Student"
@@ -1512,7 +1780,7 @@ async def enroll_lead_in_daily_drip_sequence(
         stmt = select(ScheduledEmail).where(
             ScheduledEmail.recipient_email == clean_email,
             ScheduledEmail.status == "pending",
-            ScheduledEmail.campaign_type == "daily_drip_nurture"
+            ScheduledEmail.campaign_type.in_(("daily_drip_nurture", "month_long_nurture", "custom_drip_nurture"))
         )
         res = await db.execute(stmt)
         existing = res.scalars().all()
@@ -1524,15 +1792,31 @@ async def enroll_lead_in_daily_drip_sequence(
                 "recipient_email": clean_email
             }
 
-    sequence_items = DAILY_DRIP_SEQUENCE[:drip_days] if drip_days else DAILY_DRIP_SEQUENCE
+    target_drip_days = drip_days if drip_days is not None else 30
+    sequence_items = get_nurture_sequence_for_duration(duration_days=target_drip_days, cadence=cadence or "smart_spaced")
     scheduled_records = []
+
+    # Calculate starting delivery anchor
+    start_str = str(start_time or "tomorrow_morning").lower().strip()
+    is_immediate = start_str in ("immediate", "now", "0")
+
+    if not is_immediate and start_str not in ("tomorrow_morning", "tomorrow", ""):
+        try:
+            base_anchor = parse_schedule_time(start_str)
+        except Exception:
+            base_anchor = now + datetime.timedelta(days=1)
+    else:
+        base_anchor = now + datetime.timedelta(days=1)
+
+    base_anchor = base_anchor.replace(hour=10, minute=0, second=0, microsecond=0)
 
     # Schedule sequence days
     for item in sequence_items:
         day_num = item["day"]
-        delivery_time = now + datetime.timedelta(days=day_num)
-        # Set morning delivery (e.g. 10:00 AM) for natural engagement
-        delivery_time = delivery_time.replace(hour=10, minute=0, second=0, microsecond=0)
+        if is_immediate and day_num == 1:
+            delivery_time = now + datetime.timedelta(minutes=5)
+        else:
+            delivery_time = base_anchor + datetime.timedelta(days=day_num - 1)
 
         # Personalize subject & body
         p_subject = item["subject"].replace("{{name}}", clean_name).replace("{{course}}", target_course)
@@ -1544,7 +1828,7 @@ async def enroll_lead_in_daily_drip_sequence(
             body_markdown=p_body,
             scheduled_for=delivery_time,
             to_name=clean_name,
-            campaign_type="daily_drip_nurture",
+            campaign_type="daily_drip_nurture" if target_drip_days <= 7 else "month_long_nurture",
             lead_id=lead_id,
             course_name=target_course,
             cta_text=item.get("cta_text", "Register Online"),
@@ -1553,20 +1837,22 @@ async def enroll_lead_in_daily_drip_sequence(
         )
         scheduled_records.append(rec)
 
-    logger.info(f"Successfully enrolled {clean_email} into {len(scheduled_records)}-day daily follow-up drip sequence.")
+    logger.info(f"Successfully enrolled {clean_email} into {len(scheduled_records)}-touch nurture sequence spanning {target_drip_days} days.")
     return {
         "status": "enrolled",
         "recipient_email": clean_email,
         "course": target_course,
+        "duration_days": target_drip_days,
+        "cadence": cadence or "smart_spaced",
         "scheduled_emails_count": len(scheduled_records),
         "schedule": scheduled_records
     }
 
 
-def parse_campaign_csv_data(csv_text_or_bytes: Any) -> Dict[str, Any]:
+def parse_campaign_csv_data(csv_text_or_bytes: Any, filename: Optional[str] = None) -> Dict[str, Any]:
     """
-    Intelligently parse external CSV / TSV / text data for email campaigns.
-    Handles multiple delimiters (comma, semicolon, tab, pipe), BOM encodings,
+    Intelligently parse external CSV / TSV / Excel (.xlsx) / text data for email campaigns.
+    Handles multiple delimiters (comma, semicolon, tab, pipe), BOM encodings, Excel worksheets,
     fuzzy column header recognition (email, name, course, phone, notes),
     email validation, deduplication, and synthetic phone generation for CRM.
     """
@@ -1574,41 +1860,64 @@ def parse_campaign_csv_data(csv_text_or_bytes: Any) -> Dict[str, Any]:
     import io
     import re
 
-    if isinstance(csv_text_or_bytes, bytes):
+    all_rows = []
+
+    # 1. Check for Excel spreadsheet (.xlsx, .xlsm, .xltx or PK zip signature)
+    is_excel = False
+    if filename and filename.lower().endswith(('.xlsx', '.xlsm', '.xltx')):
+        is_excel = True
+    elif isinstance(csv_text_or_bytes, bytes) and csv_text_or_bytes.startswith(b'PK\x03\x04'):
+        is_excel = True
+
+    if is_excel and isinstance(csv_text_or_bytes, bytes):
         try:
-            raw_text = csv_text_or_bytes.decode('utf-8-sig')
-        except UnicodeDecodeError:
-            raw_text = csv_text_or_bytes.decode('latin-1', errors='ignore')
-    else:
-        raw_text = str(csv_text_or_bytes or '')
+            import openpyxl
+            wb = openpyxl.load_workbook(io.BytesIO(csv_text_or_bytes), read_only=True, data_only=True)
+            sheet = wb.active
+            for row in sheet.iter_rows(values_only=True):
+                str_row = [str(c).strip() if c is not None else "" for c in row]
+                if any(str_row):
+                    all_rows.append(str_row)
+        except Exception as e:
+            logger.warning(f"Error parsing Excel workbook with openpyxl: {e}. Falling back to text decoding.")
 
-    raw_text = raw_text.replace('\ufeff', '').strip()
-    if not raw_text:
-        return {
-            "total_rows": 0,
-            "valid_count": 0,
-            "invalid_count": 0,
-            "columns_detected": {},
-            "valid_recipients": [],
-            "invalid_recipients": [],
-            "preview": []
-        }
+    # 2. Text / CSV / TSV fallback parsing
+    if not all_rows:
+        if isinstance(csv_text_or_bytes, bytes):
+            try:
+                raw_text = csv_text_or_bytes.decode('utf-8-sig')
+            except UnicodeDecodeError:
+                raw_text = csv_text_or_bytes.decode('latin-1', errors='ignore')
+        else:
+            raw_text = str(csv_text_or_bytes or '')
 
-    # Detect delimiter with fallback
-    sample = raw_text[:2048]
-    delimiter = ','
-    try:
-        sniffer = csv.Sniffer()
-        dialect = sniffer.sniff(sample, delimiters=',;\t|')
-        delimiter = dialect.delimiter
-    except Exception:
-        for d in [',', ';', '\t', '|']:
-            if d in sample:
-                delimiter = d
-                break
+        raw_text = raw_text.replace('\ufeff', '').strip()
+        if not raw_text:
+            return {
+                "total_rows": 0,
+                "valid_count": 0,
+                "invalid_count": 0,
+                "columns_detected": {},
+                "valid_recipients": [],
+                "invalid_recipients": [],
+                "preview": []
+            }
 
-    reader = csv.reader(io.StringIO(raw_text), delimiter=delimiter)
-    all_rows = [r for r in reader if any(field.strip() for field in r)]
+        # Detect delimiter with fallback
+        sample = raw_text[:2048]
+        delimiter = ','
+        try:
+            sniffer = csv.Sniffer()
+            dialect = sniffer.sniff(sample, delimiters=',;\t|')
+            delimiter = dialect.delimiter
+        except Exception:
+            for d in [',', ';', '\t', '|']:
+                if d in sample:
+                    delimiter = d
+                    break
+
+        reader = csv.reader(io.StringIO(raw_text), delimiter=delimiter)
+        all_rows = [r for r in reader if any(field.strip() for field in r)]
     if not all_rows:
         return {
             "total_rows": 0,
