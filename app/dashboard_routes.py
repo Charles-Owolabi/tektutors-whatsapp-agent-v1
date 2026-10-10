@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import re
 import datetime
+import urllib.parse
 from app.database import get_db
 from app.models import Conversation, Message, Lead, Course, FAQ, Appointment, SystemConfig, CostTelemetry, EmailLog, ScheduledEmail, WhatsAppLog, ScheduledWhatsAppMessage
 from pydantic import BaseModel

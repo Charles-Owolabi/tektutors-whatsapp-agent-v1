@@ -6,6 +6,7 @@ import smtplib
 import asyncio
 import logging
 import datetime
+import urllib.parse
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Optional, Dict, Any, List
