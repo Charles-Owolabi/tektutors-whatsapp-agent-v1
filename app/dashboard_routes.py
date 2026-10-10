@@ -2429,6 +2429,18 @@ async def cancel_scheduled_email_endpoint(scheduled_id: int):
     return {"success": True, "message": f"Scheduled email #{scheduled_id} cancelled successfully."}
 
 
+@router.post("/api/emails/scheduled/cancel-all")
+async def cancel_all_scheduled_emails_endpoint(campaign_type: Optional[str] = None):
+    """Stop/cancel all pending scheduled emails in queue."""
+    from app.email_service import cancel_all_pending_scheduled_emails
+    cancelled_count = await cancel_all_pending_scheduled_emails(campaign_type=campaign_type)
+    return {
+        "success": True,
+        "cancelled_count": cancelled_count,
+        "message": f"Successfully stopped campaign: {cancelled_count} pending email(s) cancelled."
+    }
+
+
 @router.post("/api/emails/scheduled/process-now")
 async def process_scheduled_emails_now():
     """Immediately trigger dispatch of any due scheduled emails in queue."""

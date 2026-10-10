@@ -3073,6 +3073,25 @@ async function cancelScheduledEmail(scheduledId) {
     }
 }
 
+async function cancelAllScheduledEmails() {
+    if (!confirm('Are you sure you want to STOP and cancel all pending scheduled emails in the campaign queue? This will stop future queued emails from sending.')) return;
+
+    try {
+        const res = await fetch('/api/emails/scheduled/cancel-all', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showToast(`🛑 Campaign stopped: ${data.cancelled_count} pending email(s) cancelled.`, 'success');
+            loadScheduledEmails();
+            fetchEmailStats();
+        } else {
+            showToast(data.detail || 'Could not cancel scheduled campaign queue', 'error');
+        }
+    } catch (err) {
+        console.error('Error stopping campaign queue:', err);
+        showToast('Network error while stopping campaign queue', 'error');
+    }
+}
+
 async function processScheduledEmailsNow() {
     showToast('Checking and dispatching due scheduled emails...');
     try {

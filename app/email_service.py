@@ -2212,6 +2212,26 @@ async def cancel_scheduled_emails_for_lead(lead_id: int) -> int:
         return len(items)
 
 
+async def cancel_all_pending_scheduled_emails(campaign_type: Optional[str] = None) -> int:
+    """Cancel all future pending scheduled emails across the entire queue or by campaign type."""
+    async with AsyncSessionLocal() as db:
+        if campaign_type:
+            stmt = select(ScheduledEmail).where(
+                ScheduledEmail.campaign_type == campaign_type,
+                ScheduledEmail.status == "pending"
+            )
+        else:
+            stmt = select(ScheduledEmail).where(ScheduledEmail.status == "pending")
+        res = await db.execute(stmt)
+        items = res.scalars().all()
+        for it in items:
+            it.status = "cancelled"
+            it.error_message = "Campaign stopped by administrator"
+        await db.commit()
+        logger.info(f"Cancelled {len(items)} pending scheduled emails (Campaign: {campaign_type or 'all'}).")
+        return len(items)
+
+
 # Background Worker Task
 _worker_task: Optional[asyncio.Task] = None
 _worker_running: bool = False
