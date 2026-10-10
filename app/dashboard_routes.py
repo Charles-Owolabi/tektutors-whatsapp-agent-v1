@@ -1664,7 +1664,7 @@ async def get_email_branding(db: AsyncSession = Depends(get_db)):
         "header_subtitle": config.email_header_subtitle or "Practical Data Analytics & AI Mentorship Academy",
         "header_badge": config.email_header_badge or "Live 1-on-1 Mentorship",
         "primary_color": config.email_primary_color or "#eb6711",
-        "footer_contact": config.email_footer_contact or "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517",
+        "footer_contact": config.email_footer_contact or "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 911 212 0531",
         "footer_copyright": config.email_footer_copyright or "TekTutors Academy. All rights reserved.",
         "footer_extra": config.email_footer_extra or "",
         "custom_header_html": config.email_custom_header_html,
@@ -1676,7 +1676,7 @@ async def get_email_branding(db: AsyncSession = Depends(get_db)):
         header_subtitle=config.email_header_subtitle or "Practical Data Analytics & AI Mentorship Academy",
         header_badge=config.email_header_badge or "Live 1-on-1 Mentorship",
         primary_color=config.email_primary_color or "#eb6711",
-        footer_contact=config.email_footer_contact or "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517",
+        footer_contact=config.email_footer_contact or "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 911 212 0531",
         footer_copyright=config.email_footer_copyright or "TekTutors Academy. All rights reserved.",
         footer_extra=config.email_footer_extra or "",
         custom_header_html=config.email_custom_header_html,
@@ -1725,7 +1725,7 @@ async def update_email_branding(payload: EmailBrandingUpdate, db: AsyncSession =
         header_subtitle=config.email_header_subtitle or "Practical Data Analytics & AI Mentorship Academy",
         header_badge=config.email_header_badge or "Live 1-on-1 Mentorship",
         primary_color=config.email_primary_color or "#eb6711",
-        footer_contact=config.email_footer_contact or "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517",
+        footer_contact=config.email_footer_contact or "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 911 212 0531",
         footer_copyright=config.email_footer_copyright or "TekTutors Academy. All rights reserved.",
         footer_extra=config.email_footer_extra or "",
         custom_header_html=config.email_custom_header_html,
@@ -1763,7 +1763,7 @@ async def preview_email_html(payload: dict = Body(...)):
     cta_url = payload.get("cta_url", "https://tektutors.com.ng/registration")
     recipient_name = payload.get("recipient_name", "Student")
 
-    tara_chat_url = payload.get("tara_chat_url") or "https://wa.me/2348063584517?text=Hi%20Tara%2C%20I%20have%20questions%20about%20learning%20with%20TekTutors."
+    tara_chat_url = payload.get("tara_chat_url") or "https://wa.me/2349112120531?text=Hi%20Tara%2C%20I%20have%20questions%20about%20learning%20with%20TekTutors."
 
     html = render_branded_email_html(
         subject=subject,
@@ -2058,7 +2058,7 @@ async def get_drip_sequences_metadata(
     sequence = get_nurture_sequence_for_duration(duration_days=duration_days, cadence=cadence)
     formatted = []
     enc_course = urllib.parse.quote(course_name)
-    tara_url = f"https://wa.me/2348063584517?text=Hi%20Tara%2C%20I%20have%20questions%20about%20{enc_course}%20with%20TekTutors."
+    tara_url = f"https://wa.me/2349112120531?text=Hi%20Tara%2C%20I%20have%20questions%20about%20{enc_course}%20with%20TekTutors."
 
     for step in sequence:
         full_text = (

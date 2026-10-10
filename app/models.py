@@ -102,7 +102,7 @@ class SystemConfig(Base):
     email_header_subtitle: Mapped[Optional[str]] = mapped_column(String(255), default="Practical Data Analytics & AI Mentorship Academy")
     email_header_badge: Mapped[Optional[str]] = mapped_column(String(100), default="Live 1-on-1 Mentorship")
     email_primary_color: Mapped[Optional[str]] = mapped_column(String(30), default="#eb6711")
-    email_footer_contact: Mapped[Optional[str]] = mapped_column(Text, default="Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517")
+    email_footer_contact: Mapped[Optional[str]] = mapped_column(Text, default="Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 911 212 0531")
     email_footer_copyright: Mapped[Optional[str]] = mapped_column(String(255), default="TekTutors Academy. All rights reserved.")
     email_footer_extra: Mapped[Optional[str]] = mapped_column(Text, default="")
     email_custom_header_html: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

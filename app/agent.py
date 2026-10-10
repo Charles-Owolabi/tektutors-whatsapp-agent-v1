@@ -260,7 +260,7 @@ ACADEMY ESSENTIALS:
   - Standard Plan: ₦100,000 / month flexible month-to-month billing (cancel anytime).
   - 10% Upfront Discount: Exactly ₦90,000 (saves ₦10,000 off standard monthly fee).
   - PRICING GUARD: NEVER multiply weeks by ₦100,000! Never quote ₦900,000 or ₦1,000,000.
-• Location & Delivery: 100% live online worldwide (no commute/walk-in classes). Corporate HQ: Lagos, Nigeria. Contact: WhatsApp/Phone (+2348063584517), email (info@tektutors.com.ng).
+• Location & Delivery: 100% live online worldwide (no commute/walk-in classes). Corporate HQ: Lagos, Nigeria. Contact: WhatsApp/Phone (+2349112120531), email (info@tektutors.com.ng).
 • Portal: https://tektutors.com.ng/registration
 
 OPERATIONAL RULES:
@@ -1329,7 +1329,7 @@ class TekTutorsAgentManager:
                 "• **No Commute / No Physical Walk-ins:** We do not operate crowded physical classrooms. All training sessions, portfolio reviews, and code walkthroughs are conducted live 1-on-1 with your dedicated mentor over interactive video and screen sharing.\n"
                 "• **Learn From Home or Office:** You enjoy flexible, personalized scheduling (weekday evenings or weekends) without the stress of daily traffic commute.\n"
                 "• **Corporate Headquarters & Administrative Office:** Our administrative hub is based in **Lagos, Nigeria**.\n"
-                "• **Administrative & Admissions Inquiries:** You can reach our team at **info@tektutors.com.ng** or call/WhatsApp **+2348063584517**.\n\n"
+                "• **Administrative & Admissions Inquiries:** You can reach our team at **info@tektutors.com.ng** or call/WhatsApp **+2349112120531**.\n\n"
                 "👉 *Official Portal & Registration:* https://tektutors.com.ng/registration\n\n"
                 "Would you like to schedule a 1-on-1 discovery call with an Admissions Advisor or explore our courses?"
             )

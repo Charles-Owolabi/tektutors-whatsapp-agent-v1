@@ -500,7 +500,7 @@ async def test_email_branding_preview_and_render():
             "header_subtitle": "Industry Mentorship for Modern Analysts",
             "header_badge": "Spring 2026 Cohort",
             "primary_color": "#059669",
-            "footer_contact": "Chat with an advisor on WhatsApp: +2348063584517",
+            "footer_contact": "Chat with an advisor on WhatsApp: +2349112120531",
             "footer_copyright": "Custom Data Institute. All rights reserved.",
             "sample_subject": "Test Customized Email Header",
             "sample_body": "This is test email body content."
@@ -511,7 +511,7 @@ async def test_email_branding_preview_and_render():
         assert "Custom Data Institute" in html
         assert "Spring 2026 Cohort" in html
         assert "#059669" in html
-        assert "https://wa.me/2348063584517" in html
+        assert "https://wa.me/2349112120531" in html
         assert "Custom Data Institute. All rights reserved." in html
 
     # Direct function test with custom HTML overrides

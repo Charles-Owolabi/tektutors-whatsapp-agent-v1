@@ -57,15 +57,15 @@ korede@startup.co;Korede Williams;Python & AI;2348055556666
 async def test_render_branded_email_html_includes_tara_chat_link():
     html = render_branded_email_html(
         subject="The Japa Tech Blueprint",
-        body_markdown="Hi Jane,\n\nReady to earn in dollars?\n\n👉 [Chat with Tara on WhatsApp](https://wa.me/2348063584517?text=Hi)",
+        body_markdown="Hi Jane,\n\nReady to earn in dollars?\n\n👉 [Chat with Tara on WhatsApp](https://wa.me/2349112120531?text=Hi)",
         cta_text="Claim Voucher",
         cta_url="https://tektutors.com.ng/registration",
         recipient_name="Jane",
-        tara_chat_url="https://wa.me/2348063584517?text=CustomTaraChat"
+        tara_chat_url="https://wa.me/2349112120531?text=CustomTaraChat"
     )
 
     # Must contain direct WhatsApp link to chat with Tara
-    assert "https://wa.me/2348063584517" in html
+    assert "https://wa.me/2349112120531" in html
     assert "Chat Directly with Tara on WhatsApp" in html
     assert "CustomTaraChat" in html
     assert "💬" in html
@@ -121,7 +121,7 @@ async def test_csv_campaign_broadcast_execution():
         log = (await db.execute(stmt)).scalars().first()
         assert log is not None
         assert "Japa Blueprint" in log.subject
-        assert "https://wa.me/2348063584517" in log.body_html
+        assert "https://wa.me/2349112120531" in log.body_html
 
         # Verify Lead was saved to CRM
         l_stmt = select(Lead).where(Lead.email == test_email)

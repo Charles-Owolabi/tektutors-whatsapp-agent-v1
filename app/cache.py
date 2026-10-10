@@ -1293,7 +1293,7 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
                 "• **No Commute / No Physical Walk-ins:** We do not operate crowded physical classrooms. All training sessions, portfolio reviews, and code walkthroughs are conducted live 1-on-1 with your assigned industry mentor over interactive video and screen sharing.\n"
                 "• **Learn From Home or Office:** You enjoy flexible, personalized scheduling (weekday evenings or weekends) without the stress of daily traffic commute.\n"
                 "• **Administrative Hub & Office:** Our corporate & administrative headquarters is located in **Lagos, Nigeria**.\n"
-                "• **Admissions & Inquiries:** You can reach our team directly via WhatsApp/Call at **+2348063584517** or email **info@tektutors.com.ng**.\n\n"
+                "• **Admissions & Inquiries:** You can reach our team directly via WhatsApp/Call at **+2349112120531** or email **info@tektutors.com.ng**.\n\n"
                 f"👉 *Official Portal & Course Registration:* {REGISTRATION_URL}\n\n"
                 "Would you like to schedule a quick 1-on-1 discovery call with an Admissions Advisor or explore our available course tracks?"
             )

@@ -378,12 +378,12 @@ SEED_FAQS = [
     {
         "category": "General",
         "question": "How can I contact TekTutors?",
-        "answer": "Email: info@tektutors.com.ng | Phone: +2348063584517"
+        "answer": "Email: info@tektutors.com.ng | Phone: +2349112120531"
     },
     {
         "category": "Format & Location",
         "question": "Do you have a physical address or office location?",
-        "answer": "TekTutors is a 100% live online technology academy. We do not operate physical walk-in classrooms; all training is conducted live 1-on-1 via interactive video and screen sharing with your dedicated mentor. You can learn from anywhere with your laptop and internet connection. Administrative contact: info@tektutors.com.ng | +2348063584517."
+        "answer": "TekTutors is a 100% live online technology academy. We do not operate physical walk-in classrooms; all training is conducted live 1-on-1 via interactive video and screen sharing with your dedicated mentor. You can learn from anywhere with your laptop and internet connection. Administrative contact: info@tektutors.com.ng | +2349112120531."
     },
     {
         "category": "Format & Location",
@@ -508,12 +508,12 @@ SEED_FAQS = [
     {
         "category": "Schedule & Format",
         "question": "Do you have a physical office, physical address, or walk-in classrooms I can visit?",
-        "answer": "TekTutors is a 100% live online technology academy serving learners across Nigeria and internationally! All training is delivered via live 1-on-1 private mentoring sessions with an industry practitioner over interactive video and screen sharing. We do not operate walk-in classrooms, which eliminates commute stress and allows you to learn from home on flexible schedules (evenings & weekends). For administrative inquiries, our corporate hub is in Lagos, Nigeria, and our team can be reached on WhatsApp (+2348063584517) or email (info@tektutors.com.ng)."
+        "answer": "TekTutors is a 100% live online technology academy serving learners across Nigeria and internationally! All training is delivered via live 1-on-1 private mentoring sessions with an industry practitioner over interactive video and screen sharing. We do not operate walk-in classrooms, which eliminates commute stress and allows you to learn from home on flexible schedules (evenings & weekends). For administrative inquiries, our corporate hub is in Lagos, Nigeria, and our team can be reached on WhatsApp (+2349112120531) or email (info@tektutors.com.ng)."
     },
     {
         "category": "General",
         "question": "Where is TekTutors located and what is your official address?",
-        "answer": "TekTutors is headquartered in Lagos, Nigeria, operating as a 100% live online interactive technology academy with students nationwide and globally. All lectures, coding walkthroughs, and portfolio capstone reviews take place live online 1-on-1. Official inquiries can be directed to info@tektutors.com.ng or WhatsApp +2348063584517, and course registration is online at https://tektutors.com.ng/registration."
+        "answer": "TekTutors is headquartered in Lagos, Nigeria, operating as a 100% live online interactive technology academy with students nationwide and globally. All lectures, coding walkthroughs, and portfolio capstone reviews take place live online 1-on-1. Official inquiries can be directed to info@tektutors.com.ng or WhatsApp +2349112120531, and course registration is online at https://tektutors.com.ng/registration."
     },
     {
         "category": "Schedule & Format",

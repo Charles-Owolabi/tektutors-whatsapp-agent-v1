@@ -2677,7 +2677,7 @@ async function updateEmailLivePreview() {
     const ctaText = document.getElementById('composer-cta-text')?.value || "Enroll Now";
     const ctaUrl = document.getElementById('composer-cta-url')?.value || "https://tektutors.com.ng/registration";
     const recipientName = document.getElementById('composer-recipient-name')?.value || "Alex";
-    const taraChatUrl = `https://wa.me/2348063584517?text=${encodeURIComponent(`Hi Tara, I have questions about learning ${courseName} with TekTutors.`)}`;
+    const taraChatUrl = `https://wa.me/2349112120531?text=${encodeURIComponent(`Hi Tara, I have questions about learning ${courseName} with TekTutors.`)}`;
 
     body = body.replace(/\{\{name\}\}/g, recipientName)
                .replace(/\{\{course\}\}/g, courseName)
@@ -3292,7 +3292,7 @@ function resetEmailBrandingDefaults() {
         header_subtitle: "Practical Data Analytics & AI Mentorship Academy",
         header_badge: "Live 1-on-1 Mentorship",
         primary_color: "#eb6711",
-        footer_contact: "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517",
+        footer_contact: "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 911 212 0531",
         footer_copyright: "TekTutors Academy. All rights reserved.",
         footer_extra: "",
         custom_header_html: "",

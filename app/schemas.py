@@ -148,7 +148,7 @@ class SystemConfigResponse(BaseModel):
     email_header_subtitle: Optional[str] = "Practical Data Analytics & AI Mentorship Academy"
     email_header_badge: Optional[str] = "Live 1-on-1 Mentorship"
     email_primary_color: Optional[str] = "#eb6711"
-    email_footer_contact: Optional[str] = "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517"
+    email_footer_contact: Optional[str] = "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 911 212 0531"
     email_footer_copyright: Optional[str] = "TekTutors Academy. All rights reserved."
     email_footer_extra: Optional[str] = ""
     email_custom_header_html: Optional[str] = None
@@ -181,7 +181,7 @@ class EmailBrandingResponse(BaseModel):
     header_subtitle: str = "Practical Data Analytics & AI Mentorship Academy"
     header_badge: str = "Live 1-on-1 Mentorship"
     primary_color: str = "#eb6711"
-    footer_contact: str = "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517"
+    footer_contact: str = "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 911 212 0531"
     footer_copyright: str = "TekTutors Academy. All rights reserved."
     footer_extra: Optional[str] = ""
     custom_header_html: Optional[str] = None
@@ -203,7 +203,7 @@ class EmailBrandingPreviewRequest(BaseModel):
     header_subtitle: Optional[str] = "Practical Data Analytics & AI Mentorship Academy"
     header_badge: Optional[str] = "Live 1-on-1 Mentorship"
     primary_color: Optional[str] = "#eb6711"
-    footer_contact: Optional[str] = "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517"
+    footer_contact: Optional[str] = "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 911 212 0531"
     footer_copyright: Optional[str] = "TekTutors Academy. All rights reserved."
     footer_extra: Optional[str] = ""
     custom_header_html: Optional[str] = None

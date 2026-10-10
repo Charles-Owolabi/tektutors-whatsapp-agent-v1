@@ -548,7 +548,7 @@ _EMAIL_BRANDING_CACHE: Dict[str, Any] = {
     "header_subtitle": "Practical Data Analytics & AI Mentorship Academy",
     "header_badge": "Live 1-on-1 Mentorship",
     "primary_color": "#eb6711",
-    "footer_contact": "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517",
+    "footer_contact": "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 911 212 0531",
     "footer_copyright": "TekTutors Academy. All rights reserved.",
     "footer_extra": "",
     "custom_header_html": None,
@@ -583,7 +583,7 @@ async def sync_email_branding_from_db():
                     "header_subtitle": cfg.email_header_subtitle or "Practical Data Analytics & AI Mentorship Academy",
                     "header_badge": cfg.email_header_badge or "Live 1-on-1 Mentorship",
                     "primary_color": cfg.email_primary_color or "#eb6711",
-                    "footer_contact": cfg.email_footer_contact or "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 806 358 4517",
+                    "footer_contact": cfg.email_footer_contact or "Have questions or need help? Reply to this email or message Tara on WhatsApp: +234 911 212 0531",
                     "footer_copyright": cfg.email_footer_copyright or "TekTutors Academy. All rights reserved.",
                     "footer_extra": cfg.email_footer_extra or "",
                     "custom_header_html": cfg.email_custom_header_html,
@@ -630,7 +630,7 @@ def render_branded_email_html(
     active_custom_footer = custom_footer_html if custom_footer_html is not None else cfg.get("custom_footer_html")
     
     # Resolve active Tara WhatsApp chat link
-    active_tara_chat_url = (tara_chat_url or "https://wa.me/2348063584517?text=Hi%20Tara%2C%20I%20have%20questions%20about%20learning%20with%20TekTutors.").strip()
+    active_tara_chat_url = (tara_chat_url or "https://wa.me/2349112120531?text=Hi%20Tara%2C%20I%20have%20questions%20about%20learning%20with%20TekTutors.").strip()
 
     # Pre-substitute tara_chat_url token if in body
     rendered_body = body_markdown.replace("{{tara_chat_url}}", active_tara_chat_url)
@@ -779,13 +779,13 @@ def render_branded_email_html(
                         <td valign="top">
                           <div style="font-size: 14px; font-weight: 700; color: #065f46; margin-bottom: 4px;">
                             Have Questions? Chat Directly with Tara on WhatsApp
-                            <span style="font-size: 11px; background: rgba(37,211,102,0.22); color: #047857; padding: 2px 8px; border-radius: 12px; margin-left: 6px; font-weight: 700;">+234 806 358 4517</span>
+                            <span style="font-size: 11px; background: rgba(37,211,102,0.22); color: #047857; padding: 2px 8px; border-radius: 12px; margin-left: 6px; font-weight: 700;">+234 911 212 0531</span>
                           </div>
                           <div style="font-size: 13px; color: #047857; line-height: 1.5; margin-bottom: 12px;">
-                            Our Admissions Advisor <strong>Tara</strong> is available directly on WhatsApp at <strong>+234 806 358 4517</strong> to discuss course tracks, syllabus roadmaps, flexible installment options, or to get matched with your 1-on-1 mentor.
+                            Our Admissions Advisor <strong>Tara</strong> is available directly on WhatsApp at <strong>+234 911 212 0531</strong> to discuss course tracks, syllabus roadmaps, flexible installment options, or to get matched with your 1-on-1 mentor.
                           </div>
                           <a href="{active_tara_chat_url}" target="_blank" style="display: inline-block; background-color: #25D366; color: #ffffff; font-size: 13px; font-weight: 700; padding: 10px 22px; border-radius: 6px; text-decoration: none; box-shadow: 0 2px 6px rgba(37,211,102,0.25);">
-                            💬 Chat with Tara on WhatsApp (+234 806 358 4517) &rarr;
+                            💬 Chat with Tara on WhatsApp (+234 911 212 0531) &rarr;
                           </a>
                         </td>
                       </tr>
@@ -1049,7 +1049,7 @@ async def send_email_async(
     # Construct personalized Tara WhatsApp chat link
     enc_course = urllib.parse.quote(clean_course)
     enc_name = urllib.parse.quote(clean_name)
-    resolved_tara_url = (tara_chat_url or f"https://wa.me/2348063584517?text=Hi%20Tara%2C%20I%20am%20{enc_name}.%20I%20got%20your%20email%20about%20{enc_course}%20and%20I%20want%20to%20learn%20with%20TekTutors.").strip()
+    resolved_tara_url = (tara_chat_url or f"https://wa.me/2349112120531?text=Hi%20Tara%2C%20I%20am%20{enc_name}.%20I%20got%20your%20email%20about%20{enc_course}%20and%20I%20want%20to%20learn%20with%20TekTutors.").strip()
 
     personalized_subject = subject.replace("{{name}}", clean_name).replace("{{course}}", clean_course)
     personalized_body = (
@@ -1822,7 +1822,7 @@ async def enroll_lead_in_daily_drip_sequence(
         # Personalize subject & body
         enc_c = urllib.parse.quote(target_course)
         enc_n = urllib.parse.quote(clean_name)
-        step_tara_url = f"https://wa.me/2348063584517?text=Hi%20Tara%2C%20I%20am%20{enc_n}.%20I%20got%20your%20email%20about%20{enc_c}%20and%20I%20want%20to%20learn%20with%20TekTutors."
+        step_tara_url = f"https://wa.me/2349112120531?text=Hi%20Tara%2C%20I%20am%20{enc_n}.%20I%20got%20your%20email%20about%20{enc_c}%20and%20I%20want%20to%20learn%20with%20TekTutors."
         p_subject = item["subject"].replace("{{name}}", clean_name).replace("{{course}}", target_course)
         p_body = item["body"].replace("{{name}}", clean_name).replace("{{course}}", target_course).replace("{{tara_chat_url}}", step_tara_url)
 
