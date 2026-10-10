@@ -1930,41 +1930,47 @@ def parse_campaign_csv_data(csv_text_or_bytes: Any, filename: Optional[str] = No
         }
 
     headers = [h.strip() for h in all_rows[0]]
-    # Check if first row is a header row (if ANY cell in row 0 has '@', it is data, NOT a header!)
-    row0_has_email = any('@' in field for field in headers)
-    has_header = False
-    
-    HEADER_KEYWORDS = {
-        'name', 'fullname', 'firstname', 'lastname', 'student', 'studentname', 'candidate', 'lead',
-        'email', 'mail', 'emailaddress', 'contactemail', 'recipientemail',
-        'course', 'track', 'program', 'class', 'subject', 'courseinterest',
-        'phone', 'phonenumber', 'whatsapp', 'mobile', 'tel', 'telephone',
-        'notes', 'note', 'comment', 'comments', 'remark', 'remarks'
-    }
+    # Robust Header Detection: Google Forms / CRM exports often have multiple descriptive headers.
+    # Check if row 0 contains 2 or more standard header tokens.
+    header_hits = 0
+    for h in headers:
+        clean_token = re.sub(r'[^a-zA-Z0-9]', '', h.lower())
+        if any(k in clean_token for k in ('email', 'mail', 'name', 'phone', 'course', 'track', 'program', 'time', 'timestamp', 'date', 'qualif', 'skill', 'discipline', 'address', 'comment', 'suggestion')):
+            header_hits += 1
 
-    if not row0_has_email:
-        for h in headers:
-            clean_h = re.sub(r'[^a-zA-Z0-9]', '', h.lower())
-            if clean_h in HEADER_KEYWORDS:
-                has_header = True
-                break
-
-    col_map = {}
+    has_header = header_hits >= 2
     data_rows = all_rows[1:] if has_header else all_rows
 
+    col_map = {}
     if has_header:
         for idx, h in enumerate(headers):
-            clean_h = re.sub(r'[^a-zA-Z0-9]', '', h.lower())
-            if clean_h in ('email', 'mail', 'emailaddress', 'contactemail', 'recipientemail') or 'email' in clean_h:
-                col_map['email'] = idx
-            elif clean_h in ('name', 'fullname', 'firstname', 'student', 'studentname', 'candidate', 'lead', 'client', 'user'):
-                col_map['name'] = idx
-            elif clean_h in ('course', 'program', 'track', 'class', 'subject', 'interest', 'courseinterest'):
-                col_map['course'] = idx
-            elif clean_h in ('phone', 'mobile', 'whatsapp', 'tel', 'cell', 'phonenumber', 'whatsappnumber'):
-                col_map['phone'] = idx
-            elif clean_h in ('note', 'notes', 'comment', 'comments', 'remark', 'remarks', 'message'):
-                col_map['notes'] = idx
+            hl = h.lower()
+            clean_h = re.sub(r'[^a-zA-Z0-9]', '', hl)
+
+            # 1. Email detection (prioritize 'email address' or 'email')
+            if 'email' in clean_h or 'mail' in clean_h:
+                if 'email' not in col_map or 'address' in clean_h:
+                    col_map['email'] = idx
+
+            # 2. Name detection (has 'name' but NOT 'course', 'account', 'bank', etc.)
+            if 'name' in clean_h and not any(k in clean_h for k in ('course', 'account', 'bank', 'school', 'company', 'program')):
+                if 'name' not in col_map or 'full' in clean_h:
+                    col_map['name'] = idx
+
+            # 3. Course / Track detection
+            if any(k in clean_h for k in ('course', 'track', 'program', 'training', 'discipline')):
+                if 'course' not in col_map or 'prefer' in clean_h:
+                    col_map['course'] = idx
+
+            # 4. Phone detection
+            if any(k in clean_h for k in ('phone', 'mobile', 'whatsapp', 'tel', 'cell')):
+                if 'phone' not in col_map:
+                    col_map['phone'] = idx
+
+            # 5. Notes / Qualifications / Remarks detection
+            if any(k in clean_h for k in ('comment', 'suggestion', 'note', 'remark', 'qualification', 'skills')):
+                if 'notes' not in col_map:
+                    col_map['notes'] = idx
 
     # If email column not found by header, auto-detect column containing '@' across data rows
     if 'email' not in col_map and data_rows:
@@ -1989,7 +1995,7 @@ def parse_campaign_csv_data(csv_text_or_bytes: Any, filename: Optional[str] = No
     # Default course to another text column if present
     if 'course' not in col_map and data_rows and len(data_rows[0]) > 2:
         for idx in range(len(data_rows[0])):
-            if idx != col_map.get('email') and idx != col_map.get('name'):
+            if idx != col_map.get('email') and idx != col_map.get('name') and idx != col_map.get('phone'):
                 col_map['course'] = idx
                 break
 
@@ -2001,11 +2007,23 @@ def parse_campaign_csv_data(csv_text_or_bytes: Any, filename: Optional[str] = No
         if not row or not any(field.strip() for field in row):
             continue
 
-        email_idx = col_map.get('email', 0)
-        raw_email = row[email_idx].strip().lower() if len(row) > email_idx else ""
+        raw_email = ""
+        # Check mapped email index first
+        if 'email' in col_map and len(row) > col_map['email']:
+            candidate = row[col_map['email']].strip().lower()
+            if re.match(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$', candidate):
+                raw_email = candidate
+
+        # If primary email column didn't have a valid email, scan other columns for valid email fallback
+        if not raw_email:
+            for c_val in row:
+                candidate = c_val.strip().lower()
+                if re.match(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$', candidate):
+                    raw_email = candidate
+                    break
 
         # Validate email
-        if not raw_email or not re.match(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$', raw_email):
+        if not raw_email:
             invalid_recipients.append({
                 "row": row_idx,
                 "raw": row,
@@ -2036,14 +2054,22 @@ def parse_campaign_csv_data(csv_text_or_bytes: Any, filename: Optional[str] = No
         # Extract course
         raw_course = ""
         if 'course' in col_map and len(row) > col_map['course']:
-            raw_course = row[col_map['course']].strip()
+            raw_c = row[col_map['course']].strip()
+            if raw_c:
+                # If multiple courses selected (e.g. "Power BI, SQL, Excel"), select the primary choice
+                c_split = [item.strip() for item in raw_c.split(',') if item.strip()]
+                raw_course = c_split[0] if c_split else raw_c
         if not raw_course:
             raw_course = "Data Analytics & BI Accelerator"
 
-        # Extract phone
+        # Extract phone (auto-format Nigerian numbers if applicable)
         raw_phone = ""
         if 'phone' in col_map and len(row) > col_map['phone']:
-            raw_phone = row[col_map['phone']].strip()
+            clean_p = re.sub(r'[^0-9+]', '', row[col_map['phone']].strip())
+            if clean_p.startswith('0') and len(clean_p) == 11:
+                raw_phone = '+234' + clean_p[1:]
+            else:
+                raw_phone = clean_p
 
         # Extract notes
         raw_notes = ""
@@ -2058,11 +2084,19 @@ def parse_campaign_csv_data(csv_text_or_bytes: Any, filename: Optional[str] = No
             "notes": raw_notes
         })
 
+    # Prepare readable column detected mapping
+    readable_cols = {}
+    for col_key, col_idx in col_map.items():
+        if has_header and col_idx < len(headers):
+            readable_cols[col_key] = headers[col_idx]
+        else:
+            readable_cols[col_key] = f"Col {col_idx}"
+
     return {
         "total_rows": len(data_rows),
         "valid_count": len(valid_recipients),
         "invalid_count": len(invalid_recipients),
-        "columns_detected": {k: f"Col {v}" for k, v in col_map.items()},
+        "columns_detected": readable_cols,
         "valid_recipients": valid_recipients,
         "invalid_recipients": invalid_recipients,
         "preview": valid_recipients[:25]
