@@ -123,11 +123,39 @@ class CostTelemetry(Base):
     latency_ms: Mapped[float] = mapped_column(Float, default=0.0)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now())
 
+class EmailSender(Base):
+    __tablename__ = "email_senders"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)  # e.g. "Tara Owolabi", "Charles Owolabi"
+    email: Mapped[str] = mapped_column(String(120), nullable=False)  # e.g. "tektutorsng@gmail.com", "charles@tektutors.com.ng"
+    reply_to: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    role_title: Mapped[Optional[str]] = mapped_column(String(120), default="Admissions Advisor")
+    phone_or_whatsapp: Mapped[Optional[str]] = mapped_column(String(50), default="+234 911 212 0531")
+    avatar_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    signature_markdown: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    provider_type: Mapped[str] = mapped_column(String(30), default="system_default")  # system_default, smtp, resend, brevo
+    smtp_host: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    smtp_port: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    smtp_user: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    smtp_password: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    smtp_use_tls: Mapped[Optional[bool]] = mapped_column(Boolean, default=False)
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    daily_send_limit: Mapped[int] = mapped_column(Integer, default=500)
+    sent_today_count: Mapped[int] = mapped_column(Integer, default=0)
+    total_sent_count: Mapped[int] = mapped_column(Integer, default=0)
+    last_sent_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now())
+
 class EmailLog(Base):
     __tablename__ = "email_logs"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
     lead_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("leads.id"), nullable=True)
+    sender_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("email_senders.id"), nullable=True)
+    sender_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    sender_email: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     recipient_email: Mapped[str] = mapped_column(String(120), index=True, nullable=False)
     recipient_name: Mapped[str] = mapped_column(String(100), default="Student")
     campaign_type: Mapped[str] = mapped_column(String(50), default="follow_up")  # follow_up, marketing, promotional, direct
@@ -142,6 +170,9 @@ class ScheduledEmail(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
     lead_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("leads.id"), nullable=True)
+    sender_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("email_senders.id"), nullable=True)
+    sender_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    sender_email: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     recipient_email: Mapped[str] = mapped_column(String(120), index=True, nullable=False)
     recipient_name: Mapped[str] = mapped_column(String(100), default="Student")
     sequence_day: Mapped[int] = mapped_column(Integer, default=0)  # 0 to 5
@@ -187,4 +218,20 @@ class ScheduledWhatsAppMessage(Base):
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now())
     sent_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, nullable=True)
+
+class SmsLog(Base):
+    __tablename__ = "sms_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    lead_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("leads.id"), nullable=True)
+    recipient_phone: Mapped[str] = mapped_column(String(50), index=True, nullable=False)
+    recipient_name: Mapped[str] = mapped_column(String(100), default="Student")
+    sender_id: Mapped[str] = mapped_column(String(50), default="TekTutors")
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    segments: Mapped[int] = mapped_column(Integer, default=1)
+    provider: Mapped[str] = mapped_column(String(50), default="termii")  # termii, twilio, simulated
+    status: Mapped[str] = mapped_column(String(30), default="delivered")  # delivered, failed, simulated
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    sent_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now())
+
 

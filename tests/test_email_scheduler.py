@@ -1,7 +1,7 @@
 import pytest
 import datetime
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from unittest.mock import patch
 
 from app.main import app, init_db_and_seed
@@ -13,6 +13,10 @@ from app.email_service import (
     enroll_lead_in_daily_drip_sequence,
     process_due_scheduled_emails,
     cancel_scheduled_email,
+    pause_scheduled_email,
+    resume_scheduled_email,
+    pause_all_scheduled_emails,
+    resume_all_scheduled_emails,
     DAILY_DRIP_SEQUENCE
 )
 from app.tools import schedule_followup_email
@@ -117,7 +121,9 @@ async def test_enroll_lead_in_daily_drip_sequence():
         lead_id=lead_id,
         email=drip_email,
         name="Chinedu Drip",
-        course_name="Machine Learning with Python"
+        course_name="Machine Learning with Python",
+        drip_days=7,
+        cadence="daily"
     )
 
     assert res["status"] == "enrolled"
@@ -159,7 +165,15 @@ async def test_enroll_lead_in_daily_drip_sequence():
 @pytest.mark.asyncio
 async def test_process_due_scheduled_emails():
     await init_db_and_seed()
-    due_email = "due.test@gmail.com"
+    due_email = f"due.test.{datetime.datetime.now().timestamp()}@gmail.com"
+
+    # Clean up any leftover pending due emails for test isolation
+    async with AsyncSessionLocal() as db:
+        await db.execute(delete(ScheduledEmail).where(
+            ScheduledEmail.status == "pending",
+            ScheduledEmail.scheduled_for <= datetime.datetime.now()
+        ))
+        await db.commit()
 
     # Insert a scheduled email with a scheduled_for in the past (-1 minute)
     past_due_time = datetime.datetime.now() - datetime.timedelta(minutes=1)
@@ -231,7 +245,7 @@ def test_scheduled_email_api_endpoints():
         sched_id = data["result"]["scheduled_id"]
 
         # 2. Get scheduled queue
-        get_res = client.get("/api/emails/scheduled?status=pending")
+        get_res = client.get("/api/emails/scheduled?status=pending&limit=500")
         assert get_res.status_code == 200
         queue_data = get_res.json()
         assert queue_data["total"] >= 1
@@ -248,3 +262,108 @@ def test_scheduled_email_api_endpoints():
         flush_res = client.post("/api/emails/scheduled/process-now")
         assert flush_res.status_code == 200
         assert flush_res.json()["success"] is True
+
+
+@pytest.mark.asyncio
+async def test_pause_and_resume_campaign():
+    await init_db_and_seed()
+    test_email = f"pause.test.{uuid.uuid4().hex[:6]}@gmail.com"
+    delivery_time = datetime.datetime.now() - datetime.timedelta(minutes=5) # due immediately
+
+    # 1. Schedule email
+    res = await schedule_email_async(
+        to_email=test_email,
+        subject="Pause Test Email",
+        body_markdown="This email should be paused.",
+        scheduled_for=delivery_time,
+        to_name="Pause Tester",
+        campaign_type="pause_test_campaign"
+    )
+    sched_id = res["scheduled_id"]
+    assert res["status"] == "pending"
+
+    # 2. Pause single email
+    paused = await pause_scheduled_email(sched_id)
+    assert paused is True
+
+    async with AsyncSessionLocal() as db:
+        rec = (await db.execute(select(ScheduledEmail).where(ScheduledEmail.id == sched_id))).scalar_one_or_none()
+        assert rec is not None
+        assert rec.status == "paused"
+
+    # 3. Verify process_due_scheduled_emails does NOT process paused emails
+    dispatched = await process_due_scheduled_emails()
+    dispatched_ids = [d["id"] for d in dispatched]
+    assert sched_id not in dispatched_ids
+
+    # 4. Resume single email
+    resumed = await resume_scheduled_email(sched_id)
+    assert resumed is True
+
+    async with AsyncSessionLocal() as db:
+        rec = (await db.execute(select(ScheduledEmail).where(ScheduledEmail.id == sched_id))).scalar_one_or_none()
+        assert rec.status == "pending"
+
+    # 5. Pause whole campaign
+    paused_count = await pause_all_scheduled_emails(campaign_type="pause_test_campaign")
+    assert paused_count >= 1
+
+    async with AsyncSessionLocal() as db:
+        rec = (await db.execute(select(ScheduledEmail).where(ScheduledEmail.id == sched_id))).scalar_one_or_none()
+        assert rec.status == "paused"
+
+    # 6. Resume whole campaign
+    resumed_count = await resume_all_scheduled_emails(campaign_type="pause_test_campaign")
+    assert resumed_count >= 1
+
+    async with AsyncSessionLocal() as db:
+        rec = (await db.execute(select(ScheduledEmail).where(ScheduledEmail.id == sched_id))).scalar_one_or_none()
+        assert rec.status == "pending"
+
+
+def test_pause_and_resume_api_endpoints():
+    with TestClient(app) as client:
+        api_email = f"pause.api.{uuid.uuid4().hex[:6]}@gmail.com"
+        # 1. Schedule via API
+        post_res = client.post("/api/emails/schedule", json={
+            "recipient_email": api_email,
+            "recipient_name": "API Pause Student",
+            "subject": "API Pause Test",
+            "body": "Testing pause endpoints",
+            "scheduled_for": "in 1 hour",
+            "campaign_type": "api_pause_test"
+        })
+        assert post_res.status_code == 200
+        sched_id = post_res.json()["result"]["scheduled_id"]
+
+        # 2. Pause single item
+        p_res = client.post(f"/api/emails/scheduled/{sched_id}/pause")
+        assert p_res.status_code == 200
+        assert p_res.json()["success"] is True
+
+        # 3. Check queue returns paused status
+        q_res = client.get("/api/emails/scheduled?status=paused")
+        assert q_res.status_code == 200
+        q_data = q_res.json()
+        assert "paused_count" in q_data
+        target_item = next((it for it in q_data["scheduled_emails"] if it["id"] == sched_id), None)
+        assert target_item is not None
+        assert target_item["status"] == "paused"
+
+        # 4. Resume single item
+        r_res = client.post(f"/api/emails/scheduled/{sched_id}/resume")
+        assert r_res.status_code == 200
+        assert r_res.json()["success"] is True
+
+        # 5. Pause all via API
+        pa_res = client.post("/api/emails/scheduled/pause-all")
+        assert pa_res.status_code == 200
+        assert pa_res.json()["success"] is True
+        assert pa_res.json()["paused_count"] >= 1
+
+        # 6. Resume all via API
+        ra_res = client.post("/api/emails/scheduled/resume-all")
+        assert ra_res.status_code == 200
+        assert ra_res.json()["success"] is True
+        assert ra_res.json()["resumed_count"] >= 1
+

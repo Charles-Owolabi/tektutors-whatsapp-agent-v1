@@ -65,18 +65,19 @@ def test_every_item_has_valid_schema():
 @pytest.mark.asyncio
 async def test_fast_paths_resolve_for_key_evaluation_cases():
     """Verify instant fast paths correctly trigger on greetings, registration links, and track menu items."""
+    test_phone = "2348099001122"
     # AMBIG-009: "Hello"
-    res_hello = await check_fast_path("2348011223344", "Hello")
+    res_hello = await check_fast_path(test_phone, "Hello")
     assert res_hello is not None
     assert "TekTutors" in res_hello["response"]
 
     # REG-002: "Send me the registration link"
-    res_reg = await check_fast_path("2348011223344", "Send me the registration link")
+    res_reg = await check_fast_path(test_phone, "Send me the registration link")
     assert res_reg is not None
     assert "https://tektutors.com.ng/registration" in res_reg["response"]
 
     # AMBIG-010: "1"
-    res_t1 = await check_fast_path("2348011223344", "1")
+    res_t1 = await check_fast_path(test_phone, "1")
     assert res_t1 is not None
     assert "Data Analytics" in res_t1["response"]
 

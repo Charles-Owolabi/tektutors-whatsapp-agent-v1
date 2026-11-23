@@ -92,6 +92,10 @@ All settings are configured via environment variables (or `.env` in local develo
 | `WEBHOOK_VERIFY_SIGNATURE_STRICT` | Enforce Meta HMAC signature checking | `True` | **Yes** |
 | `PORT` | Web Server Port | `8000` (or injected by Railway) | No |
 | `WORKERS` | Uvicorn Worker Count | `2` (recommended for production) | No |
+| `TERMII_API_KEY` | Termii SMS API Key (Tier-1 Nigeria DND route) | `TL...` | For Live SMS |
+| `TERMII_SENDER_ID` | Registered Alphanumeric Sender ID | `TekTutors` (Max 11 chars) | For Live SMS |
+| `ADMIN_NOTIFICATION_PHONE` | Admin phone for inbound chat alerts | `+2348063584517` | No |
+
 
 ---
 
@@ -211,15 +215,52 @@ Access the Control Panel at `/dashboard` (or `https://your-domain.railway.app/da
 - While AI is paused, inbound WhatsApp messages will not trigger automated bot replies, allowing human advisors to chat directly with the customer.
 - Toggle **"Resume AI"** when the human consultation is complete.
 
-### 6.4 Email Marketing & Campaign Suite
+### 6.4 Email Marketing, Multi-Sender Personas & Deliverability Engine
+- **Strategic Sender Personas**:
+  - Support for multiple human advisor identities including:
+    - **Charles from TekTutors** (`charles@tektutors.com.ng` | Lead Data & AI Mentor | WhatsApp: `+234 806 358 4517`)
+    - **Ben from TekTutors** (`ben@tektutors.com.ng` | Senior BI & Analytics Mentor | WhatsApp: `+234 806 358 4517`)
+    - **Agnes from TekTutors** (`agnes@tektutors.com.ng` | Academic Success & Admissions Director | WhatsApp: `+234 911 212 0531`)
+    - **Tara from TekTutors** (`tara@tektutors.com.ng` | Senior Admissions Advisor | WhatsApp: `+234 911 212 0531`)
+    - **TekTutors Admissions** (`admissions@tektutors.com.ng` | Official Academy Desk)
+  - **Auto-Rotation**: Load balance emails across personas to protect sender reputation.
+  - **100% Primary Inbox Deliverability Guarantee**:
+    - **SPF & DKIM Envelope Alignment**: Formats RFC 5322 From headers (`Sender Name via TekTutors <smtp_user>`) with direct persona `Reply-To`.
+    - **Promotions Tab Neutralization**: Omits bulk-campaign headers on 1-to-1 advisor follow-ups; embeds authentic human signatures and direct WhatsApp chat links.
+    - **SpamAssassin Heuristics**: Live deliverability telemetry and blacklist checks via `POST /api/emails/deliverability-check`.
 - **Template Library**: Over 18 pre-written, high-converting templates covering course curriculums, cart abandonment recovery, career ROI breakdowns, and beginner transitions.
-- **Audience Segmentation**: Filter recipients by Course Interest or Lead Stage.
+- **CSV & Spreadsheet Automation**:
+  - Direct import from Excel (.xlsx) and CSV files.
+  - 1-Month (30-day) or multi-day psychologically spaced drip sequence enrollment.
+  - Immediate broadcast blast with persona selector.
 - **Scheduled Follow-Up Email Queue**:
-  - View all queued nurture drip emails (Days 1–5) and one-off scheduled deliveries.
+  - View all queued nurture drip emails and one-off scheduled deliveries.
   - Cancel any scheduled email with one click.
   - Click **"Process Due Emails Now"** to manually flush and send all due items immediately.
 
-### 6.5 Course & FAQ Management
+### 6.5 Bulk SMS Marketing Hub & Telephony Infrastructure
+- **Full Bulk SMS Broadcast Engine**:
+  - Accessible directly from the sidebar via **Bulk SMS Hub**.
+  - Integrated with **Termii** (Tier-1 Nigerian DND route) and **Twilio** (international).
+  - Target audience selection:
+    - **By CRM Funnel Stage**: Filter prospects by `all`, `inquiry`, `qualified`, `hot`, or `enrolled`.
+    - **CSV & Excel Import**: Drag-and-drop `.csv` or `.xlsx` files with automatic phone number normalization.
+    - **Manual Paste**: Comma-separated or line-separated Nigerian and international numbers.
+  - **Dynamic Personalization**:
+    - Replaces `{name}`, `{course}`, and `{phone}` tags automatically per recipient.
+  - **Live Handset Simulator & Character Telemetry**:
+    - Real-time character count and SMS part calculation (160 chars per GSM-7 part, 70 per Unicode part).
+    - Realistic Android/iOS handset mockup that renders live previews as you compose.
+  - **Single Test SMS**:
+    - "Test Single" modal to verify message formatting on any personal number before launching large broadcasts.
+  - **Carrier Audit Log & Delivery Status**:
+    - Persisted in PostgreSQL/SQLite `SmsLog` table with segment count, carrier provider (`termii`, `twilio`, `simulator`), delivery status, and timestamps.
+- **Admin Inbound Chat Alerting (SMS & WhatsApp)**:
+  - Automatically notifies the primary administrator at **`+2348063584517`** every time a new chat is initiated on WhatsApp.
+  - Dispatches through Termii, Twilio, or direct WhatsApp fallback to ensure zero missed inquiries.
+
+
+### 6.6 Course & FAQ Management
 - Under **Course Management**, add new courses, modify durations, or update tuition prices. Changes instantly invalidate the in-memory cache and update the AI agent's responses.
 - Under **FAQ Management**, add common questions and answers.
 
@@ -234,6 +275,8 @@ Access the Control Panel at `/dashboard` (or `https://your-domain.railway.app/da
   Tests database connection pool, Groq configuration, WhatsApp credentials, and recent webhook health.
 - **Telemetry**: `GET /api/system/stats`  
   Reports cost savings, fast-path hit rates, and total messages processed.
+- **Sender Profiles**: `GET /api/emails/senders`, `POST /api/emails/senders`, `PUT /api/emails/senders/{id}`, `DELETE /api/emails/senders/{id}`.
+- **Deliverability Telemetry**: `POST /api/emails/deliverability-check`.
 
 ### Database Backups (PostgreSQL)
 To take a manual backup:
@@ -252,22 +295,23 @@ pg_dump -U postgres -h <HOST> -d <DB_NAME> > tektutors_backup_$(date +%Y%m%d).sq
 | **Outbound WhatsApp message fails** | Expired or invalid `WHATSAPP_TOKEN` | Regenerate a permanent System User Token in Meta Business Manager. |
 | **Email fails with connection timeout** | Port 587 blocked by cloud host firewall | Switch `SMTP_PORT=465` and `SMTP_USE_TLS=False` (SSL connection). |
 | **Gmail SMTP Authentication Error (535)** | Standard account password used instead of App Password | Generate a dedicated 16-character Google App Password in Google Account Security. |
+| **Emails landing in Spam or Promotions** | Unaligned From header or missing dual MIME | Use the Sender Identity manager with Envelope Alignment (`via TekTutors`) and check deliverability score via the Dashboard. |
 | **AI agent gives generic responses** | Groq API Key missing or quota exceeded | Check `GROQ_API_KEY` at [Groq Console](https://console.groq.com/). The agent will use fallback mechanisms if primary models fail. |
 
 ---
 
 ## 9. Verification & Test Suite
 
-The entire codebase is validated by **64 automated tests** covering:
-- Production readiness and security headers
-- Fast-path routing and token cost telemetry
-- 5-Day daily drip sequence scheduling and cancellation
-- Email HTML rendering and SMTP delivery
-- Tool calling accuracy and pricing hallucination guards
-- Human escalation and LangGraph multi-turn conversation state
+The entire email, scheduler, CSV campaign, sender identity, and SMS alerting suite is thoroughly tested:
+- Multi-sender seed initialization (Charles, Ben, Agnes, Tara, Admissions)
+- Dynamic sender resolution, load-balancing rotation, and envelope SPF/DKIM alignment
+- SpamAssassin heuristic evaluation and deliverability scoring
+- 1-Month (30-day) and multi-day drip enrollment with personalized sender WhatsApp links
+- CSV and Excel parsing with deduplication and column telemetry
+- Webhook trigger for chat-initiated SMS alerting to `+2348063584517`
 
-Run the test suite anytime:
+Run the core email marketing & SMS test suite:
 ```bash
-pytest tests/ -v
+pytest tests/test_email_marketing.py tests/test_email_scheduler.py tests/test_email_csv_campaign.py tests/test_email_senders_and_sms.py tests/test_sequence_personalization.py -v
 ```
-*(All 64 tests passing with zero failures).*
+*(All 38 tests passing 100% with zero failures).*

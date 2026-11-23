@@ -151,14 +151,25 @@ async def process_webhook_message_in_background(conversation_id: int, phone: str
                         }
                         logger.info(f"WhatsApp reply sent to {phone}. Result: {send_res}")
 
-                        # Automatically schedule personalized 3-step WhatsApp sequence for chat prospect
+                        # Automatically schedule personalized 3-step WhatsApp sequence for chat prospect (strictly delayed, never immediate)
                         try:
                             from app.whatsapp_sequence import enroll_lead_in_3_step_sequence
                             lead_stmt = select(Lead).where(Lead.phone == phone).order_by(desc(Lead.id)).limit(1)
                             lead_res = await db.execute(lead_stmt)
                             lead_obj = lead_res.scalars().first()
                             if lead_obj:
-                                await enroll_lead_in_3_step_sequence(db, lead_obj, dispatch_all_now=False)
+                                await db.refresh(lead_obj)
+                                full_turn_history = list(formatted_hist) + [
+                                    {"sender": "user", "body": user_text},
+                                    {"sender": "assistant", "body": ai_reply}
+                                ]
+                                await enroll_lead_in_3_step_sequence(
+                                    db=db,
+                                    lead=lead_obj,
+                                    dispatch_all_now=False,
+                                    chat_history=full_turn_history,
+                                    latest_user_text=user_text
+                                )
                         except Exception as seq_err:
                             logger.warning(f"Could not auto-enroll {phone} in WhatsApp sequence: {seq_err}")
                 else:
@@ -259,6 +270,7 @@ async def receive_webhook(
                 stmt = select(Conversation).where(Conversation.phone == from_number)
                 res = await db.execute(stmt)
                 conv = res.scalar_one_or_none()
+                is_new_chat = (conv is None)
 
                 if not conv:
                     conv = Conversation(phone=from_number, customer_name=contact_name, ai_active=True)
@@ -266,6 +278,19 @@ async def receive_webhook(
                     await db.flush()
                 else:
                     conv.customer_name = contact_name or conv.customer_name
+
+                # Dispatch instant SMS notification to admin on new chat initiation
+                if is_new_chat:
+                    try:
+                        from app.sms_service import send_chat_initiated_sms
+                        asyncio.create_task(send_chat_initiated_sms(
+                            student_phone=from_number,
+                            student_name=contact_name,
+                            initial_message=user_text,
+                            notification_phone="+2348063584517"
+                        ))
+                    except Exception as e:
+                        logger.warning(f"Could not dispatch chat-initiated SMS alert: {e}")
 
                 # 2. Save incoming user message
                 user_msg = Message(

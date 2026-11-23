@@ -33,12 +33,16 @@ const TAB_METADATA = {
         desc: 'Track lead conversion rates, revenue pipeline, tuition projections, and 99.4% Groq token savings.'
     },
     campaigns: {
-        title: '<i class="fa-solid fa-bullhorn" style="color: #f59e0b;"></i> WhatsApp Broadcast Campaigns',
+        title: '<i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> WhatsApp Broadcast Blasts',
         desc: 'Launch personalized cohort announcements, weekend workshop alerts, and deadline reminders.'
     },
     emails: {
         title: '<i class="fa-solid fa-envelope" style="color: #38bdf8;"></i> Email Marketing & Syllabi Hub',
         desc: 'Preview, compose, and auto-dispatch branded syllabus PDFs, follow-up sequences, and promotional offers.'
+    },
+    sms: {
+        title: '<i class="fa-solid fa-comment-sms" style="color: #10b981;"></i> Bulk SMS Marketing & Telephony Hub',
+        desc: 'Broadcast targeted SMS to students via Termii (Tier-1 Nigeria DND route) & Twilio with instant character telemetry and personalization.'
     },
     courses: {
         title: '<i class="fa-solid fa-graduation-cap" style="color: #6366f1;"></i> Academy Course Catalog',
@@ -55,6 +59,7 @@ const TAB_METADATA = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    initAppTheme();
     setupTabNavigation();
     fetchConversations();
     fetchLeads();
@@ -64,6 +69,9 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchCRMStats();
     fetchEmailStats();
     fetchEmailTemplates();
+    fetchSmsBalance();
+    fetchSmsLogs();
+
 
     // Start auto polling for conversations every 4 seconds
     pollTimer = setInterval(fetchConversations, 4000);
@@ -104,18 +112,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Close on Escape
+        // Close on Escape - Universal clean modal dismissal without conflict
         if (e.key === 'Escape') {
+            const themeMenu = document.getElementById('theme-dropdown-menu');
+            if (themeMenu) themeMenu.style.display = 'none';
+
             const searchInput = document.getElementById('global-search-input');
             if (document.activeElement === searchInput) {
                 searchInput.blur();
                 searchInput.value = '';
                 handleGlobalSearch('');
             }
-            closeHelpModal();
-            closeCourseModal();
-            closeFaqModal();
-            closeEmailComposer();
+            document.querySelectorAll('.modal-overlay').forEach(overlay => {
+                overlay.style.display = 'none';
+            });
             document.querySelector('.sidebar')?.classList.remove('mobile-open');
             document.getElementById('sidebar-backdrop')?.classList.remove('active');
         }
@@ -129,7 +139,131 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // Close theme dropdown on outside click
+    document.addEventListener('click', (e) => {
+        const wrapper = document.querySelector('.theme-dropdown-wrapper');
+        const menu = document.getElementById('theme-dropdown-menu');
+        if (menu && wrapper && !wrapper.contains(e.target)) {
+            menu.style.display = 'none';
+        }
+    });
+
 });
+
+/* ==========================================================================
+   DYNAMIC THEME ACCENT CONTROLLER
+   ========================================================================== */
+const THEME_CONFIG = {
+    'sunset': {
+        name: 'TekTutors Sunset',
+        color: '#eb6711',
+        glow: 'rgba(235, 103, 17, 0.35)'
+    },
+    'emerald': {
+        name: 'Emerald Green',
+        color: '#10b981',
+        glow: 'rgba(16, 185, 129, 0.35)'
+    },
+    'cyber-sky': {
+        name: 'Cyber Sky',
+        color: '#0ea5e9',
+        glow: 'rgba(14, 165, 233, 0.35)'
+    },
+    'royal-purple': {
+        name: 'Royal Violet',
+        color: '#8b5cf6',
+        glow: 'rgba(139, 92, 246, 0.35)'
+    },
+    'crimson-rose': {
+        name: 'Crimson Rose',
+        color: '#f43f5e',
+        glow: 'rgba(244, 63, 94, 0.35)'
+    },
+    'amber-gold': {
+        name: 'Amber Gold',
+        color: '#f59e0b',
+        glow: 'rgba(245, 158, 11, 0.35)'
+    }
+};
+
+function initAppTheme() {
+    let saved = 'sunset';
+    try {
+        saved = localStorage.getItem('appTheme') || 'sunset';
+    } catch(e) {}
+    setAppTheme(saved, false);
+}
+
+function toggleThemeDropdown(e) {
+    if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+    }
+    const menu = document.getElementById('theme-dropdown-menu');
+    if (!menu) return;
+    const isVisible = menu.style.display === 'block';
+    menu.style.display = isVisible ? 'none' : 'block';
+}
+
+function setAppTheme(themeName, notify = true) {
+    if (!THEME_CONFIG[themeName]) themeName = 'sunset';
+    const cfg = THEME_CONFIG[themeName];
+
+    // 1. Update HTML data-theme attribute
+    document.documentElement.setAttribute('data-theme', themeName);
+    try {
+        localStorage.setItem('appTheme', themeName);
+    } catch(e) {}
+
+    // 2. Update Top Action Bar theme badge & dot
+    const headerDot = document.getElementById('header-theme-dot');
+    const headerName = document.getElementById('header-theme-name');
+    if (headerDot) {
+        headerDot.style.background = cfg.color;
+        headerDot.style.boxShadow = `0 0 10px ${cfg.color}`;
+    }
+    if (headerName) {
+        headerName.textContent = cfg.name;
+    }
+
+    // 3. Update Dropdown Checkmarks & Active classes
+    const themeBtns = document.querySelectorAll('.theme-opt-btn');
+    themeBtns.forEach(btn => {
+        const isSelected = btn.getAttribute('data-theme') === themeName;
+        btn.classList.toggle('active', isSelected);
+        const check = btn.querySelector('.theme-check');
+        if (check) check.style.display = isSelected ? 'inline-block' : 'none';
+    });
+
+    // 4. Update Settings Tab Palette Tiles
+    const themeTiles = document.querySelectorAll('.theme-tile');
+    themeTiles.forEach(tile => {
+        const isSelected = tile.getAttribute('data-theme') === themeName;
+        tile.classList.toggle('active', isSelected);
+        if (isSelected) {
+            tile.style.border = `2px solid ${cfg.color}`;
+            tile.style.boxShadow = `0 0 16px ${cfg.glow}`;
+        } else {
+            tile.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+            tile.style.boxShadow = 'none';
+        }
+    });
+
+    // 5. Hide the dropdown menu
+    const menu = document.getElementById('theme-dropdown-menu');
+    if (menu) menu.style.display = 'none';
+
+    // 6. User feedback
+    if (notify && typeof showToast === 'function') {
+        showToast(`Theme changed to ${cfg.name}`, 'info');
+    }
+}
+
+// Make accessible to window
+window.toggleThemeDropdown = toggleThemeDropdown;
+window.setAppTheme = setAppTheme;
+
 
 function setupTabNavigation() {
     const navButtons = document.querySelectorAll('.nav-btn');
@@ -185,7 +319,12 @@ function switchToTab(tabName) {
     if (tabName === 'courses') fetchCourses();
     if (tabName === 'faqs') fetchFAQs();
     if (tabName === 'settings') fetchSettings();
+    if (tabName === 'sms') {
+        fetchSmsBalance();
+        fetchSmsLogs();
+    }
 }
+
 
 function dismissQuickStart() {
     const strip = document.getElementById('quick-start-strip');
@@ -2414,15 +2553,18 @@ function escapeHtml(str) {
 // EMAIL HUB & MARKETING CAMPAIGN CLIENT LOGIC
 // =========================================================================
 window.emailTemplates = [];
+window.emailSenders = [];
 window.currentEmailCategory = 'all';
 window.emailPreviewDebounceTimer = null;
+window.currentEditingSenderId = null;
 
 async function loadEmailHub() {
     await Promise.all([
         fetchEmailStats(),
         fetchEmailTemplates(),
         fetchEmailLogs(),
-        loadScheduledEmails()
+        loadScheduledEmails(),
+        loadEmailSenders()
     ]);
 }
 
@@ -2563,6 +2705,359 @@ async function fetchEmailLogs() {
     }
 }
 
+// =========================================================================
+// STRATEGIC SENDER MANAGEMENT & DELIVERABILITY FUNCTIONS
+// =========================================================================
+
+async function loadEmailSenders() {
+    try {
+        const res = await fetch('/api/emails/senders');
+        if (!res.ok) return;
+        const senders = await res.json();
+        window.emailSenders = senders;
+
+        // Render Senders Grid
+        const grid = document.getElementById('email-senders-cards-grid');
+        if (grid) {
+            if (!senders || senders.length === 0) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">No sender identities found.</div>';
+            } else {
+                grid.innerHTML = senders.map(s => {
+                    const initials = (s.name || 'TT').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                    const isDefaultBadge = s.is_default
+                        ? `<span class="badge" style="background: rgba(34,197,94,0.25); color: #4ade80; border: 1px solid rgba(34,197,94,0.4);"><i class="fa-solid fa-star"></i> Default</span>`
+                        : '';
+                    const providerBadge = s.provider_type === 'smtp'
+                        ? `<span class="badge" style="background: rgba(168,85,247,0.2); color: #c084fc; font-size: 0.68rem;">Dedicated SMTP</span>`
+                        : `<span class="badge" style="background: rgba(56,189,248,0.18); color: #38bdf8; font-size: 0.68rem;">SPF/DKIM Aligned</span>`;
+
+                    return `
+                        <div class="glass-card" style="padding: 1rem; border-radius: 10px; border: 1px solid ${s.is_default ? 'rgba(56,189,248,0.4)' : 'rgba(255,255,255,0.08)'}; background: ${s.is_default ? 'rgba(56,189,248,0.05)' : 'rgba(15,23,42,0.45)'}; display: flex; flex-direction: column; justify-content: space-between; gap: 0.85rem;">
+                            <div>
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.6rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.65rem;">
+                                        <div style="width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #0284c7, #38bdf8); color: #fff; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(56,189,248,0.25); flex-shrink: 0;">
+                                            ${escapeHtml(initials)}
+                                        </div>
+                                        <div>
+                                            <div style="font-weight: 700; font-size: 0.92rem; color: #fff; display: flex; align-items: center; gap: 0.4rem;">
+                                                ${escapeHtml(s.name)}
+                                            </div>
+                                            <div style="font-size: 0.72rem; color: var(--text-muted);">${escapeHtml(s.role_title || 'Advisor')}</div>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 0.3rem; align-items: center;">
+                                        ${isDefaultBadge}
+                                    </div>
+                                </div>
+
+                                <div style="font-size: 0.75rem; color: #cbd5e1; display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.6rem; background: rgba(0,0,0,0.25); padding: 0.5rem 0.65rem; border-radius: 6px;">
+                                    <div style="display: flex; align-items: center; gap: 0.4rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        <i class="fa-solid fa-envelope" style="color: #38bdf8; font-size: 0.7rem;"></i> ${escapeHtml(s.email)}
+                                    </div>
+                                    ${s.phone_or_whatsapp ? `
+                                    <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                        <i class="fa-brands fa-whatsapp" style="color: #25D366; font-size: 0.75rem;"></i> ${escapeHtml(s.phone_or_whatsapp)}
+                                    </div>` : ''}
+                                </div>
+
+                                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; color: var(--text-muted);">
+                                    <span title="Primary Inbox Deliverability Heuristic" style="color: #4ade80; font-weight: 600;"><i class="fa-solid fa-shield-halved"></i> 100% Primary Inbox</span>
+                                    <span>${providerBadge}</span>
+                                </div>
+                                <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.3rem;">
+                                    Today: <strong style="color: #fff;">${s.sent_today_count || 0}</strong> / ${s.daily_send_limit || 500} sent (Total: ${s.total_sent_count || 0})
+                                </div>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.6rem; gap: 0.35rem;">
+                                <div>
+                                    ${!s.is_default ? `
+                                    <button class="btn btn-sm btn-secondary" style="font-size: 0.68rem; padding: 0.2rem 0.5rem;" onclick="setDefaultSender(${s.id})" title="Set as default sender">
+                                        <i class="fa-solid fa-star"></i> Set Default
+                                    </button>` : '<span style="font-size: 0.68rem; color: #4ade80;"><i class="fa-solid fa-check"></i> Primary Default</span>'}
+                                </div>
+                                <div style="display: flex; gap: 0.35rem;">
+                                    <button class="btn btn-sm btn-secondary" style="font-size: 0.68rem; padding: 0.2rem 0.5rem;" onclick="testSenderProfile(${s.id})" title="Send test verification email">
+                                        <i class="fa-solid fa-vial"></i> Test
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary" style="font-size: 0.68rem; padding: 0.2rem 0.5rem;" onclick="openSenderModal(${s.id})" title="Edit sender profile">
+                                        <i class="fa-solid fa-pencil"></i>
+                                    </button>
+                                    ${!s.is_default ? `
+                                    <button class="btn btn-sm btn-secondary" style="font-size: 0.68rem; padding: 0.2rem 0.5rem; color: #f87171;" onclick="deleteSenderProfile(${s.id})" title="Delete persona">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Populate Select Dropdowns
+        populateSenderDropdown('composer-sender-select', senders);
+        populateSenderDropdown('csv-broadcast-sender-select', senders);
+        populateSenderDropdown('csv-drip-sender-select', senders);
+
+    } catch (err) {
+        console.error('Error loading email senders:', err);
+    }
+}
+
+function populateSenderDropdown(elementId, senders) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    const currentVal = el.value;
+
+    let html = `
+        <option value="-1">🔀 Auto-Rotate Senders (Charles, Ben, Agnes, Tara) - Maximum Inbox Placement</option>
+    `;
+
+    if (senders && senders.length > 0) {
+        html += senders.map(s => `
+            <option value="${s.id}" ${s.is_default ? 'selected' : ''}>
+                👤 ${escapeHtml(s.name)} (${escapeHtml(s.email)}) ${s.is_default ? '— Primary Default' : ''}
+            </option>
+        `).join('');
+    }
+
+    el.innerHTML = html;
+    if (currentVal && el.querySelector(`option[value="${currentVal}"]`)) {
+        el.value = currentVal;
+    }
+}
+
+function openSenderModal(senderId = null) {
+    const modal = document.getElementById('email-sender-modal');
+    if (!modal) return;
+
+    window.currentEditingSenderId = senderId;
+    const titleEl = document.getElementById('sender-modal-action-text');
+    const testBtn = document.getElementById('btn-sender-test');
+
+    if (senderId) {
+        if (titleEl) titleEl.innerText = 'Edit Sender Persona';
+        if (testBtn) testBtn.style.display = 'inline-flex';
+        const sender = (window.emailSenders || []).find(s => s.id === senderId);
+        if (sender) {
+            document.getElementById('sender-profile-id').value = sender.id;
+            document.getElementById('sender-name-input').value = sender.name || '';
+            document.getElementById('sender-role-input').value = sender.role_title || '';
+            document.getElementById('sender-email-input').value = sender.email || '';
+            document.getElementById('sender-reply-to-input').value = sender.reply_to || sender.email || '';
+            document.getElementById('sender-phone-input').value = sender.phone_or_whatsapp || '';
+            document.getElementById('sender-daily-limit-input').value = sender.daily_send_limit || 500;
+            document.getElementById('sender-provider-select').value = sender.provider_type || 'system_default';
+            toggleSenderSmtpFields(sender.provider_type || 'system_default');
+            document.getElementById('sender-smtp-host').value = sender.smtp_host || '';
+            document.getElementById('sender-smtp-port').value = sender.smtp_port || '';
+            document.getElementById('sender-smtp-user').value = sender.smtp_user || '';
+            document.getElementById('sender-smtp-pass').value = sender.smtp_password || '';
+            document.getElementById('sender-smtp-tls').checked = !!sender.smtp_use_tls;
+            document.getElementById('sender-signature-input').value = sender.signature_markdown || '';
+            document.getElementById('sender-is-default-checkbox').checked = !!sender.is_default;
+            document.getElementById('sender-is-active-checkbox').checked = sender.is_active !== false;
+        }
+    } else {
+        if (titleEl) titleEl.innerText = 'Add New Sender Persona';
+        if (testBtn) testBtn.style.display = 'none';
+        document.getElementById('sender-profile-id').value = '';
+        document.getElementById('sender-name-input').value = '';
+        document.getElementById('sender-role-input').value = 'Admissions & Mentorship Advisor';
+        document.getElementById('sender-email-input').value = '';
+        document.getElementById('sender-reply-to-input').value = '';
+        document.getElementById('sender-phone-input').value = '+234 806 358 4517';
+        document.getElementById('sender-daily-limit-input').value = '500';
+        document.getElementById('sender-provider-select').value = 'system_default';
+        toggleSenderSmtpFields('system_default');
+        document.getElementById('sender-smtp-host').value = '';
+        document.getElementById('sender-smtp-port').value = '';
+        document.getElementById('sender-smtp-user').value = '';
+        document.getElementById('sender-smtp-pass').value = '';
+        document.getElementById('sender-smtp-tls').checked = true;
+        document.getElementById('sender-signature-input').value = '';
+        document.getElementById('sender-is-default-checkbox').checked = false;
+        document.getElementById('sender-is-active-checkbox').checked = true;
+    }
+
+    modal.style.display = 'flex';
+}
+
+function closeSenderModal() {
+    const modal = document.getElementById('email-sender-modal');
+    if (modal) modal.style.display = 'none';
+    window.currentEditingSenderId = null;
+}
+
+function toggleSenderSmtpFields(providerType) {
+    const box = document.getElementById('sender-smtp-custom-fields');
+    if (box) {
+        box.style.display = (providerType === 'smtp') ? 'flex' : 'none';
+    }
+}
+
+async function saveSenderProfile() {
+    const name = document.getElementById('sender-name-input')?.value?.trim();
+    const email = document.getElementById('sender-email-input')?.value?.trim();
+    if (!name || !email || !email.includes('@')) {
+        showToast('Please provide a valid sender name and email address.', 'warning');
+        return;
+    }
+
+    const senderId = document.getElementById('sender-profile-id')?.value;
+    const providerType = document.getElementById('sender-provider-select')?.value || 'system_default';
+    const payload = {
+        name: name,
+        email: email,
+        role_title: document.getElementById('sender-role-input')?.value?.trim() || null,
+        reply_to: document.getElementById('sender-reply-to-input')?.value?.trim() || email,
+        phone_or_whatsapp: document.getElementById('sender-phone-input')?.value?.trim() || null,
+        daily_send_limit: parseInt(document.getElementById('sender-daily-limit-input')?.value || 500),
+        provider_type: providerType,
+        signature_markdown: document.getElementById('sender-signature-input')?.value?.trim() || null,
+        is_default: document.getElementById('sender-is-default-checkbox')?.checked || false,
+        is_active: document.getElementById('sender-is-active-checkbox')?.checked ?? true
+    };
+
+    if (providerType === 'smtp') {
+        payload.smtp_host = document.getElementById('sender-smtp-host')?.value?.trim() || null;
+        payload.smtp_port = parseInt(document.getElementById('sender-smtp-port')?.value || 587);
+        payload.smtp_user = document.getElementById('sender-smtp-user')?.value?.trim() || null;
+        payload.smtp_password = document.getElementById('sender-smtp-pass')?.value?.trim() || null;
+        payload.smtp_use_tls = document.getElementById('sender-smtp-tls')?.checked ?? true;
+    }
+
+    try {
+        const url = senderId ? `/api/emails/senders/${senderId}` : '/api/emails/senders';
+        const method = senderId ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || 'Failed to save sender profile');
+        }
+
+        showToast(senderId ? '✅ Sender persona updated!' : '✅ Sender persona created!');
+        closeSenderModal();
+        await loadEmailSenders();
+    } catch (err) {
+        console.error('Error saving sender profile:', err);
+        showToast(err.message || 'Error saving sender profile', 'error');
+    }
+}
+
+async function setDefaultSender(senderId) {
+    try {
+        const res = await fetch(`/api/emails/senders/${senderId}/set-default`, { method: 'POST' });
+        if (!res.ok) throw new Error('Failed to set default sender');
+        showToast('⭐ Primary default sender updated!');
+        await loadEmailSenders();
+    } catch (err) {
+        console.error('Error setting default sender:', err);
+        showToast('Error setting default sender', 'error');
+    }
+}
+
+async function deleteSenderProfile(senderId) {
+    if (!confirm('Are you sure you want to delete this sender persona?')) return;
+    try {
+        const res = await fetch(`/api/emails/senders/${senderId}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Failed to delete sender');
+        showToast('Sender persona deleted');
+        await loadEmailSenders();
+    } catch (err) {
+        console.error('Error deleting sender:', err);
+        showToast('Error deleting sender profile', 'error');
+    }
+}
+
+async function testSenderProfile(senderId) {
+    const toEmail = prompt('Enter recipient email address for the deliverability test:', 'tektutorsng@gmail.com');
+    if (!toEmail || !toEmail.includes('@')) return;
+
+    showToast(`Dispatching test verification from sender #${senderId}...`, 'info');
+    try {
+        const res = await fetch(`/api/emails/senders/${senderId}/test`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ test_to: toEmail })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showToast(`✅ Inbox placement test email sent to ${toEmail}!`);
+            loadEmailSenders();
+            fetchEmailLogs();
+        } else {
+            showToast(data.detail || 'Test dispatch failed', 'error');
+        }
+    } catch (err) {
+        console.error('Error testing sender profile:', err);
+        showToast('Network error testing sender profile', 'error');
+    }
+}
+
+async function testCurrentSenderProfile() {
+    if (window.currentEditingSenderId) {
+        testSenderProfile(window.currentEditingSenderId);
+    }
+}
+
+async function onComposerSenderChanged(senderId) {
+    // Run deliverability check
+    const subject = document.getElementById('composer-subject')?.value || "TekTutors Academy";
+    const body = document.getElementById('composer-body')?.value || "";
+    const badge = document.getElementById('composer-deliverability-badge');
+
+    let senderEmail = null;
+    if (senderId && senderId !== '-1') {
+        const s = (window.emailSenders || []).find(send => String(send.id) === String(senderId));
+        if (s) senderEmail = s.email;
+    }
+
+    try {
+        const res = await fetch('/api/emails/deliverability-check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                subject: subject,
+                body: body,
+                layout_style: 'clean_letter',
+                is_bulk: false,
+                sender_email: senderEmail
+            })
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (badge) {
+                badge.innerHTML = `<i class="fa-solid fa-shield-halved"></i> ${data.score}% ${data.grade} (${data.predicted_placement})`;
+                if (data.score >= 90) {
+                    badge.style.background = 'rgba(34, 197, 94, 0.2)';
+                    badge.style.color = '#4ade80';
+                    badge.style.border = '1px solid rgba(34, 197, 94, 0.3)';
+                } else if (data.score >= 70) {
+                    badge.style.background = 'rgba(234, 179, 8, 0.2)';
+                    badge.style.color = '#facc15';
+                    badge.style.border = '1px solid rgba(234, 179, 8, 0.3)';
+                } else {
+                    badge.style.background = 'rgba(239, 68, 68, 0.2)';
+                    badge.style.color = '#f87171';
+                    badge.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Error running deliverability check:', err);
+    }
+
+    updateEmailLivePreview();
+}
+
 function setComposerMode(mode) {
     const singleFields = document.getElementById('composer-single-fields');
     const broadcastFields = document.getElementById('composer-broadcast-fields');
@@ -2677,6 +3172,7 @@ async function updateEmailLivePreview() {
     const ctaText = document.getElementById('composer-cta-text')?.value || "Enroll Now";
     const ctaUrl = document.getElementById('composer-cta-url')?.value || "https://tektutors.com.ng/registration";
     const recipientName = document.getElementById('composer-recipient-name')?.value || "Alex";
+    const courseName = document.getElementById('composer-course-name')?.value || "Data Analytics & BI Accelerator";
     const taraChatUrl = `https://wa.me/2349112120531?text=${encodeURIComponent(`Hi Tara, I have questions about learning ${courseName} with TekTutors.`)}`;
 
     body = body.replace(/\{\{name\}\}/g, recipientName)
@@ -2724,6 +3220,7 @@ async function sendTestEmailFromComposer() {
     const ctaUrl = document.getElementById('composer-cta-url')?.value || "https://tektutors.com.ng/registration";
     const courseName = document.getElementById('composer-course-name')?.value || "Data Analytics & BI Accelerator";
     const campaignType = document.getElementById('composer-campaign-type')?.value || "test";
+    const senderId = document.getElementById('composer-sender-select')?.value || null;
 
     showToast(`Dispatching test preview to ${toEmail}...`, 'info');
 
@@ -2739,7 +3236,8 @@ async function sendTestEmailFromComposer() {
                 cta_text: ctaText,
                 cta_url: ctaUrl,
                 course_name: courseName,
-                campaign_type: campaignType
+                campaign_type: campaignType,
+                sender_id: senderId
             })
         });
         const data = await res.json();
@@ -2763,6 +3261,7 @@ async function submitEmailDispatch() {
     const body = document.getElementById('composer-body')?.value;
     const ctaText = document.getElementById('composer-cta-text')?.value;
     const ctaUrl = document.getElementById('composer-cta-url')?.value;
+    const senderId = document.getElementById('composer-sender-select')?.value || null;
     const submitBtn = document.getElementById('btn-submit-email');
 
     if (!subject || !body) {
@@ -2787,7 +3286,8 @@ async function submitEmailDispatch() {
                     subject: subject,
                     body: body,
                     cta_text: ctaText,
-                    cta_url: ctaUrl
+                    cta_url: ctaUrl,
+                    sender_id: senderId
                 })
             });
             const data = await res.json();
@@ -2835,7 +3335,8 @@ async function submitEmailDispatch() {
                 lead_id: leadId,
                 course_name: document.getElementById('composer-course-name')?.value,
                 cta_text: ctaText,
-                cta_url: ctaUrl
+                cta_url: ctaUrl,
+                sender_id: senderId
             };
             if (isScheduled) {
                 payload.scheduled_for = scheduledForVal;
@@ -3000,6 +3501,30 @@ async function loadScheduledEmails() {
         const data = await res.json();
         const items = data.scheduled_emails || [];
 
+        // Update Pause / Resume Campaign toggle button state
+        const pauseBtn = document.getElementById('btn-toggle-pause-campaign');
+        if (pauseBtn) {
+            const pendingCount = data.pending_count ?? 0;
+            const pausedCount = data.paused_count ?? 0;
+            const isPaused = data.is_paused || (pausedCount > 0 && pendingCount === 0);
+
+            if (isPaused) {
+                pauseBtn.innerHTML = '<i class="fa-solid fa-play"></i> Resume Campaign';
+                pauseBtn.style.background = 'rgba(34,197,94,0.15)';
+                pauseBtn.style.color = '#4ade80';
+                pauseBtn.style.border = '1px solid rgba(34,197,94,0.3)';
+                pauseBtn.setAttribute('data-action', 'resume');
+                pauseBtn.title = `Campaign is paused (${pausedCount} emails frozen). Click to resume.`;
+            } else {
+                pauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause Campaign';
+                pauseBtn.style.background = 'rgba(245,158,11,0.15)';
+                pauseBtn.style.color = '#fbbf24';
+                pauseBtn.style.border = '1px solid rgba(245,158,11,0.3)';
+                pauseBtn.setAttribute('data-action', 'pause');
+                pauseBtn.title = 'Pause campaign dispatch without cancelling queued emails.';
+            }
+        }
+
         if (items.length === 0) {
             tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="color: var(--text-muted); padding: 1.5rem;">No upcoming scheduled emails in queue. Emails scheduled from chat or composer will appear here.</td></tr>';
             return;
@@ -3007,7 +3532,9 @@ async function loadScheduledEmails() {
 
         tbody.innerHTML = items.map(item => {
             let statusBadge = '<span class="badge" style="background: rgba(234,179,8,0.15); color: #eab308;"><i class="fa-solid fa-clock"></i> Pending</span>';
-            if (item.status === 'sent') {
+            if (item.status === 'paused') {
+                statusBadge = '<span class="badge" style="background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.4);"><i class="fa-solid fa-pause"></i> Paused</span>';
+            } else if (item.status === 'sent') {
                 statusBadge = '<span class="badge" style="background: rgba(34,197,94,0.15); color: #22c55e;"><i class="fa-solid fa-check"></i> Sent</span>';
             } else if (item.status === 'cancelled') {
                 statusBadge = '<span class="badge" style="background: rgba(148,163,184,0.15); color: #94a3b8;"><i class="fa-solid fa-ban"></i> Cancelled</span>';
@@ -3022,9 +3549,25 @@ async function loadScheduledEmails() {
             let actions = '';
             if (item.status === 'pending') {
                 actions = `
-                    <button class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3);" onclick="cancelScheduledEmail(${item.id})">
-                        <i class="fa-solid fa-xmark"></i> Cancel
-                    </button>
+                    <div style="display: flex; gap: 0.35rem; align-items: center;">
+                        <button class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.45rem; background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3);" title="Pause this email" onclick="pauseScheduledEmail(${item.id})">
+                            <i class="fa-solid fa-pause"></i> Pause
+                        </button>
+                        <button class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.45rem; background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3);" title="Cancel this email" onclick="cancelScheduledEmail(${item.id})">
+                            <i class="fa-solid fa-xmark"></i> Cancel
+                        </button>
+                    </div>
+                `;
+            } else if (item.status === 'paused') {
+                actions = `
+                    <div style="display: flex; gap: 0.35rem; align-items: center;">
+                        <button class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.45rem; background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3);" title="Resume this email" onclick="resumeScheduledEmail(${item.id})">
+                            <i class="fa-solid fa-play"></i> Resume
+                        </button>
+                        <button class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.45rem; background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3);" title="Cancel this email" onclick="cancelScheduledEmail(${item.id})">
+                            <i class="fa-solid fa-xmark"></i> Cancel
+                        </button>
+                    </div>
                 `;
             } else {
                 actions = `<span style="font-size: 0.72rem; color: var(--text-muted);">—</span>`;
@@ -3042,7 +3585,7 @@ async function loadScheduledEmails() {
                         ${escapeHtml(item.subject)}
                     </td>
                     <td style="font-size: 0.78rem;">
-                        <div style="color: #4ade80; font-weight: 600;"><i class="fa-regular fa-clock"></i> ${escapeHtml(item.scheduled_for_formatted || item.scheduled_for)}</div>
+                        <div style="color: ${item.status === 'paused' ? '#fbbf24' : '#4ade80'}; font-weight: 600;"><i class="fa-regular fa-clock"></i> ${escapeHtml(item.scheduled_for_formatted || item.scheduled_for)}</div>
                     </td>
                     <td>${statusBadge}</td>
                     <td>${actions}</td>
@@ -3052,6 +3595,77 @@ async function loadScheduledEmails() {
     } catch (err) {
         console.error('Error loading scheduled emails:', err);
         tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="color: #ef4444;">Failed to load scheduled queue.</td></tr>';
+    }
+}
+
+async function togglePauseCampaign() {
+    const pauseBtn = document.getElementById('btn-toggle-pause-campaign');
+    const isCurrentlyPaused = pauseBtn && pauseBtn.getAttribute('data-action') === 'resume';
+
+    if (isCurrentlyPaused) {
+        if (!confirm('Resume the campaign? This will reactivate paused emails so they can continue dispatching on schedule.')) return;
+        try {
+            const res = await fetch('/api/emails/scheduled/resume-all', { method: 'POST' });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                showToast(`▶️ Campaign resumed: ${data.resumed_count} email(s) reactivated!`, 'success');
+                loadScheduledEmails();
+                fetchEmailStats();
+            } else {
+                showToast(data.detail || 'Could not resume campaign', 'error');
+            }
+        } catch (err) {
+            console.error('Error resuming campaign:', err);
+            showToast('Network error while resuming campaign', 'error');
+        }
+    } else {
+        if (!confirm('Pause the campaign? This will freeze all pending scheduled emails without deleting them until you click Resume.')) return;
+        try {
+            const res = await fetch('/api/emails/scheduled/pause-all', { method: 'POST' });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                showToast(`⏸️ Campaign paused: ${data.paused_count} email(s) safely frozen.`, 'info');
+                loadScheduledEmails();
+                fetchEmailStats();
+            } else {
+                showToast(data.detail || 'Could not pause campaign', 'error');
+            }
+        } catch (err) {
+            console.error('Error pausing campaign:', err);
+            showToast('Network error while pausing campaign', 'error');
+        }
+    }
+}
+
+async function pauseScheduledEmail(scheduledId) {
+    try {
+        const res = await fetch(`/api/emails/scheduled/${scheduledId}/pause`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showToast(`Scheduled email #${scheduledId} paused.`);
+            loadScheduledEmails();
+        } else {
+            showToast(data.detail || 'Could not pause scheduled email', 'error');
+        }
+    } catch (err) {
+        console.error('Error pausing scheduled email:', err);
+        showToast('Network error while pausing email', 'error');
+    }
+}
+
+async function resumeScheduledEmail(scheduledId) {
+    try {
+        const res = await fetch(`/api/emails/scheduled/${scheduledId}/resume`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showToast(`Scheduled email #${scheduledId} resumed.`);
+            loadScheduledEmails();
+        } else {
+            showToast(data.detail || 'Could not resume scheduled email', 'error');
+        }
+    } catch (err) {
+        console.error('Error resuming scheduled email:', err);
+        showToast('Network error while resuming email', 'error');
     }
 }
 
@@ -3074,13 +3688,13 @@ async function cancelScheduledEmail(scheduledId) {
 }
 
 async function cancelAllScheduledEmails() {
-    if (!confirm('Are you sure you want to STOP and cancel all pending scheduled emails in the campaign queue? This will stop future queued emails from sending.')) return;
+    if (!confirm('Are you sure you want to STOP and cancel all scheduled emails in the campaign queue? This will permanently cancel future queued emails.')) return;
 
     try {
         const res = await fetch('/api/emails/scheduled/cancel-all', { method: 'POST' });
         const data = await res.json();
         if (res.ok && data.success) {
-            showToast(`🛑 Campaign stopped: ${data.cancelled_count} pending email(s) cancelled.`, 'success');
+            showToast(`🛑 Campaign stopped: ${data.cancelled_count} email(s) cancelled.`, 'success');
             loadScheduledEmails();
             fetchEmailStats();
         } else {
@@ -4503,6 +5117,7 @@ async function submitEmailCsvCampaign() {
         payload.cta_url = ctaUrl;
         payload.course_name = courseContext;
         payload.campaign_type = campaignType;
+        payload.sender_id = document.getElementById('csv-broadcast-sender-select')?.value || null;
     } else if (strategy === 'drip_enroll') {
         const duration = window.selectedDripDuration === 'custom'
             ? parseInt(document.getElementById('csv-drip-custom-days-input')?.value || 21)
@@ -4518,6 +5133,7 @@ async function submitEmailCsvCampaign() {
             payload.start_date = startSchedule;
         }
         payload.course_name = document.getElementById('csv-drip-course-fallback')?.value || 'Data Analytics & BI Accelerator';
+        payload.sender_id = document.getElementById('csv-drip-sender-select')?.value || null;
     }
 
     if (submitBtn) {
@@ -4611,6 +5227,433 @@ async function submitEmailCsvCampaign() {
         }
     }
 }
+
+// =========================================================================
+// BULK SMS & TELEPHONY HUB LOGIC
+// =========================================================================
+
+window.smsCustomRecipients = [];
+let smsPreviewDebounceTimer = null;
+
+const SMS_TEMPLATES = {
+    cohort: "Hi {name}! Ben from TekTutors here. Our next cohort for {course} kicks off this Saturday. Limited seats with 1-on-1 mentor guidance. Secure your spot: tektutors.com.ng",
+    followup: "Hi {name}! Charles from TekTutors following up on your inquiry about {course}. Have you reviewed our curriculum? Chat with our advisors: wa.me/2348063584517",
+    scholarship: "🎉 Exclusive Offer for {name}! Claim 20% off your {course} tuition at TekTutors this week. Flexible installment plans available. Reply YES for details.",
+    urgency: "⚡ Urgent: Only 3 mentor slots remaining for {course} at TekTutors! Start your hands-on journey with real portfolio projects: tektutors.com.ng"
+};
+
+async function fetchSmsBalance() {
+    try {
+        const res = await fetch('/api/sms/balance');
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        const balanceEl = document.getElementById('sms-balance-display');
+        const statusEl = document.getElementById('sms-provider-status');
+        const senderEl = document.getElementById('sms-active-sender');
+        const previewSender = document.getElementById('preview-sender-label');
+
+        if (balanceEl) {
+            const sym = (data.currency === 'USD') ? '$' : '₦';
+            balanceEl.textContent = `${sym}${parseFloat(data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        }
+        if (statusEl) {
+            if (data.status === 'live') {
+                statusEl.textContent = 'Termii Live Production Route';
+                statusEl.style.color = '#34d399';
+            } else if (data.status === 'simulated') {
+                statusEl.textContent = 'Termii Simulator Mode';
+                statusEl.style.color = '#38bdf8';
+            } else {
+                statusEl.textContent = 'SMS Gateway Standby';
+                statusEl.style.color = '#f59e0b';
+            }
+        }
+        if (senderEl && data.sender_id) {
+            senderEl.textContent = data.sender_id;
+        }
+        if (previewSender && data.sender_id) {
+            previewSender.textContent = data.sender_id;
+        }
+    } catch (err) {
+        console.warn('Could not fetch SMS balance:', err);
+    }
+}
+
+async function fetchSmsLogs() {
+    try {
+        const res = await fetch('/api/sms/logs');
+        if (!res.ok) return;
+        const logs = await res.json();
+
+        const countEl = document.getElementById('sms-total-dispatched');
+        if (countEl) countEl.textContent = logs.length;
+
+        const tbody = document.getElementById('sms-logs-table-body');
+        if (!tbody) return;
+
+        if (!logs || logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="color: var(--text-muted); padding: 1.5rem;">No SMS dispatches recorded yet. Launch your first test campaign!</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = logs.map(l => {
+            let statusBadge = '<span class="badge" style="background: rgba(37,211,102,0.15); color: #25D366; border: 1px solid rgba(37,211,102,0.3); font-size: 0.7rem;">DELIVERED</span>';
+            if (l.status === 'simulated') {
+                statusBadge = '<span class="badge" style="background: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.3); font-size: 0.7rem;">SIMULATED</span>';
+            } else if (l.status === 'failed') {
+                statusBadge = `<span class="badge" style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); font-size: 0.7rem;" title="${escapeHtml(l.error_message || '')}">FAILED</span>`;
+            }
+
+            const snippet = (l.body || '').length > 60 ? (l.body || '').substring(0, 57) + '...' : (l.body || '');
+
+            return `
+                <tr>
+                    <td style="color: var(--text-muted); font-size: 0.75rem;">#${l.id}</td>
+                    <td style="font-weight: 600; color: #fff; font-size: 0.8rem;"><i class="fa-solid fa-phone" style="font-size: 0.7rem; color: #10b981; margin-right: 4px;"></i> ${escapeHtml(l.recipient_phone || '')}</td>
+                    <td style="font-size: 0.8rem; color: #cbd5e1;">${escapeHtml(l.recipient_name || 'Student')}</td>
+                    <td style="font-size: 0.78rem; color: #ff8c3a; font-weight: 600;">${escapeHtml(l.sender_id || 'TekTutors')}</td>
+                    <td style="font-size: 0.76rem; color: #94a3b8; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(l.body || '')}">${escapeHtml(snippet)}</td>
+                    <td style="font-size: 0.75rem; text-align: center;"><span style="background: rgba(56,189,248,0.15); color: #38bdf8; padding: 2px 6px; border-radius: 4px;">${l.segments || 1} Part</span></td>
+                    <td style="font-size: 0.72rem; text-transform: uppercase; color: #cbd5e1;">${escapeHtml(l.provider || 'termii')}</td>
+                    <td>${statusBadge}</td>
+                    <td style="font-size: 0.73rem; color: var(--text-muted);">${escapeHtml(l.sent_at || '')}</td>
+                </tr>
+            `;
+        }).join('');
+
+    } catch (err) {
+        console.warn('Could not fetch SMS logs:', err);
+    }
+}
+
+function handleSmsAudienceChange() {
+    const sel = document.getElementById('sms-target-audience');
+    const customBox = document.getElementById('sms-custom-upload-box');
+    if (sel && customBox) {
+        customBox.style.display = (sel.value === 'custom') ? 'block' : 'none';
+    }
+}
+
+function applySmsTemplate(type) {
+    const tmpl = SMS_TEMPLATES[type];
+    const bodyInput = document.getElementById('sms-body-input');
+    if (tmpl && bodyInput) {
+        bodyInput.value = tmpl;
+        handleSmsBodyInput();
+        if (typeof showToast === 'function') showToast(`Loaded "${type}" SMS template`, 'info');
+    }
+}
+
+function insertSmsTag(tag) {
+    const bodyInput = document.getElementById('sms-body-input');
+    if (!bodyInput) return;
+    const start = bodyInput.selectionStart || 0;
+    const end = bodyInput.selectionEnd || 0;
+    const val = bodyInput.value;
+    bodyInput.value = val.substring(0, start) + tag + val.substring(end);
+    bodyInput.focus();
+    bodyInput.selectionStart = bodyInput.selectionEnd = start + tag.length;
+    handleSmsBodyInput();
+}
+
+function handleSmsBodyInput() {
+    const bodyInput = document.getElementById('sms-body-input');
+    if (!bodyInput) return;
+    const text = bodyInput.value;
+
+    // Fast local character & segment calculation
+    const isUnicode = /[^\u0000-\u007F]/.test(text.replace(/[\u20AC]/g, ''));
+    const charLen = text.length;
+    let parts = 1;
+    let limit = isUnicode ? 70 : 160;
+    let remaining = limit - charLen;
+
+    if (!isUnicode) {
+        if (charLen <= 160) {
+            parts = 1;
+            remaining = 160 - charLen;
+        } else {
+            parts = Math.ceil(charLen / 153);
+            remaining = (parts * 153) - charLen;
+        }
+    } else {
+        if (charLen <= 70) {
+            parts = 1;
+            remaining = 70 - charLen;
+        } else {
+            parts = Math.ceil(charLen / 67);
+            remaining = (parts * 67) - charLen;
+        }
+    }
+
+    const charCountEl = document.getElementById('sms-counter-chars');
+    const limitEl = document.getElementById('sms-counter-limit');
+    const partsEl = document.getElementById('sms-counter-parts');
+    const encodingEl = document.getElementById('sms-counter-encoding');
+    const remainingEl = document.getElementById('sms-remaining-notice');
+    const bubbleEl = document.getElementById('sms-live-bubble-text');
+    const senderInput = document.getElementById('sms-sender-id');
+    const previewSender = document.getElementById('preview-sender-label');
+
+    if (charCountEl) charCountEl.textContent = charLen;
+    if (limitEl) limitEl.textContent = isUnicode ? (parts > 1 ? parts * 67 : 70) : (parts > 1 ? parts * 153 : 160);
+    if (partsEl) partsEl.textContent = `${parts} SMS Part${parts > 1 ? 's' : ''}`;
+    if (encodingEl) {
+        encodingEl.textContent = isUnicode ? 'Unicode (UCS-2)' : 'GSM-7 (Standard)';
+        encodingEl.style.color = isUnicode ? '#f59e0b' : '#34d399';
+    }
+    if (remainingEl) {
+        remainingEl.textContent = `${remaining} characters left in part ${parts}`;
+    }
+
+    // Update handset simulator bubble with sample preview
+    if (bubbleEl) {
+        const preview = text
+            .replace(/{name}/gi, 'Chinedu')
+            .replace(/{course}/gi, 'Data Analytics & AI')
+            .replace(/{phone}/gi, '+2348063584517');
+        bubbleEl.textContent = preview || 'Type your message on the left to see the live handset preview...';
+    }
+
+    if (previewSender && senderInput && senderInput.value.trim()) {
+        previewSender.textContent = senderInput.value.trim();
+    }
+}
+
+function handleSmsCsvUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const content = e.target.result;
+        const lines = content.split(/\r?\n/);
+        window.smsCustomRecipients = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            // Ignore header row if contains 'phone' or 'mobile'
+            if (i === 0 && (line.toLowerCase().includes('phone') || line.toLowerCase().includes('mobile'))) continue;
+            
+            const cols = line.split(/[,\t]/);
+            const rawPhone = cols[0] ? cols[0].replace(/["']/g, '').trim() : '';
+            const rawName = cols[1] ? cols[1].replace(/["']/g, '').trim() : 'Student';
+            const rawCourse = cols[2] ? cols[2].replace(/["']/g, '').trim() : 'Data Analytics';
+
+            if (rawPhone.length >= 8) {
+                window.smsCustomRecipients.push({
+                    phone: rawPhone,
+                    name: rawName,
+                    course: rawCourse
+                });
+            }
+        }
+
+        const statsEl = document.getElementById('sms-custom-recipient-stats');
+        if (statsEl) {
+            statsEl.textContent = `✅ Successfully loaded ${window.smsCustomRecipients.length} phone numbers from ${file.name}`;
+            statsEl.style.color = '#34d399';
+        }
+        if (typeof showToast === 'function') showToast(`Loaded ${window.smsCustomRecipients.length} recipients from CSV!`, 'success');
+    };
+    reader.readAsText(file);
+}
+
+function updateSmsRecipientCount() {
+    const textarea = document.getElementById('sms-custom-phones-input');
+    if (!textarea) return;
+    const text = textarea.value.trim();
+    if (!text) return;
+
+    const tokens = text.split(/[\n,;]+/).map(t => t.trim()).filter(t => t.length >= 8);
+    const statsEl = document.getElementById('sms-custom-recipient-stats');
+    if (statsEl) {
+        const total = (window.smsCustomRecipients?.length || 0) + tokens.length;
+        statsEl.textContent = `${total} recipient phone numbers ready`;
+    }
+}
+
+async function dispatchBulkSmsCampaign() {
+    const audienceSel = document.getElementById('sms-target-audience');
+    const bodyInput = document.getElementById('sms-body-input');
+    const senderInput = document.getElementById('sms-sender-id');
+    const channelSel = document.getElementById('sms-route-channel');
+    const broadcastBtn = document.getElementById('btn-broadcast-sms');
+    const resultBox = document.getElementById('sms-broadcast-result-box');
+    const summaryText = document.getElementById('sms-broadcast-summary-text');
+    const timestampEl = document.getElementById('sms-broadcast-timestamp');
+
+    const message = bodyInput ? bodyInput.value.trim() : '';
+    if (!message) {
+        if (typeof showToast === 'function') showToast('Please write an SMS message body first.', 'error');
+        bodyInput?.focus();
+        return;
+    }
+
+    const audience = audienceSel ? audienceSel.value : 'qualified';
+    const senderId = senderInput ? senderInput.value.trim() : 'TekTutors';
+    const channel = channelSel ? channelSel.value : 'generic';
+
+    let payload = {
+        message: message,
+        sender_id: senderId,
+        channel: channel
+    };
+
+    if (audience === 'custom') {
+        let customList = [...(window.smsCustomRecipients || [])];
+        const manualText = document.getElementById('sms-custom-phones-input')?.value.trim() || '';
+        if (manualText) {
+            const manualTokens = manualText.split(/[\n,;]+/).map(t => t.trim()).filter(t => t.length >= 8);
+            manualTokens.forEach(p => customList.push({ phone: p, name: 'Student', course: 'Data Analytics' }));
+        }
+        if (customList.length === 0) {
+            if (typeof showToast === 'function') showToast('Please upload a CSV or paste recipient phone numbers.', 'error');
+            return;
+        }
+        payload.recipients = customList;
+    } else {
+        payload.lead_status_filter = audience;
+    }
+
+    // Confirmation dialog
+    if (!confirm(`Are you sure you want to broadcast this bulk SMS campaign via "${senderId}"?`)) {
+        return;
+    }
+
+    try {
+        if (broadcastBtn) {
+            broadcastBtn.disabled = true;
+            broadcastBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Dispatched to SMS Gateway...';
+        }
+
+        const res = await fetch('/api/sms/broadcast', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.detail || 'Bulk SMS dispatch failed');
+        }
+
+        const summary = data.campaign_summary || {};
+        const total = summary.total || 0;
+        const delivered = summary.delivered || 0;
+        const simulated = summary.simulated || 0;
+        const failed = summary.failed || 0;
+
+        if (resultBox) {
+            resultBox.style.display = 'block';
+            if (timestampEl) timestampEl.textContent = new Date().toLocaleTimeString();
+            if (summaryText) {
+                summaryText.innerHTML = `Dispatched to <strong>${total}</strong> recipients • <span style="color: #34d399;">${delivered} Delivered</span> • <span style="color: #c084fc;">${simulated} Simulated</span> ${failed > 0 ? `• <span style="color: #ef4444;">${failed} Failed</span>` : ''}`;
+            }
+        }
+
+        if (typeof showToast === 'function') {
+            showToast(`Bulk SMS broadcast completed! (${total} contacts processed)`, 'success');
+        }
+
+        fetchSmsBalance();
+        fetchSmsLogs();
+
+    } catch (err) {
+        console.error('Error in bulk SMS broadcast:', err);
+        if (typeof showToast === 'function') showToast(err.message || 'SMS broadcast failed', 'error');
+    } finally {
+        if (broadcastBtn) {
+            broadcastBtn.disabled = false;
+            broadcastBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Launch Bulk SMS Campaign';
+        }
+    }
+}
+
+function openQuickSingleSmsModal() {
+    const modal = document.getElementById('quick-sms-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.getElementById('quick-sms-phone')?.focus();
+    }
+}
+
+function closeQuickSingleSmsModal() {
+    const modal = document.getElementById('quick-sms-modal');
+    if (modal) modal.style.display = 'none';
+    const statusBox = document.getElementById('quick-sms-status');
+    if (statusBox) statusBox.style.display = 'none';
+}
+
+async function handleQuickSingleSmsSubmit(event) {
+    event.preventDefault();
+    const phone = document.getElementById('quick-sms-phone')?.value.trim();
+    const name = document.getElementById('quick-sms-name')?.value.trim() || 'Student';
+    const sender = document.getElementById('quick-sms-sender')?.value.trim() || 'TekTutors';
+    const message = document.getElementById('quick-sms-message')?.value.trim();
+    const btn = document.getElementById('btn-send-quick-sms');
+    const statusBox = document.getElementById('quick-sms-status');
+
+    if (!phone || !message) {
+        if (typeof showToast === 'function') showToast('Please enter both phone number and message.', 'error');
+        return;
+    }
+
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending SMS...';
+        }
+
+        const res = await fetch('/api/sms/send-single', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                phone: phone,
+                name: name,
+                sender_id: sender,
+                message: message
+            })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Single SMS failed');
+
+        if (statusBox) {
+            statusBox.style.display = 'block';
+            statusBox.style.background = 'rgba(16,185,129,0.15)';
+            statusBox.style.color = '#34d399';
+            statusBox.style.border = '1px solid rgba(16,185,129,0.3)';
+            statusBox.innerHTML = `✅ SMS successfully dispatched to ${escapeHtml(phone)} via ${escapeHtml(data.result?.provider || 'Termii')}!`;
+        }
+
+        if (typeof showToast === 'function') showToast('Test SMS sent successfully!', 'success');
+        fetchSmsBalance();
+        fetchSmsLogs();
+
+        setTimeout(() => {
+            closeQuickSingleSmsModal();
+        }, 1500);
+
+    } catch (err) {
+        if (statusBox) {
+            statusBox.style.display = 'block';
+            statusBox.style.background = 'rgba(239,68,68,0.15)';
+            statusBox.style.color = '#f87171';
+            statusBox.style.border = '1px solid rgba(239,68,68,0.3)';
+            statusBox.innerHTML = `❌ Error: ${escapeHtml(err.message)}`;
+        }
+        if (typeof showToast === 'function') showToast(err.message, 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Test SMS Now';
+        }
+    }
+}
+
 
 
 

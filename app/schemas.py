@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, Field, ConfigDict
+from typing import Optional, List, Dict, Any, Union
 import datetime
 
 # --- Webhook Schemas ---
@@ -223,6 +223,7 @@ class SingleEmailSendRequest(BaseModel):
     lead_id: Optional[int] = None
     cta_text: Optional[str] = "Register Online"
     cta_url: Optional[str] = "https://tektutors.com.ng/registration"
+    sender_id: Optional[Union[int, str]] = None
 
 class BroadcastEmailSendRequest(BaseModel):
     template_id: Optional[str] = None
@@ -233,6 +234,7 @@ class BroadcastEmailSendRequest(BaseModel):
     cta_text: Optional[str] = "Enroll Now"
     cta_url: Optional[str] = "https://tektutors.com.ng/registration"
     custom_recipients: Optional[List[Dict[str, Any]]] = None
+    sender_id: Optional[Union[int, str]] = None
 
 class EmailCsvPreviewRequest(BaseModel):
     csv_text: Optional[str] = None
@@ -252,6 +254,104 @@ class EmailCsvCampaignRequest(BaseModel):
     drip_days: Optional[int] = 30  # e.g. 7, 14, 30, or custom days
     cadence: Optional[str] = "smart_spaced"  # smart_spaced | daily | alternate | weekly
     start_date: Optional[str] = "tomorrow_morning"  # tomorrow_morning | immediate | ISO timestamp
+    sender_id: Optional[Union[int, str]] = None
+
+# --- Sender Management & Deliverability Schemas ---
+class EmailSenderBase(BaseModel):
+    name: str
+    email: str
+    reply_to: Optional[str] = None
+    role_title: Optional[str] = "Admissions Advisor"
+    phone_or_whatsapp: Optional[str] = "+234 911 212 0531"
+    avatar_url: Optional[str] = None
+    signature_markdown: Optional[str] = None
+    provider_type: Optional[str] = "system_default"  # system_default, smtp, resend, brevo
+    smtp_host: Optional[str] = None
+    smtp_port: Optional[int] = None
+    smtp_user: Optional[str] = None
+    smtp_password: Optional[str] = None
+    smtp_use_tls: Optional[bool] = False
+    is_default: Optional[bool] = False
+    is_active: Optional[bool] = True
+    daily_send_limit: Optional[int] = 500
+
+class EmailSenderCreate(EmailSenderBase):
+    pass
+
+class EmailSenderUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    reply_to: Optional[str] = None
+    role_title: Optional[str] = None
+    phone_or_whatsapp: Optional[str] = None
+    avatar_url: Optional[str] = None
+    signature_markdown: Optional[str] = None
+    provider_type: Optional[str] = None
+    smtp_host: Optional[str] = None
+    smtp_port: Optional[int] = None
+    smtp_user: Optional[str] = None
+    smtp_password: Optional[str] = None
+    smtp_use_tls: Optional[bool] = None
+    is_default: Optional[bool] = None
+    is_active: Optional[bool] = None
+    daily_send_limit: Optional[int] = None
+
+class EmailSenderResponse(EmailSenderBase):
+    id: int
+    sent_today_count: int = 0
+    total_sent_count: int = 0
+    last_sent_at: Optional[datetime.datetime] = None
+    created_at: Optional[datetime.datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class EmailDeliverabilityCheckRequest(BaseModel):
+    subject: str
+    body: str
+    layout_style: Optional[str] = "clean_letter"
+    is_bulk: Optional[bool] = False
+    sender_email: Optional[str] = None
+
+class EmailDeliverabilityCheckResponse(BaseModel):
+    score: int
+    grade: str
+    predicted_placement: str
+    checklist: List[Dict[str, Any]]
+    passed_count: int
+    total_checks: int
+    spam_triggers_found: List[str]
+
+class BulkSmsRecipient(BaseModel):
+    phone: str
+    name: Optional[str] = None
+    course: Optional[str] = None
+
+class BulkSmsRequest(BaseModel):
+    message: str
+    recipients: Optional[List[BulkSmsRecipient]] = None
+    lead_status_filter: Optional[str] = None  # all, inquiry, qualified, hot, enrolled, cold
+    sender_id: Optional[str] = "TekTutors"
+    channel: Optional[str] = "generic"  # generic, dnd
+
+class SingleSmsRequest(BaseModel):
+    phone: str
+    message: str
+    name: Optional[str] = None
+    sender_id: Optional[str] = "TekTutors"
+    channel: Optional[str] = "generic"
+
+class SmsPreviewRequest(BaseModel):
+    message: str
+    sample_name: Optional[str] = "Chinedu"
+    sample_course: Optional[str] = "Data Analytics"
+
+class SmsPreviewResponse(BaseModel):
+    char_count: int
+    segment_count: int
+    encoding: str
+    chars_remaining_in_segment: int
+    rendered_preview: str
+
 
 
 

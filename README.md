@@ -38,7 +38,13 @@ The system acts as a 24/7 senior admissions advisor: answering technical syllabu
 - Admin dashboard allows scheduling custom or templated emails for future delivery with an interactive queue manager.
 - Background asynchronous worker running in the FastAPI lifespan continuously queries and dispatches due emails with rate limiting.
 
-### 5. Unified Web Control Panel & Simulator
+### 5. Bulk SMS Marketing & Direct Telephony Hub
+- **Termii & Twilio Telephony Route**: Tier-1 DND-compliant SMS delivery in Nigeria with instant alphanumeric sender ID (`TekTutors`).
+- **Segment & Character Telemetry**: Automatic GSM-7 and Unicode part calculation, live character countdown, and handset mockup preview.
+- **Funnel Stage Targeting & CSV Import**: Broadcast to leads by CRM status (`inquiry`, `qualified`, `hot`, `enrolled`) or upload custom customer phone sheets (.csv/.xlsx).
+- **Personalization Engine**: Auto-populates `{name}`, `{course}`, and `{phone}` tags per recipient.
+
+### 6. Unified Web Control Panel & Simulator
 - **Live WhatsApp Simulator**: Test conversations, tools, and qualification behavior directly in the browser without spending Meta API credits.
 - **Human Escalation & Live Takeover**: Toggle "Pause AI" on any active chat to allow human advisors to step in seamlessly.
 - **Lead CRM & Funnel Metrics**: Track leads across `inquiry`, `qualified`, `call_scheduled`, `invoice_sent`, and `enrolled` with one-click CSV export.
@@ -54,15 +60,17 @@ WhatsApp Agent v1/
 │   ├── main.py                  # FastAPI entrypoint, lifespan worker, security middleware
 │   ├── config.py                # Environment configuration & sanitation
 │   ├── database.py              # Async SQLAlchemy engine (PostgreSQL / SQLite)
-│   ├── models.py                # Database models (Lead, Conversation, Message, Course, FAQ, ScheduledEmail)
+│   ├── models.py                # Database models (Lead, Conversation, Message, Course, FAQ, ScheduledEmail, SmsLog)
 │   ├── schemas.py               # Pydantic validation schemas
 │   ├── agent.py                 # LangChain Groq agent & prompt engineering
 │   ├── tools.py                 # Core tools (course search, lead capture, schedule call, schedule email)
 │   ├── email_service.py         # 5-Day Drip sequence, schedule parser, worker dispatcher, Gmail SMTP
+│   ├── sms_service.py           # Bulk SMS marketing, Termii Tier-1 route, DND delivery, Twilio & admin alerts
 │   ├── cache.py                 # Fast-path cache routing & non-blocking cost telemetry
 │   ├── whatsapp.py              # Meta Cloud API Graph v20.0 client
 │   ├── webhook.py               # Webhook verification & decoupled async worker
 │   └── dashboard_routes.py      # Admin control panel REST endpoints
+
 ├── templates/
 │   └── dashboard.html           # Glassmorphism Admin Dashboard UI
 ├── static/

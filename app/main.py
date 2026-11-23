@@ -21,7 +21,7 @@ from sqlalchemy import select
 
 from app.config import settings
 from app.database import engine, Base, AsyncSessionLocal
-from app.models import Course, FAQ, SystemConfig, EmailLog, Lead, ScheduledEmail, WhatsAppLog, ScheduledWhatsAppMessage
+from app.models import Course, FAQ, SystemConfig, EmailLog, Lead, ScheduledEmail, WhatsAppLog, ScheduledWhatsAppMessage, EmailSender
 from app.data import SEED_COURSES, SEED_FAQS
 from app.webhook import router as webhook_router
 from app.dashboard_routes import router as dashboard_router
@@ -72,6 +72,26 @@ async def init_db_and_seed():
                 if "lead_score" not in existing_lead_cols:
                     await conn.execute(text("ALTER TABLE leads ADD COLUMN lead_score INTEGER DEFAULT 50"))
 
+                email_log_cols_res = await conn.execute(text("PRAGMA table_info(email_logs)"))
+                existing_email_log_cols = {row[1] for row in email_log_cols_res.fetchall()}
+                for col, col_type in [
+                    ("sender_id", "INTEGER"),
+                    ("sender_name", "VARCHAR(100)"),
+                    ("sender_email", "VARCHAR(120)")
+                ]:
+                    if col not in existing_email_log_cols:
+                        await conn.execute(text(f"ALTER TABLE email_logs ADD COLUMN {col} {col_type}"))
+
+                sched_email_cols_res = await conn.execute(text("PRAGMA table_info(scheduled_emails)"))
+                existing_sched_cols = {row[1] for row in sched_email_cols_res.fetchall()}
+                for col, col_type in [
+                    ("sender_id", "INTEGER"),
+                    ("sender_name", "VARCHAR(100)"),
+                    ("sender_email", "VARCHAR(120)")
+                ]:
+                    if col not in existing_sched_cols:
+                        await conn.execute(text(f"ALTER TABLE scheduled_emails ADD COLUMN {col} {col_type}"))
+
             elif dialect_name == "postgresql":
                 # PostgreSQL natively supports ADD COLUMN IF NOT EXISTS without aborting transactions
                 for col, col_type in [
@@ -95,6 +115,12 @@ async def init_db_and_seed():
                     await conn.execute(text(f"ALTER TABLE system_config ADD COLUMN IF NOT EXISTS {col} {col_type}"))
 
                 await conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS lead_score INTEGER DEFAULT 50"))
+                await conn.execute(text("ALTER TABLE email_logs ADD COLUMN IF NOT EXISTS sender_id INTEGER"))
+                await conn.execute(text("ALTER TABLE email_logs ADD COLUMN IF NOT EXISTS sender_name VARCHAR(100)"))
+                await conn.execute(text("ALTER TABLE email_logs ADD COLUMN IF NOT EXISTS sender_email VARCHAR(120)"))
+                await conn.execute(text("ALTER TABLE scheduled_emails ADD COLUMN IF NOT EXISTS sender_id INTEGER"))
+                await conn.execute(text("ALTER TABLE scheduled_emails ADD COLUMN IF NOT EXISTS sender_name VARCHAR(100)"))
+                await conn.execute(text("ALTER TABLE scheduled_emails ADD COLUMN IF NOT EXISTS sender_email VARCHAR(120)"))
 
     except Exception as e:
         logger.error(f"Error creating or updating database schema: {e}", exc_info=True)
@@ -118,6 +144,98 @@ async def init_db_and_seed():
                                 ec.duration_weeks = c_data["duration_weeks"]
                                 ec.description = c_data["description"]
                 await db.commit()
+
+            # Seed Default Email Senders if none exist
+            sender_res = await db.execute(select(EmailSender))
+            existing_senders = sender_res.scalars().all()
+            existing_names = {s.name.lower() for s in existing_senders}
+            
+            default_senders_to_seed = [
+                {
+                    "name": "Tara from TekTutors",
+                    "email": settings.SMTP_FROM_EMAIL or "tektutorsng@gmail.com",
+                    "reply_to": settings.SMTP_FROM_EMAIL or "tektutorsng@gmail.com",
+                    "role_title": "Lead Admissions Advisor",
+                    "phone_or_whatsapp": "+234 911 212 0531",
+                    "signature_markdown": "Best regards,\n**Tara Owolabi**\nLead Admissions Advisor | TekTutors Academy\nWhatsApp: +234 911 212 0531\nWebsite: https://tektutors.com.ng",
+                    "provider_type": "system_default",
+                    "is_default": len(existing_senders) == 0,
+                    "is_active": True,
+                    "daily_send_limit": 500
+                },
+                {
+                    "name": "Charles from TekTutors",
+                    "email": "charles@tektutors.com.ng",
+                    "reply_to": settings.SMTP_FROM_EMAIL or "tektutorsng@gmail.com",
+                    "role_title": "Founder & Senior Data Mentor",
+                    "phone_or_whatsapp": "+234 911 212 0531",
+                    "signature_markdown": "To your accelerated career,\n**Charles Owolabi**\nFounder & Lead Mentor | TekTutors Academy\nDirect Mentorship & Portfolio Reviews\nWebsite: https://tektutors.com.ng",
+                    "provider_type": "system_default",
+                    "is_default": False,
+                    "is_active": True,
+                    "daily_send_limit": 500
+                },
+                {
+                    "name": "Ben from TekTutors",
+                    "email": "ben@tektutors.com.ng",
+                    "reply_to": settings.SMTP_FROM_EMAIL or "tektutorsng@gmail.com",
+                    "role_title": "Academic Success & Career Advisor",
+                    "phone_or_whatsapp": "+234 911 212 0531",
+                    "signature_markdown": "Warm regards,\n**Ben Okon**\nAcademic Success & Career Advisor | TekTutors Academy\nWhatsApp: +234 911 212 0531\nWebsite: https://tektutors.com.ng",
+                    "provider_type": "system_default",
+                    "is_default": False,
+                    "is_active": True,
+                    "daily_send_limit": 500
+                },
+                {
+                    "name": "Agnes from TekTutors",
+                    "email": "agnes@tektutors.com.ng",
+                    "reply_to": settings.SMTP_FROM_EMAIL or "tektutorsng@gmail.com",
+                    "role_title": "Senior Student Admissions Advisor",
+                    "phone_or_whatsapp": "+234 911 212 0531",
+                    "signature_markdown": "Sincerely,\n**Agnes Adebayo**\nStudent Admissions Advisor | TekTutors Academy\nWhatsApp: +234 911 212 0531\nWebsite: https://tektutors.com.ng",
+                    "provider_type": "system_default",
+                    "is_default": False,
+                    "is_active": True,
+                    "daily_send_limit": 500
+                },
+                {
+                    "name": "TekTutors Admissions",
+                    "email": "admissions@tektutors.com.ng",
+                    "reply_to": settings.SMTP_FROM_EMAIL or "tektutorsng@gmail.com",
+                    "role_title": "Admissions & Enrollments Desk",
+                    "phone_or_whatsapp": "+234 911 212 0531",
+                    "signature_markdown": "Warm regards,\n**TekTutors Admissions Office**\nPractical 1-on-1 Mentorship Academy\nLagos, Nigeria | Global Remote Mentorship\nWhatsApp: +234 911 212 0531",
+                    "provider_type": "system_default",
+                    "is_default": False,
+                    "is_active": True,
+                    "daily_send_limit": 1000
+                },
+                {
+                    "name": "Academic Mentorship Team",
+                    "email": "mentors@tektutors.com.ng",
+                    "reply_to": settings.SMTP_FROM_EMAIL or "tektutorsng@gmail.com",
+                    "role_title": "Senior Industry Practitioners",
+                    "phone_or_whatsapp": "+234 911 212 0531",
+                    "signature_markdown": "Regards,\n**TekTutors Academic Faculty**\nPractical Data Analytics & AI Mentorship\nDirect 1-on-1 Code & Portfolio Reviews",
+                    "provider_type": "system_default",
+                    "is_default": False,
+                    "is_active": True,
+                    "daily_send_limit": 500
+                }
+            ]
+
+            added_any = False
+            for s_info in default_senders_to_seed:
+                # If this sender not yet present in existing senders
+                name_key = s_info["name"].lower()
+                if not any(name_key in en or en in name_key for en in existing_names):
+                    db.add(EmailSender(**s_info))
+                    added_any = True
+
+            if added_any:
+                await db.commit()
+                logger.info("Seeded TekTutors multi-sender identities: Charles, Ben, Agnes, Tara, Admissions.")
 
             # Seed FAQs
             faq_res = await db.execute(select(FAQ))
@@ -165,14 +283,17 @@ async def lifespan(app: FastAPI):
         logger.error(f"Error during startup init_db_and_seed: {e}", exc_info=True)
 
     from app.email_service import start_scheduled_email_worker, stop_scheduled_email_worker, sync_email_branding_from_db
+    from app.whatsapp_sequence import start_scheduled_whatsapp_worker, stop_scheduled_whatsapp_worker
     try:
         await sync_email_branding_from_db()
     except Exception as e:
         logger.warning(f"Note: Email branding cache sync skipped: {e}")
     start_scheduled_email_worker()
+    start_scheduled_whatsapp_worker()
 
     yield
 
+    stop_scheduled_whatsapp_worker()
     stop_scheduled_email_worker()
     logger.info("Shutting down TekTutors Server...")
 

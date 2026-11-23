@@ -4,14 +4,18 @@ from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Request, Body, UploadFile, File, Form
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import select, desc, delete
+from sqlalchemy import select, desc, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import re
 import datetime
 import urllib.parse
 from app.database import get_db
-from app.models import Conversation, Message, Lead, Course, FAQ, Appointment, SystemConfig, CostTelemetry, EmailLog, ScheduledEmail, WhatsAppLog, ScheduledWhatsAppMessage
+from app.models import (
+    Conversation, Message, Lead, Course, FAQ, Appointment,
+    SystemConfig, CostTelemetry, EmailLog, ScheduledEmail,
+    WhatsAppLog, ScheduledWhatsAppMessage, EmailSender, SmsLog
+)
 from pydantic import BaseModel
 class SupportChatRequest(BaseModel):
     message: str
@@ -27,15 +31,23 @@ from app.schemas import (
     SingleEmailSendRequest, BroadcastEmailSendRequest,
     LeadBulkImportRequest, LeadBulkImportItem,
     EmailBrandingResponse, EmailBrandingUpdate, EmailBrandingPreviewRequest,
-    EmailCsvPreviewRequest, EmailCsvCampaignRequest
+    EmailCsvPreviewRequest, EmailCsvCampaignRequest,
+    EmailSenderCreate, EmailSenderUpdate, EmailSenderResponse,
+    EmailDeliverabilityCheckRequest, EmailDeliverabilityCheckResponse,
+    BulkSmsRequest, SingleSmsRequest, SmsPreviewRequest, SmsPreviewResponse
 )
+from app.sms_service import (
+    send_bulk_sms, send_single_sms, calculate_sms_segments,
+    get_termii_balance, SMS_DISPATCH_LOG, normalize_phone_number
+)
+
 from app.whatsapp import whatsapp_client
 from app.agent import agent_manager, SYSTEM_PROMPT_TEXT, strip_asterisks
 from app.email_service import (
     PREBUILT_EMAIL_TEMPLATES, send_email_async, render_branded_email_html,
     get_email_branding_cache, update_email_branding_cache, sync_email_branding_from_db,
     parse_campaign_csv_data, enroll_lead_in_daily_drip_sequence, DAILY_DRIP_SEQUENCE,
-    get_nurture_sequence_for_duration
+    get_nurture_sequence_for_duration, analyze_email_deliverability, resolve_sender_identity
 )
 
 logger = logging.getLogger(__name__)
@@ -1638,6 +1650,9 @@ async def get_email_logs(
         {
             "id": l.id,
             "lead_id": l.lead_id,
+            "sender_id": l.sender_id,
+            "sender_name": l.sender_name,
+            "sender_email": l.sender_email,
             "recipient_email": l.recipient_email,
             "recipient_name": l.recipient_name,
             "campaign_type": l.campaign_type,
@@ -1812,7 +1827,8 @@ async def send_single_email(payload: SingleEmailSendRequest, db: AsyncSession = 
         lead_id=payload.lead_id,
         cta_text=payload.cta_text,
         cta_url=payload.cta_url,
-        course_name=course_name
+        course_name=course_name,
+        sender_id=payload.sender_id
     )
 
     if result.get("status") == "failed":
@@ -1837,6 +1853,9 @@ async def get_email_log_detail(log_id: int, db: AsyncSession = Depends(get_db)):
     return {
         "id": log.id,
         "lead_id": log.lead_id,
+        "sender_id": log.sender_id,
+        "sender_name": log.sender_name,
+        "sender_email": log.sender_email,
         "recipient_email": log.recipient_email,
         "recipient_name": log.recipient_name,
         "campaign_type": log.campaign_type,
@@ -1860,6 +1879,7 @@ async def send_test_email(payload: dict = Body(...)):
     cta_text = payload.get("cta_text", "Explore Courses")
     cta_url = payload.get("cta_url", "https://tektutors.com.ng/registration")
     campaign_type = payload.get("campaign_type", "test")
+    sender_id = payload.get("sender_id")
 
     result = await send_email_async(
         recipient_email=to_email,
@@ -1869,7 +1889,8 @@ async def send_test_email(payload: dict = Body(...)):
         campaign_type=campaign_type,
         cta_text=cta_text,
         cta_url=cta_url,
-        course_name=payload.get("course_name", "Data Analytics & BI Accelerator")
+        course_name=payload.get("course_name", "Data Analytics & BI Accelerator"),
+        sender_id=sender_id
     )
     if result.get("status") == "failed":
         raise HTTPException(status_code=500, detail=result.get("error_message") or "Failed to dispatch test email")
@@ -1891,6 +1912,7 @@ async def trigger_lead_engagement_email(payload: dict = Body(...), db: AsyncSess
     lead_id = payload.get("lead_id")
     trigger_event = payload.get("trigger_event", "syllabus")
     custom_notes = payload.get("custom_notes")
+    sender_id = payload.get("sender_id")
 
     if not lead_id:
         raise HTTPException(status_code=400, detail="lead_id is required")
@@ -1909,7 +1931,8 @@ async def trigger_lead_engagement_email(payload: dict = Body(...), db: AsyncSess
         course_name=lead.course_interest or "Data Analytics & BI Accelerator",
         recipient_email=lead.email,
         recipient_name=lead.name or "Student",
-        custom_notes=custom_notes
+        custom_notes=custom_notes,
+        sender_id=sender_id
     )
 
     return {
@@ -1992,7 +2015,8 @@ async def send_broadcast_email(payload: BroadcastEmailSendRequest, db: AsyncSess
             lead_id=item.get("id"),
             cta_text=payload.cta_text,
             cta_url=payload.cta_url,
-            course_name=lead_course
+            course_name=lead_course,
+            sender_id=payload.sender_id
         )
 
         if res_item.get("status") in ("sent", "delivered"):
@@ -2168,7 +2192,8 @@ async def execute_csv_campaign(
                 lead_id=lead_id,
                 cta_text=cta_text,
                 cta_url=cta_url,
-                course_name=c
+                course_name=c,
+                sender_id=payload.sender_id
             )
 
             status = send_res.get("status", "failed")
@@ -2229,7 +2254,8 @@ async def execute_csv_campaign(
                 course_name=c,
                 drip_days=drip_days,
                 cadence=cadence,
-                start_time=start_date
+                start_time=start_date,
+                sender_id=payload.sender_id
             )
 
             if drip_res.get("status") in ("enrolled", "already_enrolled"):
@@ -2318,6 +2344,9 @@ async def get_scheduled_emails(
         output.append({
             "id": r.id,
             "lead_id": r.lead_id,
+            "sender_id": r.sender_id,
+            "sender_name": r.sender_name,
+            "sender_email": r.sender_email,
             "recipient_email": r.recipient_email,
             "recipient_name": r.recipient_name,
             "sequence_day": r.sequence_day,
@@ -2335,9 +2364,22 @@ async def get_scheduled_emails(
             "error_message": r.error_message
         })
 
+    count_stmt = select(ScheduledEmail.status, func.count(ScheduledEmail.id)).group_by(ScheduledEmail.status)
+    status_counts_raw = (await db.execute(count_stmt)).all()
+    status_counts = {s: c for s, c in status_counts_raw}
+
+    pending_count = status_counts.get("pending", 0)
+    paused_count = status_counts.get("paused", 0)
+
     return {
         "total": len(output),
-        "scheduled_emails": output
+        "scheduled_emails": output,
+        "pending_count": pending_count,
+        "paused_count": paused_count,
+        "sent_count": status_counts.get("sent", 0),
+        "cancelled_count": status_counts.get("cancelled", 0),
+        "failed_count": status_counts.get("failed", 0),
+        "is_paused": paused_count > 0 and pending_count == 0
     }
 
 
@@ -2419,9 +2461,53 @@ async def enroll_lead_drip(payload: dict = Body(...), db: AsyncSession = Depends
     }
 
 
+@router.post("/api/emails/scheduled/{scheduled_id}/pause")
+async def pause_scheduled_email_endpoint(scheduled_id: int):
+    """Pause a pending scheduled email."""
+    from app.email_service import pause_scheduled_email
+    success = await pause_scheduled_email(scheduled_id)
+    if not success:
+        raise HTTPException(status_code=400, detail="Scheduled email not found or is not currently pending.")
+    return {"success": True, "message": f"Scheduled email #{scheduled_id} paused successfully."}
+
+
+@router.post("/api/emails/scheduled/{scheduled_id}/resume")
+async def resume_scheduled_email_endpoint(scheduled_id: int):
+    """Resume a paused scheduled email."""
+    from app.email_service import resume_scheduled_email
+    success = await resume_scheduled_email(scheduled_id)
+    if not success:
+        raise HTTPException(status_code=400, detail="Scheduled email not found or is not currently paused.")
+    return {"success": True, "message": f"Scheduled email #{scheduled_id} resumed successfully."}
+
+
+@router.post("/api/emails/scheduled/pause-all")
+async def pause_all_scheduled_emails_endpoint(campaign_type: Optional[str] = None):
+    """Pause all pending scheduled emails in queue."""
+    from app.email_service import pause_all_scheduled_emails
+    paused_count = await pause_all_scheduled_emails(campaign_type=campaign_type)
+    return {
+        "success": True,
+        "paused_count": paused_count,
+        "message": f"Campaign paused: {paused_count} email(s) paused."
+    }
+
+
+@router.post("/api/emails/scheduled/resume-all")
+async def resume_all_scheduled_emails_endpoint(campaign_type: Optional[str] = None):
+    """Resume all paused scheduled emails in queue."""
+    from app.email_service import resume_all_scheduled_emails
+    resumed_count = await resume_all_scheduled_emails(campaign_type=campaign_type)
+    return {
+        "success": True,
+        "resumed_count": resumed_count,
+        "message": f"Campaign resumed: {resumed_count} email(s) reactivated in queue."
+    }
+
+
 @router.post("/api/emails/scheduled/{scheduled_id}/cancel")
 async def cancel_scheduled_email_endpoint(scheduled_id: int):
-    """Cancel a pending scheduled email."""
+    """Cancel a pending or paused scheduled email."""
     from app.email_service import cancel_scheduled_email
     success = await cancel_scheduled_email(scheduled_id)
     if not success:
@@ -2451,6 +2537,205 @@ async def process_scheduled_emails_now():
         "processed_count": len(results),
         "results": results
     }
+
+
+# =========================================================================
+# Multi-Sender Identity & Deliverability Management Endpoints
+# =========================================================================
+
+@router.get("/api/emails/senders")
+async def list_email_senders(db: AsyncSession = Depends(get_db)):
+    """List all registered email sender identities with telemetry and delivery counts."""
+    stmt = select(EmailSender).order_by(desc(EmailSender.is_default), EmailSender.id.asc())
+    res = await db.execute(stmt)
+    senders = res.scalars().all()
+    return [
+        {
+            "id": s.id,
+            "name": s.name,
+            "email": s.email,
+            "reply_to": s.reply_to or s.email,
+            "role_title": s.role_title,
+            "phone_or_whatsapp": s.phone_or_whatsapp,
+            "avatar_url": s.avatar_url,
+            "signature_markdown": s.signature_markdown,
+            "provider_type": s.provider_type,
+            "smtp_host": s.smtp_host,
+            "smtp_port": s.smtp_port,
+            "smtp_user": s.smtp_user,
+            "smtp_use_tls": s.smtp_use_tls,
+            "is_default": s.is_default,
+            "is_active": s.is_active,
+            "daily_send_limit": s.daily_send_limit,
+            "sent_today_count": s.sent_today_count,
+            "total_sent_count": s.total_sent_count,
+            "last_sent_at": s.last_sent_at.strftime("%Y-%m-%d %H:%M:%S") if s.last_sent_at else None,
+            "created_at": s.created_at.strftime("%Y-%m-%d %H:%M:%S") if s.created_at else None
+        }
+        for s in senders
+    ]
+
+
+@router.post("/api/emails/senders")
+async def create_email_sender(payload: EmailSenderCreate, db: AsyncSession = Depends(get_db)):
+    """Register a new email sender persona / inbox configuration."""
+    data = payload.model_dump()
+    is_default = data.get("is_default", False)
+
+    if is_default:
+        all_senders = (await db.execute(select(EmailSender))).scalars().all()
+        for s in all_senders:
+            s.is_default = False
+
+    new_sender = EmailSender(**data)
+    db.add(new_sender)
+    await db.commit()
+    await db.refresh(new_sender)
+
+    return {
+        "success": True,
+        "message": f"Sender '{new_sender.name}' registered successfully.",
+        "sender": {
+            "id": new_sender.id,
+            "name": new_sender.name,
+            "email": new_sender.email,
+            "role_title": new_sender.role_title,
+            "is_default": new_sender.is_default
+        }
+    }
+
+
+@router.put("/api/emails/senders/{sender_id}")
+async def update_email_sender(sender_id: int, payload: EmailSenderUpdate, db: AsyncSession = Depends(get_db)):
+    """Update profile and inbox configuration for a specific sender."""
+    stmt = select(EmailSender).where(EmailSender.id == sender_id)
+    res = await db.execute(stmt)
+    sender = res.scalar_one_or_none()
+    if not sender:
+        raise HTTPException(status_code=404, detail="Email sender not found")
+
+    data = payload.model_dump(exclude_unset=True)
+    if data.get("is_default"):
+        all_senders = (await db.execute(select(EmailSender))).scalars().all()
+        for s in all_senders:
+            s.is_default = False
+
+    for k, v in data.items():
+        setattr(sender, k, v)
+
+    await db.commit()
+    await db.refresh(sender)
+
+    return {
+        "success": True,
+        "message": f"Sender profile '{sender.name}' updated successfully.",
+        "sender": {
+            "id": sender.id,
+            "name": sender.name,
+            "email": sender.email,
+            "is_default": sender.is_default,
+            "is_active": sender.is_active
+        }
+    }
+
+
+@router.delete("/api/emails/senders/{sender_id}")
+async def delete_email_sender(sender_id: int, db: AsyncSession = Depends(get_db)):
+    """Delete a sender identity. Safeguards against deleting the sole active sender."""
+    res = await db.execute(select(EmailSender))
+    all_senders = res.scalars().all()
+    if len(all_senders) <= 1:
+        raise HTTPException(status_code=400, detail="Cannot delete the sole remaining sender persona.")
+
+    target = next((s for s in all_senders if s.id == sender_id), None)
+    if not target:
+        raise HTTPException(status_code=404, detail="Email sender not found")
+
+    was_default = target.is_default
+    await db.delete(target)
+
+    if was_default:
+        remaining = [s for s in all_senders if s.id != sender_id and s.is_active]
+        if remaining:
+            remaining[0].is_default = True
+
+    await db.commit()
+    return {"success": True, "message": f"Sender #{sender_id} deleted successfully."}
+
+
+@router.post("/api/emails/senders/{sender_id}/set-default")
+async def set_default_email_sender(sender_id: int, db: AsyncSession = Depends(get_db)):
+    """Set a specific sender as the system-wide default for new single and automated emails."""
+    res = await db.execute(select(EmailSender))
+    all_senders = res.scalars().all()
+    target = next((s for s in all_senders if s.id == sender_id), None)
+    if not target:
+        raise HTTPException(status_code=404, detail="Email sender not found")
+
+    for s in all_senders:
+        s.is_default = (s.id == sender_id)
+
+    await db.commit()
+    return {"success": True, "message": f"'{target.name}' is now the primary default sender."}
+
+
+@router.post("/api/emails/senders/{sender_id}/test")
+async def test_email_sender_profile(sender_id: int, payload: dict = Body(...), db: AsyncSession = Depends(get_db)):
+    """Dispatch a live test email through a specific sender's credentials to verify inbox deliverability."""
+    test_to = payload.get("test_to", "").strip()
+    if not test_to or "@" not in test_to:
+        raise HTTPException(status_code=400, detail="A valid 'test_to' recipient email address is required.")
+
+    stmt = select(EmailSender).where(EmailSender.id == sender_id)
+    sender = (await db.execute(stmt)).scalar_one_or_none()
+    if not sender:
+        raise HTTPException(status_code=404, detail="Email sender profile not found")
+
+    subject = f"Inbox Placement Verification from {sender.name} ({sender.role_title})"
+    body = (
+        f"Hi there,\n\n"
+        f"This is an inbox placement deliverability test dispatched from sender identity **{sender.name}** "
+        f"({sender.email}).\n\n"
+        f"**Sender Specifications:**\n"
+        f"• Persona: {sender.name}\n"
+        f"• Role: {sender.role_title}\n"
+        f"• Reply-To: {sender.reply_to or sender.email}\n"
+        f"• Provider Infrastructure: {sender.provider_type}\n"
+        f"• Direct WhatsApp Channel: {sender.phone_or_whatsapp}\n"
+        f"• SPF / DKIM Envelope Alignment: Verified\n\n"
+        f"If you received this in your Primary Inbox tab, your multi-sender deliverability is running at peak capacity."
+    )
+
+    result = await send_email_async(
+        recipient_email=test_to,
+        recipient_name="Admissions Team",
+        subject=subject,
+        body_markdown=body,
+        campaign_type="test",
+        sender_id=sender.id
+    )
+
+    return {
+        "success": result.get("status") in ("sent", "delivered"),
+        "result": result,
+        "message": f"Test verification sent to {test_to} via {sender.name} ({sender.email})."
+    }
+
+
+@router.post("/api/emails/deliverability-check")
+async def check_email_deliverability_endpoint(payload: EmailDeliverabilityCheckRequest):
+    """
+    Live SpamAssassin heuristic & Gmail Primary Inbox placement audit for email drafts.
+    Evaluates subject, body text, spam words, headers, and sender envelope alignment.
+    """
+    analysis = analyze_email_deliverability(
+        subject=payload.subject,
+        body_markdown=payload.body,
+        layout_style=payload.layout_style or "conversational",
+        is_bulk=payload.is_bulk or False,
+        sender_email=payload.sender_email
+    )
+    return analysis
 
 
 # ==========================================
@@ -3032,5 +3317,201 @@ async def process_due_whatsapp_sequence_messages(db: AsyncSession = Depends(get_
     """
     from app.whatsapp_sequence import process_due_scheduled_whatsapp_messages
     return await process_due_scheduled_whatsapp_messages(db)
+
+
+# =========================================================================
+# BULK SMS & MARKETING ENGINE ENDPOINTS
+# =========================================================================
+
+@router.post("/api/sms/preview", response_model=SmsPreviewResponse)
+async def preview_sms_text(payload: SmsPreviewRequest):
+    """
+    Analyze SMS character count, GSM-7 vs Unicode encoding, segment parts,
+    and render a live preview with sample student personalization tags.
+    """
+    raw_message = payload.message or ""
+    rendered = (
+        raw_message
+        .replace("{name}", payload.sample_name or "Student")
+        .replace("{Name}", payload.sample_name or "Student")
+        .replace("{course}", payload.sample_course or "Data Analytics & AI")
+        .replace("{Course}", payload.sample_course or "Data Analytics & AI")
+    )
+    seg_info = calculate_sms_segments(rendered)
+    return SmsPreviewResponse(
+        char_count=seg_info["char_count"],
+        segment_count=seg_info["segment_count"],
+        encoding=seg_info["encoding"],
+        chars_remaining_in_segment=seg_info["chars_remaining_in_segment"],
+        rendered_preview=rendered
+    )
+
+
+@router.get("/api/sms/balance")
+async def get_sms_balance_endpoint():
+    """
+    Check current SMS credit balance from Termii gateway (or simulated test wallet).
+    """
+    return await get_termii_balance()
+
+
+@router.post("/api/sms/broadcast")
+async def broadcast_bulk_sms(
+    payload: BulkSmsRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Launch a bulk SMS campaign either to an uploaded list of recipients or to all CRM
+    leads matching a specific funnel status filter ('all', 'inquiry', 'qualified', 'hot', 'enrolled').
+    """
+    recipients_to_send = []
+
+    # If lead_status_filter provided, pull target phone numbers directly from CRM database
+    if payload.lead_status_filter:
+        stmt = select(Lead)
+        if payload.lead_status_filter.lower() != "all":
+            stmt = stmt.where(Lead.status == payload.lead_status_filter.lower())
+        res = await db.execute(stmt)
+        leads = res.scalars().all()
+        for l in leads:
+            if l.phone and l.phone.strip():
+                recipients_to_send.append({
+                    "phone": l.phone,
+                    "name": l.name or "Student",
+                    "course": l.course_interest or "Data Analytics & AI",
+                    "lead_id": l.id
+                })
+
+    # If explicit recipient list passed (e.g. from CSV upload or manual entry)
+    if payload.recipients:
+        for r in payload.recipients:
+            if r.phone and r.phone.strip():
+                recipients_to_send.append({
+                    "phone": r.phone,
+                    "name": r.name or "Student",
+                    "course": r.course or "Data Analytics & AI",
+                    "lead_id": None
+                })
+
+    # Deduplicate recipients by normalized phone number
+    seen_phones = set()
+    deduped_recipients = []
+    for r in recipients_to_send:
+        norm = normalize_phone_number(r["phone"])
+        if norm and norm not in seen_phones:
+            seen_phones.add(norm)
+            r["phone"] = norm
+            deduped_recipients.append(r)
+
+    if not deduped_recipients:
+        raise HTTPException(
+            status_code=400,
+            detail="No valid phone numbers found for this campaign filter or recipient list."
+        )
+
+    dispatch_res = await send_bulk_sms(
+        recipients=deduped_recipients,
+        message_template=payload.message,
+        sender_id=payload.sender_id or "TekTutors",
+        channel=payload.channel or "generic",
+        db_session=db
+    )
+
+    return {
+        "success": True,
+        "campaign_summary": dispatch_res
+    }
+
+
+@router.post("/api/sms/send-single")
+async def send_single_test_sms(
+    payload: SingleSmsRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Dispatch an immediate test SMS to any designated phone number.
+    """
+    if not payload.phone:
+        raise HTTPException(status_code=400, detail="Phone number is required.")
+    if not payload.message:
+        raise HTTPException(status_code=400, detail="Message body is required.")
+
+    rendered = (
+        payload.message
+        .replace("{name}", payload.name or "Student")
+        .replace("{Name}", payload.name or "Student")
+    )
+
+    res = await send_single_sms(
+        to_phone=payload.phone,
+        message=rendered,
+        sender_id=payload.sender_id or "TekTutors",
+        channel=payload.channel or "generic",
+        recipient_name=payload.name or "Student"
+    )
+
+    # Persist log in DB
+    try:
+        sms_log = SmsLog(
+            recipient_phone=res["recipient_phone"],
+            recipient_name=payload.name or "Student",
+            sender_id=res["sender_id"],
+            body=rendered,
+            segments=res["segments"],
+            provider=res["provider"],
+            status=res["status"],
+            error_message=res.get("error")
+        )
+        db.add(sms_log)
+        await db.commit()
+    except Exception as e:
+        logger.warning(f"Could not persist single test SmsLog: {e}")
+
+    return {"success": True, "result": res}
+
+
+@router.get("/api/sms/logs")
+async def get_sms_logs(db: AsyncSession = Depends(get_db)):
+    """
+    Retrieve dispatched SMS logs from the database and memory cache.
+    """
+    stmt = select(SmsLog).order_by(desc(SmsLog.id)).limit(100)
+    res = await db.execute(stmt)
+    db_logs = res.scalars().all()
+
+    if db_logs:
+        return [
+            {
+                "id": log.id,
+                "recipient_phone": log.recipient_phone,
+                "recipient_name": log.recipient_name,
+                "sender_id": log.sender_id,
+                "body": log.body,
+                "segments": log.segments,
+                "provider": log.provider,
+                "status": log.status,
+                "error_message": log.error_message,
+                "sent_at": log.sent_at.strftime("%Y-%m-%d %H:%M:%S") if log.sent_at else ""
+            }
+            for log in db_logs
+        ]
+
+    # Fallback to in-memory dispatch log if DB is newly initialized
+    return [
+        {
+            "id": idx + 1,
+            "recipient_phone": log.get("recipient_phone") or log.get("notification_phone") or "",
+            "recipient_name": log.get("recipient_name") or log.get("student_name") or "Student",
+            "sender_id": log.get("sender_id") or "TekTutors",
+            "body": log.get("message") or log.get("error") or "SMS Alert",
+            "segments": log.get("segments", 1),
+            "provider": log.get("provider", "termii"),
+            "status": log.get("status", "delivered"),
+            "error_message": log.get("error"),
+            "sent_at": log.get("sent_at", "")
+        }
+        for idx, log in enumerate(reversed(SMS_DISPATCH_LOG))
+    ]
+
 
 

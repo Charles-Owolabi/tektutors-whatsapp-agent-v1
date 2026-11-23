@@ -4458,5 +4458,300 @@ textarea.form-control {
     }
 }
 
+/* =========================================================================
+   UI/UX POLISH & CONFLICT-FREE DESIGN SYSTEM REFINEMENTS
+   ========================================================================= */
+
+/* Universal Modal Overlay with Apple-grade Blur & Animation */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(3, 6, 16, 0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000 !important;
+    padding: 1.25rem;
+    animation: modalScaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalScaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-content.glass-card {
+    background: #090f23 !important;
+    background-image: radial-gradient(circle at 100% 0%, rgba(235, 103, 17, 0.12) 0%, transparent 40%),
+                      radial-gradient(circle at 0% 100%, rgba(27, 36, 117, 0.25) 0%, transparent 50%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+    border-radius: 16px !important;
+}
+
+/* Sidebar Section Headers */
+.nav-section-label {
+    font-size: 0.64rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.08em !important;
+    color: #64748b !important;
+    padding: 0.65rem 0.6rem 0.2rem 0.6rem !important;
+    text-transform: uppercase !important;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.nav-section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* Nav Button Refinements */
+.nav-btn {
+    padding: 0.6rem 0.85rem !important;
+    border-radius: 10px !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    color: #cbd5e1 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.65rem !important;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    position: relative;
+    border: 1px solid transparent !important;
+}
+
+.nav-btn:hover {
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    transform: translateX(2px);
+}
+
+.nav-btn.active {
+    background: linear-gradient(135deg, rgba(235, 103, 17, 0.18), rgba(27, 36, 117, 0.35)) !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+    border: 1px solid rgba(235, 103, 17, 0.4) !important;
+    box-shadow: 0 4px 16px rgba(235, 103, 17, 0.15) !important;
+}
+
+.nav-btn.active i {
+    color: #ff8c3a !important;
+    transform: scale(1.08);
+}
+
+/* Strategic Channel Badge System */
+.badge-whatsapp {
+    background: rgba(37, 211, 102, 0.18) !important;
+    color: #25D366 !important;
+    border: 1px solid rgba(37, 211, 102, 0.35) !important;
+    font-size: 0.64rem !important;
+    font-weight: 800 !important;
+    padding: 2px 6px !important;
+    border-radius: 12px !important;
+}
+
+.badge-sky {
+    background: rgba(56, 189, 248, 0.18) !important;
+    color: #38bdf8 !important;
+    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+    font-size: 0.64rem !important;
+    font-weight: 800 !important;
+    padding: 2px 6px !important;
+    border-radius: 12px !important;
+}
+
+.badge-emerald {
+    background: rgba(16, 185, 129, 0.18) !important;
+    color: #10b981 !important;
+    border: 1px solid rgba(16, 185, 129, 0.35) !important;
+    font-size: 0.64rem !important;
+    font-weight: 800 !important;
+    padding: 2px 6px !important;
+    border-radius: 12px !important;
+}
+
+/* Top Action Bar Spacing & Zero Overflow */
+.top-action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.5rem !important;
+    background: #090e22 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    gap: 1rem;
+    flex-wrap: nowrap;
+    min-width: 0;
+}
+
+.top-header-left {
+    min-width: 0;
+    flex: 1;
+}
+
+.view-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+
+.view-title-row h2 {
+    font-size: 1.12rem !important;
+    font-weight: 700 !important;
+    color: #fff !important;
+    margin: 0 !important;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    white-space: nowrap;
+}
+
+.view-subtext {
+    font-size: 0.74rem !important;
+    color: var(--text-muted) !important;
+    margin: 0.15rem 0 0 0 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Button Micro-interactions */
+.btn {
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    border-radius: 8px !important;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover)) !important;
+    border: none !important;
+    color: #fff !important;
+    box-shadow: 0 4px 14px var(--primary-glow) !important;
+}
+
+.btn-primary:hover {
+    box-shadow: 0 6px 20px var(--primary-glow) !important;
+}
+
+/* ==========================================================================
+   DYNAMIC THEME ACCENT PALETTES
+   ========================================================================== */
+:root[data-theme="sunset"], html[data-theme="sunset"] {
+    --primary: #eb6711;
+    --primary-hover: #c9550d;
+    --primary-glow: rgba(235, 103, 17, 0.35);
+    --accent-orange: #eb6711;
+    --accent-orange-strong: #c9550d;
+    --accent-orange-soft: #fee8db;
+    --accent-orange-glow: #ffb487;
+    --border-highlight: rgba(235, 103, 17, 0.35);
+}
+
+:root[data-theme="emerald"], html[data-theme="emerald"] {
+    --primary: #10b981;
+    --primary-hover: #059669;
+    --primary-glow: rgba(16, 185, 129, 0.35);
+    --accent-orange: #10b981;
+    --accent-orange-strong: #059669;
+    --accent-orange-soft: #d1fae5;
+    --accent-orange-glow: #6ee7b7;
+    --border-highlight: rgba(16, 185, 129, 0.35);
+}
+
+:root[data-theme="cyber-sky"], html[data-theme="cyber-sky"] {
+    --primary: #0ea5e9;
+    --primary-hover: #0284c7;
+    --primary-glow: rgba(14, 165, 233, 0.35);
+    --accent-orange: #0ea5e9;
+    --accent-orange-strong: #0284c7;
+    --accent-orange-soft: #e0f2fe;
+    --accent-orange-glow: #7dd3fc;
+    --border-highlight: rgba(14, 165, 233, 0.35);
+}
+
+:root[data-theme="royal-purple"], html[data-theme="royal-purple"] {
+    --primary: #8b5cf6;
+    --primary-hover: #7c3aed;
+    --primary-glow: rgba(139, 92, 246, 0.35);
+    --accent-orange: #8b5cf6;
+    --accent-orange-strong: #7c3aed;
+    --accent-orange-soft: #ede9fe;
+    --accent-orange-glow: #c4b5fd;
+    --border-highlight: rgba(139, 92, 246, 0.35);
+}
+
+:root[data-theme="crimson-rose"], html[data-theme="crimson-rose"] {
+    --primary: #f43f5e;
+    --primary-hover: #e11d48;
+    --primary-glow: rgba(244, 63, 94, 0.35);
+    --accent-orange: #f43f5e;
+    --accent-orange-strong: #e11d48;
+    --accent-orange-soft: #ffe4e6;
+    --accent-orange-glow: #fda4af;
+    --border-highlight: rgba(244, 63, 94, 0.35);
+}
+
+:root[data-theme="amber-gold"], html[data-theme="amber-gold"] {
+    --primary: #f59e0b;
+    --primary-hover: #d97706;
+    --primary-glow: rgba(245, 158, 11, 0.35);
+    --accent-orange: #f59e0b;
+    --accent-orange-strong: #d97706;
+    --accent-orange-soft: #fef3c7;
+    --accent-orange-glow: #fcd34d;
+    --border-highlight: rgba(245, 158, 11, 0.35);
+}
+
+/* Theme picker dropdown & tile interactions */
+.theme-opt-btn:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #fff !important;
+}
+
+.theme-opt-btn.active {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    color: #fff !important;
+}
+
+.theme-tile {
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    cursor: pointer;
+}
+
+.theme-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.theme-tile.active {
+    border-width: 2px !important;
+    box-shadow: 0 0 20px var(--primary-glow) !important;
+}
+
+
+
 
 

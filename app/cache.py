@@ -298,7 +298,7 @@ GREETING_PATTERNS = [
 ]
 
 REGISTRATION_PATTERNS = [
-    r"(register|registration|how\s+to\s+pay|where\s+to\s+pay|payment\s+link|registration\s+link|enrollment\s+link|sign\s+up\s+link|link\s+to\s+pay|link\s+to\s+register|how\s+do\s+i\s+pay|how\s+can\s+i\s+pay|want\s+to\s+pay|ready\s+to\s+pay)"
+    r"(register|registration|how\s+to\s+pay|where\s+to\s+pay|payment\s+link|registration\s+link|enrollment\s+link|sign\s+up\s+link|link\s+to\s+pay|link\s+to\s+register|how\s+do\s+i\s+pay|how\s+can\s+i\s+pay|want\s+to\s+pay|ready\s+to\s+pay|bank\s+transfer|transfer\s+payment|account\s+details|pay\s+by\s+transfer|make\s+transfer|payment\s+methods?|pay\s+online)"
 ]
 
 ADVISOR_CALL_PATTERNS = [
@@ -689,9 +689,14 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
                 "🎯 *Ready to accelerate your career with TekTutors?*\n\n"
                 f"You can register and complete your enrollment securely online here:\n"
                 f"👉 *Official Portal:* {REGISTRATION_URL}\n\n"
+                "💳 *Accepted Payment Options on Portal:*\n"
+                "• Instant Bank Transfer\n"
+                "• Debit / Credit Card (Visa, Mastercard, Verve)\n"
+                "• USSD & Internet Banking\n\n"
                 "💡 *Our Program Highlights:*\n"
                 "• Live 1-on-1 personalized mentorship\n"
                 f"• Flexible month-to-month billing ({STANDARD_MONTHLY_FEE} / month)\n"
+                "• Upfront Full-Payment: Pay ₦90,000 (10% Discount — Save ₦10,000!)\n"
                 "• Real-world portfolio projects & certificate upon completion\n\n"
                 "Do you have any questions before registering, or would you like to schedule a 15-minute advisor call?"
             )
@@ -907,7 +912,7 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
                     if not active_course_context:
                         lead_rec = (await db.execute(select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1))).scalars().first()
                         if lead_rec and lead_rec.course_interest:
-                            active_course_context = lead_rec.course_interest
+                            active_course_context = normalize_course_name(lead_rec.course_interest) or lead_rec.course_interest
         except Exception as e:
             logger.warning(f"Context resolution note in fast path: {e}")
 

@@ -34,7 +34,7 @@ Empty Email,,SQL,
     assert r1["email"] == "tunde@example.com"
     assert r1["name"] == "Tunde Bakare"
     assert r1["course"] == "Data Analytics & BI Accelerator"
-    assert r1["phone"] == "08012345678"
+    assert r1["phone"] == "+2348012345678"
 
     r2 = parsed["valid_recipients"][1]
     assert r2["email"] == "ngozi.eze@globaltech.io"

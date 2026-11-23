@@ -87,7 +87,7 @@ class Settings(BaseSettings):
     SMTP_USER: str = os.getenv("SMTP_USER", "")
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
     SMTP_FROM_EMAIL: str = os.getenv("SMTP_FROM_EMAIL", "tektutorsng@gmail.com")
-    SMTP_FROM_NAME: str = os.getenv("SMTP_FROM_NAME", "TekTutors Academy")
+    SMTP_FROM_NAME: str = os.getenv("SMTP_FROM_NAME", "Tara from TekTutors")
     SMTP_USE_TLS: bool = _safe_bool_env("SMTP_USE_TLS", False)
     RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
     BREVO_API_KEY: str = os.getenv("BREVO_API_KEY", "")
