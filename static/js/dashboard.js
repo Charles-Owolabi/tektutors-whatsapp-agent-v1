@@ -548,8 +548,14 @@ async function fetchConversations() {
 
 async function selectConversation(phone, name) {
     currentPhone = phone;
+    const cleanDigits = String(phone || '').replace(/[^0-9]/g, '');
     document.getElementById('current-chat-name').innerText = name || 'Customer';
-    document.getElementById('current-chat-phone').innerText = `Phone: +${phone}`;
+    document.getElementById('current-chat-phone').innerHTML = `Phone: <a href="tel:+${cleanDigits}" style="color: #38bdf8; text-decoration: none; font-weight: 600;" title="Click to call +${cleanDigits}">+${cleanDigits}</a>`;
+    const callBtn = document.getElementById('btn-call-current-prospect');
+    if (callBtn) {
+        callBtn.href = `tel:+${cleanDigits}`;
+        callBtn.title = `Call ${name || 'Prospect'} (+${cleanDigits})`;
+    }
     document.getElementById('handoff-controls-bar').style.display = 'flex';
     document.getElementById('human-input-area').style.display = 'flex';
 
@@ -1545,10 +1551,12 @@ function openCandidateDetailsModal(leadId) {
     const avatarEl = document.getElementById('cd-avatar');
     if (avatarEl) avatarEl.innerText = initials;
 
-    // WhatsApp link
+    // WhatsApp & Direct Call links
     const cleanPhone = String(lead.phone).replace(/[^0-9]/g, '');
     const waLink = document.getElementById('cd-wa-link');
     if (waLink) waLink.href = `https://wa.me/${cleanPhone}`;
+    const callLink = document.getElementById('cd-call-link');
+    if (callLink) callLink.href = `tel:+${cleanPhone}`;
 
     // Stage badge
     const stageBadge = document.getElementById('cd-stage-badge');

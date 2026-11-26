@@ -261,6 +261,7 @@
                                         <span class="slider round"></span>
                                     </label>
                                 </div>
+                                <a id="btn-call-current-prospect" href="#" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.35rem 0.6rem; border-color: rgba(16,185,129,0.45); background: rgba(16,185,129,0.12); color: #34d399; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;" title="Call this prospect directly via phone dialer"><i class="fa-solid fa-phone-volume"></i> Call Prospect</a>
                                 <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.35rem 0.6rem; border-color: rgba(37,211,102,0.4); color: #25D366;" onclick="trigger3StepWhatsAppForCurrentLead()" title="Intelligently craft and send 3-step WhatsApp sequence to this user"><i class="fa-brands fa-whatsapp"></i> Send 3 AI Messages</button>
                                 <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.6rem;" onclick="toggleCustomer360Drawer()"><i class="fa-solid fa-id-badge"></i> Dossier</button>
                                 <button class="btn btn-secondary" id="btn-toggle-chat-expand" style="font-size: 0.75rem; padding: 0.35rem 0.6rem; border-color: rgba(56,189,248,0.4); color: #38bdf8;" onclick="toggleHandoffExpand(event)" title="Toggle Expanded Chatting Space (Full Width &amp; Height Focus Mode)"><i class="fa-solid fa-up-right-and-down-left-from-center" id="chat-expand-icon"></i> <span id="chat-expand-label">Expand</span></button>
@@ -1963,9 +1964,12 @@
                             <i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> WhatsApp Phone
                         </div>
                         <div id="cd-phone" style="font-size: 0.98rem; font-weight: 700; color: #fff; margin-bottom: 0.45rem;">+234...</div>
-                        <div style="display: flex; gap: 0.4rem;">
+                        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                            <a id="cd-call-link" href="#" class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.25rem 0.55rem; background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.35); text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <i class="fa-solid fa-phone-volume"></i> Call Direct
+                            </a>
                             <a id="cd-wa-link" href="#" target="_blank" class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.25rem 0.55rem; background: rgba(37,211,102,0.15); color: #25D366; border: 1px solid rgba(37,211,102,0.3); text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;">
-                                <i class="fa-brands fa-whatsapp"></i> Chat on WhatsApp
+                                <i class="fa-brands fa-whatsapp"></i> WhatsApp App
                             </a>
                             <button id="cd-chat-btn" class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.25rem 0.55rem; background: rgba(14,165,233,0.15); color: #38bdf8; border: 1px solid rgba(14,165,233,0.3); display: inline-flex; align-items: center; gap: 0.35rem;">
                                 <i class="fa-solid fa-headset"></i> Live Handoff
