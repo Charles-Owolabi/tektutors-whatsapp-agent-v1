@@ -655,11 +655,18 @@ class TekTutorsAgentManager:
                 "tool_logs": ["escalate_to_human_advisor"]
             }
 
+        # 0. Resolve and lock onto the customer's active requested course across conversation turns
+        from app.cache import check_fast_path, resolve_active_course_for_phone
+        active_course = await resolve_active_course_for_phone(
+            clean_phone,
+            current_text=user_text,
+            chat_history_messages=chat_history_messages
+        )
+
         # 1. Zero-Cost Fast-Path Check (Saves 100% LLM tokens on deterministic queries)
-        from app.cache import check_fast_path
         fast_res = await check_fast_path(clean_phone, user_text)
         if fast_res is not None:
-            logger.info(f"Resolved via Zero-Cost Fast Path for {clean_phone} (Tokens saved: {fast_res.get('tokens_saved', 0)})")
+            logger.info(f"Resolved via Zero-Cost Fast Path for {clean_phone} [Course: {active_course}] (Tokens saved: {fast_res.get('tokens_saved', 0)})")
             clean_fast_resp = sanitize_whatsapp_message(fast_res.get("response", ""))
             return {
                 "response": clean_fast_resp,
@@ -667,22 +674,25 @@ class TekTutorsAgentManager:
             }
 
         config = {"configurable": {"thread_id": clean_phone}}
-        contextualized_input = f"[Customer Phone: {clean_phone}]\nUser message: {user_text}"
+        course_context_anchor = (
+            f"\n[ACTIVE REQUESTED COURSE: {active_course}] "
+            f"(CRITICAL RULE: The customer is asking about {active_course}. Keep your entire response, examples, syllabus modules, and next steps 100% focused on {active_course}. "
+            f"Do NOT switch to or refer to a different course unless the customer explicitly asks to change courses!)"
+            if active_course else ""
+        )
+        contextualized_input = f"[Customer Phone: {clean_phone}]{course_context_anchor}\nUser message: {user_text}"
         user_msg = HumanMessage(content=contextualized_input)
 
         try:
-            # Check existing thread state in checkpointer
-            existing_state = await self.graph.aget_state(config)
-
+            # Always synchronize recent DB chat_history_messages so fast-path turns never leave gaps in MemorySaver
             initial_input: Dict[str, Any] = {
                 "phone": clean_phone,
-                "system_prompt": system_prompt,
+                "system_prompt": system_prompt + course_context_anchor,
                 "tool_logs": []
             }
 
-            # If thread is new in memory and historical messages exist, populate them
-            if (not existing_state or not existing_state.values.get("messages")) and chat_history_messages:
-                history_objs: List[BaseMessage] = [SystemMessage(content=system_prompt)]
+            if chat_history_messages:
+                history_objs: List[BaseMessage] = [SystemMessage(content=system_prompt + course_context_anchor)]
                 for msg in chat_history_messages[-6:]:
                     if msg.get("sender") == "user":
                         history_objs.append(HumanMessage(content=msg.get("body", "")))
@@ -830,36 +840,13 @@ class TekTutorsAgentManager:
             extracted_email = None
         is_curriculum_req = any(w in lower_text for w in ["curriculum", "curriclum", "syllabus", "brochure", "outline", "send curriculum", "course outline"])
 
+        clean_phone = phone.strip().replace("+", "")
+        from app.cache import detect_target_course, get_course_syllabus, resolve_active_course_for_phone
+        active_course_context = await resolve_active_course_for_phone(clean_phone, actual_text)
+
         # 1. Curriculum / Syllabus requests (e.g. "send curriculum to my email: name@example.com")
         if is_curriculum_req:
-            from app.cache import detect_target_course, get_course_syllabus
-            target_course = detect_target_course(actual_text)
-            if not target_course:
-                # Check recent messages or lead record for prior course interest
-                clean_phone = phone.strip().replace("+", "")
-                try:
-                    from app.database import AsyncSessionLocal
-                    from app.models import Conversation, Message, Lead
-                    from sqlalchemy import select, desc
-                    async with AsyncSessionLocal() as db:
-                        conv_rec = (await db.execute(select(Conversation).where(Conversation.phone == clean_phone).limit(1))).scalars().first()
-                        if conv_rec:
-                            recent_msgs = (await db.execute(select(Message).where(Message.conversation_id == conv_rec.id).order_by(desc(Message.id)).limit(8))).scalars().all()
-                            for m in recent_msgs:
-                                c_found = detect_target_course(m.body or "")
-                                if c_found:
-                                    target_course = c_found
-                                    break
-                        if not target_course:
-                            lead_rec = (await db.execute(select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1))).scalars().first()
-                            if lead_rec and lead_rec.course_interest:
-                                target_course = lead_rec.course_interest
-                except Exception as ex:
-                    logger.warning(f"Could not resolve prior course interest: {ex}")
-
-            if not target_course:
-                target_course = "Data Analytics & BI Accelerator"
-
+            target_course = active_course_context or detect_target_course(actual_text) or "Data Analytics & BI Accelerator"
             canonical_title, syllabus_data = get_course_syllabus(target_course)
             module_bullets = "\n".join([f"🔹 *{m.split(':')[0].strip()}:* {':'.join(m.split(':')[1:]).strip() if ':' in m else m}" for m in syllabus_data.get("modules", [])])
 
@@ -911,33 +898,7 @@ class TekTutorsAgentManager:
             if "my name is" in lower_text:
                 name = actual_text.lower().split("my name is")[-1].strip().title()
 
-            from app.cache import detect_target_course, get_course_syllabus
-            target_course = detect_target_course(actual_text)
-            if not target_course:
-                clean_phone = phone.strip().replace("+", "")
-                try:
-                    from app.database import AsyncSessionLocal
-                    from app.models import Conversation, Message, Lead
-                    from sqlalchemy import select, desc
-                    async with AsyncSessionLocal() as db:
-                        conv_rec = (await db.execute(select(Conversation).where(Conversation.phone == clean_phone).limit(1))).scalars().first()
-                        if conv_rec:
-                            recent_msgs = (await db.execute(select(Message).where(Message.conversation_id == conv_rec.id).order_by(desc(Message.id)).limit(8))).scalars().all()
-                            for m in recent_msgs:
-                                c_found = detect_target_course(m.body or "")
-                                if c_found:
-                                    target_course = c_found
-                                    break
-                        if not target_course:
-                            lead_rec = (await db.execute(select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1))).scalars().first()
-                            if lead_rec and lead_rec.course_interest:
-                                target_course = lead_rec.course_interest
-                except Exception as ex:
-                    logger.warning(f"Could not resolve prior course interest: {ex}")
-
-            if not target_course:
-                target_course = "Data Analytics & BI Accelerator"
-
+            target_course = active_course_context or detect_target_course(actual_text) or "Data Analytics & BI Accelerator"
             canonical_title, syllabus_data = get_course_syllabus(target_course)
             module_bullets = "\n".join([f"• *{m.split(':')[0].strip()}:* {':'.join(m.split(':')[1:]).strip() if ':' in m else m}" for m in syllabus_data.get("modules", [])])
 
@@ -970,7 +931,7 @@ class TekTutorsAgentManager:
                     f"Have you worked with data tools before, or are you starting completely fresh?"
                 )
             else:
-                reply = f"Awesome! Nice to meet you, {name}! How can I help you with TekTutors courses today?"
+                reply = f"Awesome! Nice to meet you, {name}! How can I help you with *{canonical_title}* today?"
             return {"response": reply, "tool_logs": ["qualify_and_capture_lead"]}
 
         # 3. Check if user selected by number (e.g. "1", "2", "3", "4", "5", "option 1", "track 1")
@@ -985,14 +946,11 @@ class TekTutorsAgentManager:
         
         # Check active conversation context before assuming this is Track 1-6!
         last_asst_body = ""
-        active_course_context = None
         has_catalog_menu_prompt = False
-        clean_phone = phone.strip().replace("+", "")
         try:
             from app.database import AsyncSessionLocal
-            from app.models import Conversation, Message, Lead
+            from app.models import Conversation, Message
             from sqlalchemy import select, desc
-            from app.cache import detect_target_course
             async with AsyncSessionLocal() as db:
                 conv_rec = (await db.execute(select(Conversation).where(Conversation.phone == clean_phone).limit(1))).scalars().first()
                 if conv_rec:
@@ -1000,19 +958,12 @@ class TekTutorsAgentManager:
                         select(Message)
                         .where(Message.conversation_id == conv_rec.id)
                         .order_by(desc(Message.id))
-                        .limit(8)
+                        .limit(6)
                     )).scalars().all()
                     for m in recent_msgs:
                         if m.sender == "assistant" and not last_asst_body:
                             last_asst_body = m.body or ""
-                        if not active_course_context:
-                            c_found = detect_target_course(m.body or "")
-                            if c_found:
-                                active_course_context = c_found
-                    if not active_course_context:
-                        lead_rec = (await db.execute(select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1))).scalars().first()
-                        if lead_rec and lead_rec.course_interest:
-                            active_course_context = lead_rec.course_interest
+                            break
         except Exception as e:
             logger.warning(f"Context resolution note in mock fallback: {e}")
 
@@ -1108,6 +1059,11 @@ class TekTutorsAgentManager:
                 )
                 return {"response": reply, "tool_logs": ["search_tektutors_courses"]}
 
+            await qualify_and_capture_lead.ainvoke({
+                "phone": phone,
+                "course_interest": selected_track["title"],
+                "notes": f"Selected {selected_track['title']} in chat"
+            })
             reply = (
                 f"🎯 *Excellent choice! Track {selected_track['num']}: {selected_track['title']}*\n\n"
                 f"This program is 100% practical, project-driven, and delivered via personalized 1-on-1 mentorship with an experienced industry mentor.\n\n"
@@ -1120,19 +1076,25 @@ class TekTutorsAgentManager:
                 f"*Have you worked with data tools before, or are you starting completely fresh?* "
                 f"(You can also share your email to receive the detailed syllabus or book a free discovery call!)"
             )
-            return {"response": reply, "tool_logs": ["search_tektutors_courses"]}
+            return {"response": reply, "tool_logs": ["search_tektutors_courses", "qualify_and_capture_lead"]}
 
         # Check if user asked about a specific specialized course (e.g. Machine Learning, Data Science, Business Analysis, etc.)
         elif any(kw in lower_text for kw in [
             "machine learning", "data science", "predictive analytic", "business analysis",
             "business analytic", "financial analytic", "marketing analytic", "hr analytic",
-            "people analytic", "operations analytic", "time series", "deep learning", "nlp", "r for data"
+            "people analytic", "operations analytic", "time series", "deep learning", "nlp", "r for data",
+            "data governance", "data visualization", "statistical analysis", "generative ai", "llm"
         ]):
             try:
                 courses_raw = await search_tektutors_courses.ainvoke({"query": actual_text})
                 found_courses = json.loads(courses_raw)
                 if found_courses and isinstance(found_courses, list):
                     top_c = found_courses[0]
+                    await qualify_and_capture_lead.ainvoke({
+                        "phone": phone,
+                        "course_interest": top_c.get("canonical_title") or top_c["title"],
+                        "notes": f"Inquired about {top_c['title']}"
+                    })
                     prereq_q = "Do you already have some experience with Python and basic math/statistics, or are you starting from scratch?" if "machine learning" in lower_text or "data science" in lower_text else "Have you worked with data tools before, or are you starting fresh?"
                     reply = (
                         f"🎯 *Yes, absolutely! {top_c['title']}*\n\n"
@@ -1147,7 +1109,7 @@ class TekTutorsAgentManager:
                         f"*(Reply with your **Email Address** to receive the complete syllabus PDF, or schedule a free 15-minute 1-on-1 discovery call with an Admissions Advisor!)*\n"
                         f"🔗 https://tektutors.com.ng/registration"
                     )
-                    return {"response": reply, "tool_logs": ["search_tektutors_courses"]}
+                    return {"response": reply, "tool_logs": ["search_tektutors_courses", "qualify_and_capture_lead"]}
             except Exception as e:
                 logger.warning(f"Error querying courses in mock fallback: {e}")
         elif any(w in lower_text for w in [
@@ -1156,20 +1118,23 @@ class TekTutorsAgentManager:
         ]) or ("book" in lower_text and "call" in lower_text):
             await qualify_and_capture_lead.ainvoke({
                 "phone": phone,
-                "notes": f"Advisor discovery call requested: {actual_text}"
+                "course_interest": active_course_context,
+                "notes": f"Advisor discovery call requested ({active_course_context or 'General'}): {actual_text}"
             })
+            course_tag = f" ({active_course_context})" if active_course_context else ""
+            step3_line = f"3. *Course Track:* *{active_course_context}* (confirmed)\n\n" if active_course_context else "3. *Course Track of interest* (or reply 'Not sure yet')\n\n"
             reply = (
-                "📅 *Book Your 1-on-1 Admissions Discovery Call*\n\n"
+                f"📅 *Book Your 1-on-1 Admissions Discovery Call{course_tag}*\n\n"
                 "I'd love to set up your personalized 15-minute consultation with a Senior TekTutors Admissions Advisor! 🎯\n\n"
                 "During this private call, we will:\n"
                 "• Review your current background & career aspirations\n"
-                "• Recommend the optimal learning track for you\n"
+                f"• Map out your personalized *{active_course_context or 'TekTutors'}* learning roadmap\n"
                 "• Walk you through our live 1-on-1 industry mentor format & practical projects\n"
                 "• Answer any questions about our flexible schedule and tuition\n\n"
                 "👉 *To lock in your call slot, please reply with:*\n"
                 "1. *Your Full Name*\n"
                 "2. *Preferred Time & Day* (e.g., Tomorrow at 2:00 PM)\n"
-                "3. *Course Track of interest* (or reply 'Not sure yet')\n\n"
+                f"{step3_line}"
                 "You can also secure your enrollment directly anytime at:\n🔗 https://tektutors.com.ng/registration"
             )
             return {"response": reply, "tool_logs": ["qualify_and_capture_lead", "schedule_advisor_call"]}
@@ -1181,10 +1146,17 @@ class TekTutorsAgentManager:
         ]):
             await qualify_and_capture_lead.ainvoke({
                 "phone": phone,
-                "notes": f"Payment plans inquiry: {actual_text}"
+                "course_interest": active_course_context,
+                "notes": f"Payment plans inquiry ({active_course_context or 'General'}): {actual_text}"
             })
+            course_tag = f" ({active_course_context})" if active_course_context else ""
+            cta_end = (
+                f"Would you like me to email you the full *{active_course_context}* syllabus PDF, or schedule a quick 1-on-1 advisor call for *{active_course_context}*?"
+                if active_course_context else
+                "Which course track would you like to enroll in? (Reply with a track number 1-6 or course name!)"
+            )
             reply = (
-                "💳 *TekTutors Flexible Tuition & Payment Plans*\n\n"
+                f"💳 *TekTutors Flexible Tuition & Payment Plans{course_tag}*\n\n"
                 "We believe quality tech training should be accessible without financial pressure. Here are our flexible options:\n\n"
                 "1️⃣ *Flexible Month-to-Month Plan (Most Popular):*\n"
                 "• *₦100,000 / month* — flexible month-to-month billing (cancel anytime)\n"
@@ -1196,7 +1168,7 @@ class TekTutorsAgentManager:
                 "• Immediate onboarding and priority mentor allocation\n\n"
                 "👉 *Ready to get started? Enroll securely on our official portal:*\n"
                 "🔗 https://tektutors.com.ng/registration\n\n"
-                "Which course track would you like to enroll in? (Reply with a track number 1-6 or course name!)"
+                f"{cta_end}"
             )
             return {"response": reply, "tool_logs": ["get_course_faq_answer", "qualify_and_capture_lead"]}
 
@@ -1205,8 +1177,14 @@ class TekTutorsAgentManager:
             "discount", "scholarship", "promo", "voucher", "coupon", "financial aid",
             "cheaper", "reduce fee", "price slash"
         ]):
+            course_tag = f" ({active_course_context})" if active_course_context else ""
+            cta_end = (
+                f"Would you like to claim your discount for *{active_course_context}* or receive the full syllabus PDF?"
+                if active_course_context else
+                "Which skill track would you like to enroll in? (Reply with a track number 1-6 or course name!)"
+            )
             reply = (
-                "🎁 *Exclusive TekTutors Tuition Discounts & Savings!*\n\n"
+                f"🎁 *Exclusive TekTutors Tuition Discounts & Savings{course_tag}!*\n\n"
                 "We want to ensure financial constraints never hold you back from acquiring high-income tech skills. Here are our active offers:\n\n"
                 "1️⃣ *10% Full-Payment Discount:*\n"
                 "Pay your course tuition upfront and instantly save *10%* — pay just *₦90,000* instead of ₦100,000 (save ₦10,000)!\n\n"
@@ -1218,7 +1196,7 @@ class TekTutorsAgentManager:
                 "• Flexible ₦100,000/month pay-as-you-learn plan with zero debt\n\n"
                 "👉 *Claim your discount and enroll securely online:*\n"
                 "🔗 https://tektutors.com.ng/registration\n\n"
-                "Which skill track would you like to enroll in? (Reply with a track number 1-6 or course name!)"
+                f"{cta_end}"
             )
             return {"response": reply, "tool_logs": ["check_scholarship_and_discounts"]}
 
@@ -1235,12 +1213,12 @@ class TekTutorsAgentManager:
             "how do i pay", "make payment", "ready to pay", "enrollment link", "enroll now", "register now"
         ]):
             reply = (
-                "🚀 *Ready to start your 1-on-1 practical tech training with TekTutors?*\n\n"
+                f"🚀 *Ready to start your 1-on-1 {active_course_context or 'practical tech'} training with TekTutors?*\n\n"
                 "You can complete your course registration and submit your payment securely online right here:\n\n"
                 "👉 *Official Registration & Payment Portal:*\n"
                 "https://tektutors.com.ng/registration\n\n"
                 "💳 *Tuition Details:*\n"
-                "• Standard fee: ₦100,000 / month\n"
+                "• Standard fee: ₦100,000 / month (or ₦90,000 upfront with 10% discount)\n"
                 "• Live 1-on-1 expert mentor guidance\n"
                 "• Real-world capstone portfolio projects\n\n"
                 "Once you complete your registration at the link above, our admissions team and your mentor will reach out immediately to finalize your schedule and onboarding! 🎓\n\n"
@@ -1255,7 +1233,19 @@ class TekTutorsAgentManager:
             "beginner", "can i cope", "background", "transition", "switch to tech"
         ]):
             is_finance = any(w in lower_text for w in ["bank", "account", "finance", "audit", "econ"])
-            if is_finance:
+            if active_course_context:
+                _, syl_info = get_course_syllabus(active_course_context)
+                mod_preview = "\n".join([f"• {m}" for m in syl_info.get("modules", [])[:3]])
+                reply = (
+                    f"🌟 *You can 100% succeed in {active_course_context} with TekTutors!*\n\n"
+                    f"Over 70% of our learners start *{active_course_context}* as complete beginners or career switchers. Here is how we ensure your success:\n\n"
+                    f"• *Private 1-on-1 Mentorship:* Your dedicated mentor teaches *{active_course_context}* from the ground up at your exact pace ({syl_info.get('duration', 'Flexible pace')}).\n"
+                    f"• *Core Foundation Modules:*\n{mod_preview}\n"
+                    f"• *3 Employer-Ready Capstones:* You build a practical *{active_course_context}* portfolio to showcase to recruiters.\n\n"
+                    f"👉 *Reply with your Email Address* so I can send you the complete *{active_course_context}* beginner-to-pro syllabus PDF, or register directly at:\n"
+                    f"🔗 https://tektutors.com.ng/registration"
+                )
+            elif is_finance:
                 reply = (
                     "📊 *Perfect fit for Banking & Financial Professionals!*\n\n"
                     "Many of our most successful learners come from accounting, banking, and audit backgrounds. For your career path, we highly recommend:\n\n"

@@ -2868,7 +2868,7 @@ function openSenderModal(senderId = null) {
         document.getElementById('sender-role-input').value = 'Admissions & Mentorship Advisor';
         document.getElementById('sender-email-input').value = '';
         document.getElementById('sender-reply-to-input').value = '';
-        document.getElementById('sender-phone-input').value = '+234 806 358 4517';
+        document.getElementById('sender-phone-input').value = '+234 911 212 0531';
         document.getElementById('sender-daily-limit-input').value = '500';
         document.getElementById('sender-provider-select').value = 'system_default';
         toggleSenderSmtpFields('system_default');
@@ -4451,6 +4451,27 @@ async function seedSampleDeliveryData() {
 // =========================================================================
 
 let currentSequenceLeadId = null;
+window.waSeqDraftBodies = { 1: '', 2: '', 3: '' };
+
+function formatWhatsAppBubbleHtml(rawText) {
+    if (!rawText) return '';
+    let html = escapeHtml(rawText);
+    // Render WhatsApp *bold* as crisp bold tags
+    html = html.replace(/\*([^*\n]+)\*/g, '<strong style="color: #ffffff; font-weight: 700;">$1</strong>');
+    // Render WhatsApp _italic_ as muted italic disclosures
+    html = html.replace(/_([^_\n]+)_/g, '<em style="color: #94a3b8; font-size: 0.72rem;">$1</em>');
+    // Style bullet lines cleanly
+    html = html.replace(/^•\s+(.*)$/gm, '<div style="padding-left: 0.35rem; margin: 0.18rem 0;">• $1</div>');
+    // Preserve line breaks
+    html = html.replace(/\n/g, '<br>');
+    return `
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.67rem; color: #25D366; font-weight: 700; margin-bottom: 0.4rem; padding-bottom: 0.3rem; border-bottom: 1px solid rgba(255,255,255,0.06);">
+            <span><i class="fa-brands fa-whatsapp"></i> Tara &bull; TekTutors AI Advisor</span>
+            <span style="color: #64748b; font-weight: 500;">WhatsApp Cloud API</span>
+        </div>
+        <div>${html}</div>
+    `;
+}
 
 async function openWhatsAppSequenceModal(specificLeadId = null) {
     currentSequenceLeadId = specificLeadId;
@@ -4458,12 +4479,17 @@ async function openWhatsAppSequenceModal(specificLeadId = null) {
     if (modal) {
         modal.style.display = 'flex';
     }
+    const resultBanner = document.getElementById('wa-seq-result-banner');
+    if (resultBanner) {
+        resultBanner.style.display = 'none';
+        resultBanner.innerHTML = '';
+    }
 
     // Populate the lead selector
     await populateSequenceLeadSelect(specificLeadId);
 
     // Load preview of the 3 crafted messages
-    await loadSequencePreview(specificLeadId);
+    await loadSequencePreview(currentSequenceLeadId);
 }
 
 function closeWhatsAppSequenceModal() {
@@ -4480,17 +4506,85 @@ async function populateSequenceLeadSelect(selectedId = null) {
     try {
         const res = await fetch('/api/leads');
         if (!res.ok) return;
-        const leads = await res.json();
+        const data = await res.json();
+        const leads = Array.isArray(data) ? data : (data.leads || []);
 
-        let options = '<option value="">-- Choose Individual Lead --</option>';
+        let options = '<option value="">-- All Leads in Selected Audience --</option>';
         leads.forEach(l => {
             const isSel = selectedId && (String(l.id) === String(selectedId)) ? 'selected' : '';
-            options += `<option value="${l.id}" ${isSel}>${escapeHtml(l.name || 'Student')} (${l.course_interest || 'General'} - ${l.phone})</option>`;
+            const labelName = (l.name && l.name !== 'Unknown') ? l.name : 'Prospect';
+            const labelCourse = l.course_interest || 'General Track';
+            options += `<option value="${l.id}" ${isSel}>${escapeHtml(labelName)} (${escapeHtml(labelCourse)} - ${escapeHtml(l.phone)})</option>`;
         });
         selectEl.innerHTML = options;
     } catch (err) {
         console.error('Error populating sequence leads:', err);
     }
+}
+
+function renderSingleWaSeqCard(stepNum, stepObj, accentColor, btnBg, btnBorder) {
+    const textEl = document.getElementById(`wa-seq-msg-${stepNum}-text`);
+    const editorEl = document.getElementById(`wa-seq-msg-${stepNum}-editor`);
+    const titleEl = document.getElementById(`wa-seq-msg-${stepNum}-title`);
+    const charsEl = document.getElementById(`wa-seq-msg-${stepNum}-chars`);
+    const btnsEl = document.getElementById(`wa-seq-msg-${stepNum}-buttons`);
+
+    if (!stepObj) return;
+    const rawBody = stepObj.body || '';
+    window.waSeqDraftBodies[stepNum] = rawBody;
+
+    if (titleEl && stepObj.title) titleEl.innerText = stepObj.title;
+    if (textEl) textEl.innerHTML = formatWhatsAppBubbleHtml(rawBody);
+    if (editorEl) editorEl.value = rawBody;
+    if (charsEl) charsEl.innerText = `${rawBody.length} / 1024 chars`;
+
+    if (btnsEl) {
+        btnsEl.innerHTML = (stepObj.buttons || []).map(b => `
+            <div style="background: ${btnBg}; border: 1px solid ${btnBorder}; color: ${accentColor}; font-size: 0.73rem; padding: 0.35rem 0.5rem; border-radius: 6px; text-align: center; font-weight: 600;">
+                <i class="fa-solid fa-reply" style="font-size: 0.65rem; opacity: 0.8;"></i> ${escapeHtml(b.title)}
+            </div>
+        `).join('');
+    }
+}
+
+function toggleWaSeqEdit(stepNum) {
+    const textEl = document.getElementById(`wa-seq-msg-${stepNum}-text`);
+    const editorEl = document.getElementById(`wa-seq-msg-${stepNum}-editor`);
+    const btnEl = document.getElementById(`wa-seq-edit-btn-${stepNum}`);
+    if (!textEl || !editorEl) return;
+
+    const isEditing = editorEl.style.display !== 'none';
+    if (isEditing) {
+        editorEl.style.display = 'none';
+        textEl.style.display = 'block';
+        textEl.innerHTML = formatWhatsAppBubbleHtml(window.waSeqDraftBodies[stepNum]);
+        if (btnEl) btnEl.innerHTML = '<i class="fa-solid fa-pen"></i> Edit Draft';
+    } else {
+        editorEl.value = window.waSeqDraftBodies[stepNum] || '';
+        textEl.style.display = 'none';
+        editorEl.style.display = 'block';
+        editorEl.focus();
+        if (btnEl) btnEl.innerHTML = '<i class="fa-solid fa-eye"></i> Preview';
+    }
+}
+
+function onWaSeqDraftEdited(stepNum, newValue) {
+    window.waSeqDraftBodies[stepNum] = newValue;
+    const charsEl = document.getElementById(`wa-seq-msg-${stepNum}-chars`);
+    if (charsEl) {
+        charsEl.innerText = `${newValue.length} / 1024 chars`;
+        charsEl.style.color = newValue.length > 1024 ? '#f87171' : '#94a3b8';
+    }
+}
+
+function copyWaSeqDraft(stepNum) {
+    const body = window.waSeqDraftBodies[stepNum] || '';
+    if (!body) return;
+    navigator.clipboard.writeText(body).then(() => {
+        showToast(`Step ${stepNum} WhatsApp draft copied to clipboard!`, 'success');
+    }).catch(() => {
+        showToast('Could not copy message draft', 'error');
+    });
 }
 
 async function loadSequencePreview(leadId = null) {
@@ -4501,48 +4595,25 @@ async function loadSequencePreview(leadId = null) {
         if (!res.ok) throw new Error('Failed to load sequence preview');
         const data = await res.json();
 
-        // Render Step 1
         const s1 = data.steps.find(s => s.step === 1) || data.steps[0];
-        const msg1Text = document.getElementById('wa-seq-msg-1-text');
-        const msg1Btns = document.getElementById('wa-seq-msg-1-buttons');
-        if (msg1Text && s1) msg1Text.innerText = s1.body;
-        if (msg1Btns && s1) {
-            msg1Btns.innerHTML = s1.buttons.map(b => `
-                <div style="background: rgba(37,211,102,0.15); border: 1px solid rgba(37,211,102,0.35); color: #25D366; font-size: 0.72rem; padding: 0.35rem 0.5rem; border-radius: 6px; text-align: center; font-weight: 600;">
-                    🔘 [${escapeHtml(b.title)}]
-                </div>
-            `).join('');
-        }
-
-        // Render Step 2
         const s2 = data.steps.find(s => s.step === 2) || data.steps[1];
-        const msg2Text = document.getElementById('wa-seq-msg-2-text');
-        const msg2Btns = document.getElementById('wa-seq-msg-2-buttons');
-        if (msg2Text && s2) msg2Text.innerText = s2.body;
-        if (msg2Btns && s2) {
-            msg2Btns.innerHTML = s2.buttons.map(b => `
-                <div style="background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.35); color: #c084fc; font-size: 0.72rem; padding: 0.35rem 0.5rem; border-radius: 6px; text-align: center; font-weight: 600;">
-                    🔘 [${escapeHtml(b.title)}]
-                </div>
-            `).join('');
-        }
-
-        // Render Step 3
         const s3 = data.steps.find(s => s.step === 3) || data.steps[2];
-        const msg3Text = document.getElementById('wa-seq-msg-3-text');
-        const msg3Btns = document.getElementById('wa-seq-msg-3-buttons');
-        if (msg3Text && s3) msg3Text.innerText = s3.body;
-        if (msg3Btns && s3) {
-            msg3Btns.innerHTML = s3.buttons.map(b => `
-                <div style="background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.35); color: #38bdf8; font-size: 0.72rem; padding: 0.35rem 0.5rem; border-radius: 6px; text-align: center; font-weight: 600;">
-                    🔘 [${escapeHtml(b.title)}]
-                </div>
-            `).join('');
+
+        renderSingleWaSeqCard(1, s1, '#38bdf8', 'rgba(56,189,248,0.14)', 'rgba(56,189,248,0.35)');
+        renderSingleWaSeqCard(2, s2, '#c084fc', 'rgba(168,85,247,0.14)', 'rgba(168,85,247,0.35)');
+        renderSingleWaSeqCard(3, s3, '#25D366', 'rgba(37,211,102,0.14)', 'rgba(37,211,102,0.35)');
+
+        const topicBadge = document.getElementById('wa-seq-topic-badge');
+        if (topicBadge && data.discussion_topic) {
+            topicBadge.innerHTML = `<i class="fa-solid fa-comments"></i> Topic: ${escapeHtml(data.discussion_topic)}`;
         }
 
         const statusText = document.getElementById('wa-seq-status-text');
         if (statusText) {
-            statusText.innerHTML = `Tailored for <strong>${escapeHtml(data.lead_name)}</strong> &bull; Program: <strong>${escapeHtml(data.course_name)}</strong> (${escapeHtml(data.skill_level)}) &bull; <span style="color:#25D366;"><i class="fa-solid fa-clock"></i> 10h Interval</span> &bull; <span style="color:#25D366;"><i class="fa-solid fa-circle-check"></i> Meta Cloud API Verified</span>`;
+            const targetLabel = leadId
+                ? `<strong>${escapeHtml(data.lead_name)}</strong> (${escapeHtml(data.lead_phone || 'Selected Lead')})`
+                : `<strong>${escapeHtml(data.lead_name)}</strong> (Sample Preview)`;
+            statusText.innerHTML = `Tailored for ${targetLabel} &bull; Program: <strong>${escapeHtml(data.course_name)}</strong> (${escapeHtml(data.skill_level)}) &bull; <span style="color:#25D366;"><i class="fa-solid fa-clock"></i> 2h / 10h / 20h Cadence</span> &bull; <span style="color:#25D366;"><i class="fa-solid fa-circle-check"></i> Meta Cloud API Verified</span>`;
         }
 
     } catch (err) {
@@ -4552,58 +4623,151 @@ async function loadSequencePreview(leadId = null) {
 
 function previewSequenceForLead(leadId) {
     currentSequenceLeadId = leadId || null;
-    loadSequencePreview(leadId);
+    loadSequencePreview(currentSequenceLeadId);
 }
 
 function updateSequencePreviewForSelection() {
     loadSequencePreview(currentSequenceLeadId);
 }
 
-async function executeWhatsAppSequenceDispatch() {
+async function executeWhatsAppSequenceDispatch(dispatchAllNow = true) {
     const submitBtn = document.getElementById('btn-submit-wa-seq');
+    const scheduleBtn = document.getElementById('btn-schedule-wa-seq');
+    const resultBanner = document.getElementById('wa-seq-result-banner');
     const audienceSelect = document.getElementById('wa-seq-audience-select');
     const audience = audienceSelect ? audienceSelect.value : 'all_chat_users';
 
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Dispatched via Meta WhatsApp API...';
+    const activeBtn = dispatchAllNow ? submitBtn : scheduleBtn;
+    if (submitBtn) submitBtn.disabled = true;
+    if (scheduleBtn) scheduleBtn.disabled = true;
+    if (activeBtn) {
+        activeBtn.innerHTML = dispatchAllNow
+            ? '<i class="fa-solid fa-spinner fa-spin"></i> Dispatching via Meta WhatsApp API...'
+            : '<i class="fa-solid fa-spinner fa-spin"></i> Scheduling 3-Step Sequence...';
+    }
+    if (resultBanner) {
+        resultBanner.style.display = 'none';
+        resultBanner.innerHTML = '';
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 18000);
+
     try {
+        const customBodiesPayload = {
+            1: window.waSeqDraftBodies[1] || null,
+            2: window.waSeqDraftBodies[2] || null,
+            3: window.waSeqDraftBodies[3] || null
+        };
+
         let endpoint = '/api/whatsapp/sequence/send-all';
-        let bodyPayload = { target_audience: audience, dispatch_all_now: true };
+        let bodyPayload = {
+            target_audience: audience,
+            dispatch_all_now: dispatchAllNow,
+            custom_bodies: customBodiesPayload
+        };
 
         if (currentSequenceLeadId) {
-            endpoint = `/api/whatsapp/sequence/lead/${currentSequenceLeadId}/send`;
-            bodyPayload = { dispatch_all_now: true };
+            endpoint = `/api/whatsapp/sequence/lead/${currentSequenceLeadId}/send?dispatch_all_now=${dispatchAllNow}`;
+            bodyPayload = {
+                dispatch_all_now: dispatchAllNow,
+                custom_bodies: customBodiesPayload
+            };
         }
 
         const res = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(bodyPayload)
+            body: JSON.stringify(bodyPayload),
+            signal: controller.signal
         });
 
-        if (!res.ok) throw new Error('WhatsApp sequence dispatch failed');
+        clearTimeout(timeoutId);
+
+        if (!res.ok) {
+            const errJson = await res.json().catch(() => ({}));
+            throw new Error(errJson.detail || `Server returned HTTP ${res.status}`);
+        }
         const data = await res.json();
 
-        closeWhatsAppSequenceModal();
+        const deliveredCount = data.delivered_count || 0;
+        const failedCount = data.failed_count || 0;
+        const leadsCount = data.total_leads_targeted || 1;
+        const firstError = data.first_error || null;
 
-        const countSent = data.delivered_count || (data.steps ? data.steps.length : 3);
-        showToast(`Dispatched 3 tailored WhatsApp messages! (${countSent} delivered successfully)`, 'success');
-
-        // Automatically open the Delivery Status Inspector to view the dispatched messages
-        setTimeout(() => {
-            openDeliveryAuditModal('whatsapp');
-        }, 600);
+        if (!dispatchAllNow) {
+            showToast(`Scheduled 3-step WhatsApp sequence (T+2h, T+10h, T+20h) for ${leadsCount} prospect(s)!`, 'success');
+            if (resultBanner) {
+                resultBanner.style.display = 'block';
+                resultBanner.innerHTML = `
+                    <div style="background: rgba(56, 189, 248, 0.14); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 10px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="font-size: 0.8rem; color: #e2e8f0;">
+                            <strong style="color: #38bdf8;"><i class="fa-solid fa-calendar-check"></i> 3-Touch Sequence Queued!</strong>
+                            Scheduled Step 1 (+2h), Step 2 (+10h), and Step 3 (+20h) for <strong>${leadsCount} prospect(s)</strong>.
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.72rem;" onclick="closeWhatsAppSequenceModal()">Done</button>
+                    </div>
+                `;
+            }
+        } else if (failedCount > 0 && deliveredCount === 0) {
+            showToast(`Meta API reported delivery errors (${failedCount} failed). Check banner details.`, 'warning');
+            if (resultBanner) {
+                resultBanner.style.display = 'block';
+                resultBanner.innerHTML = `
+                    <div style="background: rgba(245, 158, 11, 0.14); border: 1px solid rgba(245, 158, 11, 0.45); border-radius: 10px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.65rem;">
+                        <div style="font-size: 0.78rem; color: #fef3c7; flex: 1;">
+                            <strong style="color: #fbbf24; display: block; margin-bottom: 0.2rem;">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Meta Cloud API Dispatch Diagnostic (${failedCount} message(s) logged as failed for ${leadsCount} lead(s)):
+                            </strong>
+                            <span>${escapeHtml(firstError || 'Meta Cloud API rejected dispatch. Verify WHATSAPP_TOKEN in .env.')}</span>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; border-color: rgba(251,191,36,0.4); color: #fbbf24;" onclick="closeWhatsAppSequenceModal(); openDeliveryAuditModal('whatsapp');">
+                            <i class="fa-solid fa-satellite-dish"></i> Inspect Delivery Logs
+                        </button>
+                    </div>
+                `;
+            }
+        } else {
+            showToast(`Dispatched 3 tailored WhatsApp messages! (${deliveredCount} delivered across ${leadsCount} lead(s))`, 'success');
+            if (resultBanner) {
+                resultBanner.style.display = 'block';
+                resultBanner.innerHTML = `
+                    <div style="background: rgba(37, 211, 102, 0.14); border: 1px solid rgba(37, 211, 102, 0.4); border-radius: 10px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="font-size: 0.8rem; color: #e2e8f0;">
+                            <strong style="color: #25D366;"><i class="fa-solid fa-circle-check"></i> Successfully Dispatched via Meta WhatsApp API!</strong>
+                            ${deliveredCount} message(s) delivered across ${leadsCount} prospect(s).
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; border-color: rgba(37,211,102,0.4); color: #25D366;" onclick="closeWhatsAppSequenceModal(); openDeliveryAuditModal('whatsapp');">
+                            <i class="fa-solid fa-satellite-dish"></i> View Delivery Telemetry
+                        </button>
+                    </div>
+                `;
+            }
+        }
 
     } catch (err) {
+        clearTimeout(timeoutId);
         console.error('Error executing sequence dispatch:', err);
-        showToast('Failed to dispatch WhatsApp sequence. Check connection.', 'error');
+        const errMsg = err.name === 'AbortError'
+            ? 'Request timed out after 18s. Please check that your local/cloud server is running.'
+            : (err.message || 'Failed to dispatch WhatsApp sequence.');
+        showToast(errMsg, 'error');
+        if (resultBanner) {
+            resultBanner.style.display = 'block';
+            resultBanner.innerHTML = `
+                <div style="background: rgba(239, 68, 68, 0.14); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.78rem; color: #fecaca;">
+                    <strong style="color: #f87171;"><i class="fa-solid fa-circle-xmark"></i> Dispatch Error:</strong> ${escapeHtml(errMsg)}
+                </div>
+            `;
+        }
     } finally {
         if (submitBtn) {
             submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send 3 WhatsApp Messages Now';
+            submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Dispatch Now via Meta WhatsApp API';
+        }
+        if (scheduleBtn) {
+            scheduleBtn.disabled = false;
+            scheduleBtn.innerHTML = '<i class="fa-solid fa-calendar-check"></i> Schedule at 2h / 10h / 20h Intervals';
         }
     }
 }
@@ -4612,17 +4776,26 @@ function launch3StepWhatsAppSequence() {
     openWhatsAppSequenceModal();
 }
 
-function trigger3StepWhatsAppForCurrentLead() {
+async function trigger3StepWhatsAppForCurrentLead() {
     const currentPhoneEl = document.getElementById('current-chat-phone');
-    const currentNameEl = document.getElementById('current-chat-name');
-
     if (!currentPhoneEl || !currentPhoneEl.innerText || currentPhoneEl.innerText.includes('Choose a chat')) {
         showToast('Please select a conversation from the left first.', 'warning');
         return;
     }
 
-    // Open modal with this prospect
-    openWhatsAppSequenceModal();
+    const activeDigits = currentPhoneEl.innerText.replace(/\D/g, '');
+    let matchedLeadId = null;
+    try {
+        const res = await fetch('/api/leads');
+        if (res.ok) {
+            const data = await res.json();
+            const leads = Array.isArray(data) ? data : (data.leads || []);
+            const found = leads.find(l => (l.phone || '').replace(/\D/g, '') === activeDigits);
+            if (found) matchedLeadId = found.id;
+        }
+    } catch (e) { /* ignore */ }
+
+    openWhatsAppSequenceModal(matchedLeadId);
 }
 
 // =========================================================================
@@ -5237,7 +5410,7 @@ let smsPreviewDebounceTimer = null;
 
 const SMS_TEMPLATES = {
     cohort: "Hi {name}! Ben from TekTutors here. Our next cohort for {course} kicks off this Saturday. Limited seats with 1-on-1 mentor guidance. Secure your spot: tektutors.com.ng",
-    followup: "Hi {name}! Charles from TekTutors following up on your inquiry about {course}. Have you reviewed our curriculum? Chat with our advisors: wa.me/2348063584517",
+    followup: "Hi {name}! Charles from TekTutors following up on your inquiry about {course}. Have you reviewed our curriculum? Chat with our advisors: wa.me/2349112120531",
     scholarship: "🎉 Exclusive Offer for {name}! Claim 20% off your {course} tuition at TekTutors this week. Flexible installment plans available. Reply YES for details.",
     urgency: "⚡ Urgent: Only 3 mentor slots remaining for {course} at TekTutors! Start your hands-on journey with real portfolio projects: tektutors.com.ng"
 };

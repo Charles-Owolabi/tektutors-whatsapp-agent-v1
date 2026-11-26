@@ -820,7 +820,9 @@ async def dispatch_whatsapp_message_direct(
     buttons: Optional[List[Dict[str, str]]] = None,
     campaign_name: str = "WhatsApp 3-Touch AI Sequence",
     lead_id: Optional[int] = None,
-    db: Optional[AsyncSession] = None
+    db: Optional[AsyncSession] = None,
+    fast_fail_error: Optional[Dict[str, Any]] = None,
+    auto_commit: bool = True
 ) -> Dict[str, Any]:
     """
     Dispatch a single WhatsApp Cloud API message with interactive buttons (or text fallback),
@@ -843,31 +845,38 @@ async def dispatch_whatsapp_message_direct(
                 valid_buttons.append({"id": b.get("id", f"btn_{title}"), "title": title})
 
     try:
-        if whatsapp_client.is_configured():
+        if fast_fail_error:
+            api_response = {"error": fast_fail_error}
+        elif whatsapp_client.is_configured():
             if valid_buttons:
                 api_response = await whatsapp_client.send_interactive_buttons(clean_phone, body_text, valid_buttons)
-                # If interactive buttons failed, fallback to plain text with numbered options
+                # Only fallback to plain text if error is NOT an OAuth/token, 24h-window, sandbox, or undeliverable error
                 if api_response and api_response.get("error"):
-                    button_fallback_text = body_text + "\n\n" + "\n".join([f"🔘 [{b['title']}]" for b in valid_buttons])
-                    api_response = await whatsapp_client.send_text_message(clean_phone, button_fallback_text)
+                    err_obj = api_response.get("error", {})
+                    err_code = err_obj.get("code") if isinstance(err_obj, dict) else None
+                    if err_code not in (190, 131047, 131030, 131026, 10, 200, 100):
+                        button_fallback_text = body_text + "\n\n" + "\n".join([f"🔘 [{b['title']}]" for b in valid_buttons])
+                        api_response = await whatsapp_client.send_text_message(clean_phone, button_fallback_text)
             else:
                 api_response = await whatsapp_client.send_text_message(clean_phone, body_text)
 
-            if api_response and api_response.get("error"):
-                delivery_status = "failed"
-                err_obj = api_response.get("error", {})
-                err_code = err_obj.get("code") if isinstance(err_obj, dict) else None
-                err_msg = err_obj.get("message", "") if isinstance(err_obj, dict) else str(err_obj)
+        if api_response and api_response.get("error"):
+            delivery_status = "failed"
+            err_obj = api_response.get("error", {})
+            err_code = err_obj.get("code") if isinstance(err_obj, dict) else None
+            err_msg = err_obj.get("message", "") if isinstance(err_obj, dict) else str(err_obj)
 
-                if err_code == 131047:
-                    delivery_error = "Meta 24-hour service window expired (contact has not messaged your WhatsApp bot in the last 24h). Requires pre-approved Meta Template."
-                elif err_code == 131030:
-                    delivery_error = "Meta Sandbox restriction: phone number not in verified test numbers list (Manage phone number list in Meta Developer Portal)."
-                elif err_code == 131026:
-                    delivery_error = "Undeliverable by WhatsApp (number may not have an active WhatsApp account or invalid format)."
-                else:
-                    delivery_error = f"Meta API Error ({err_code or 'N/A'}): {err_msg}"
-        else:
+            if err_code == 190:
+                delivery_error = "Meta OAuth Token Expired/Invalid (Code 190): Please update WHATSAPP_TOKEN in your .env / variables with a valid Meta Access Token."
+            elif err_code == 131047:
+                delivery_error = "Meta 24-hour service window expired (contact has not messaged your WhatsApp bot in the last 24h). Requires pre-approved Meta Template."
+            elif err_code == 131030:
+                delivery_error = "Meta Sandbox restriction: phone number not in verified test numbers list (Manage phone number list in Meta Developer Portal)."
+            elif err_code == 131026:
+                delivery_error = "Undeliverable by WhatsApp (number may not have an active WhatsApp account or invalid format)."
+            else:
+                delivery_error = f"Meta API Error ({err_code or 'N/A'}): {err_msg}"
+        elif not whatsapp_client.is_configured():
             # Simulated environment: successfully delivered to mock client
             delivery_status = "delivered"
             delivery_error = None
@@ -912,7 +921,10 @@ async def dispatch_whatsapp_message_direct(
                 error_message=delivery_error
             )
             db.add(log_entry)
-            await db.commit()
+            if auto_commit:
+                await db.commit()
+            else:
+                await db.flush()
         except Exception as e:
             logger.error(f"Error persisting WhatsAppLog: {e}")
 
@@ -930,7 +942,9 @@ async def enroll_lead_in_3_step_sequence(
     lead: Lead,
     dispatch_all_now: bool = False,
     chat_history: Optional[List[Dict[str, str]]] = None,
-    latest_user_text: Optional[str] = None
+    latest_user_text: Optional[str] = None,
+    custom_bodies: Optional[Dict[int, str]] = None,
+    shared_auth_error: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Enroll a user who chatted with Tara into the 3-step intelligently crafted sequence.
@@ -1014,11 +1028,12 @@ async def enroll_lead_in_3_step_sequence(
 
     now = datetime.datetime.now()
     dispatched_results = []
+    detected_auth_error = shared_auth_error
 
     for step_data in steps:
         step_num = step_data["step"]
         step_title = step_data["title"]
-        body = step_data["body"]
+        body = (custom_bodies.get(step_num) if custom_bodies and custom_bodies.get(step_num) else None) or step_data["body"]
         buttons = step_data["buttons"]
         delay_hrs = step_data["delay_hours"]
 
@@ -1076,8 +1091,15 @@ async def enroll_lead_in_3_step_sequence(
                 buttons=buttons,
                 campaign_name=f"WhatsApp 3-Touch AI: {step_title}",
                 lead_id=lead.id,
-                db=db
+                db=db,
+                fast_fail_error=detected_auth_error,
+                auto_commit=False
             )
+            # If Meta returned an OAuth token error (Code 190), remember it so remaining steps don't hang waiting on network timeouts
+            api_err = (res.get("api_response") or {}).get("error") if isinstance(res.get("api_response"), dict) else None
+            if isinstance(api_err, dict) and api_err.get("code") == 190 and not detected_auth_error:
+                detected_auth_error = api_err
+
             scheduled_rec.status = res["status"]
             scheduled_rec.error_message = res.get("error")
             scheduled_rec.sent_at = datetime.datetime.now()
@@ -1104,20 +1126,22 @@ async def enroll_lead_in_3_step_sequence(
         "phone": clean_phone,
         "course": detected_course,
         "discussion_topic": topic_label,
-        "steps": dispatched_results
+        "steps": dispatched_results,
+        "auth_error": detected_auth_error
     }
 
 
 async def auto_trigger_sequence_for_all_chat_users(
     db: AsyncSession,
     target_audience: str = "all_chat_users",
-    dispatch_all_now: bool = True
+    dispatch_all_now: bool = True,
+    custom_bodies: Optional[Dict[int, str]] = None
 ) -> Dict[str, Any]:
     """
     Automatically identify all users who chatted with Tara and dispatch the 3-step WhatsApp sequence.
+    Short-circuits repeated OAuth failures so batch dispatch finishes in ~1 second instead of hanging.
     """
-    # Find all leads who have active conversations or are in CRM
-    stmt = select(Lead)
+    stmt = select(Lead).order_by(desc(Lead.id))
     if target_audience == "hot":
         stmt = stmt.where(Lead.status == "hot")
     elif target_audience == "qualified":
@@ -1129,8 +1153,7 @@ async def auto_trigger_sequence_for_all_chat_users(
     leads = res.scalars().all()
 
     if not leads:
-        # Fallback to any lead in system
-        all_res = await db.execute(select(Lead))
+        all_res = await db.execute(select(Lead).order_by(desc(Lead.id)))
         leads = all_res.scalars().all()
 
     # Deduplicate by phone
@@ -1146,9 +1169,20 @@ async def auto_trigger_sequence_for_all_chat_users(
     total_messages_dispatched = 0
     total_delivered = 0
     total_failed = 0
+    shared_auth_error = None
+    first_error_message = None
 
     for lead in unique_leads:
-        enroll_res = await enroll_lead_in_3_step_sequence(db, lead, dispatch_all_now=dispatch_all_now)
+        enroll_res = await enroll_lead_in_3_step_sequence(
+            db,
+            lead,
+            dispatch_all_now=dispatch_all_now,
+            custom_bodies=custom_bodies,
+            shared_auth_error=shared_auth_error
+        )
+        if enroll_res.get("auth_error") and not shared_auth_error:
+            shared_auth_error = enroll_res["auth_error"]
+
         for s in enroll_res.get("steps", []):
             if s["status"] in ("delivered", "sent"):
                 total_messages_dispatched += 1
@@ -1157,6 +1191,10 @@ async def auto_trigger_sequence_for_all_chat_users(
             elif s["status"] == "failed":
                 total_messages_dispatched += 1
                 total_failed += 1
+                if s.get("error") and not first_error_message:
+                    first_error_message = s["error"]
+            elif s["status"] == "pending":
+                total_messages_dispatched += 1
         results.append(enroll_res)
 
     return {
@@ -1165,6 +1203,7 @@ async def auto_trigger_sequence_for_all_chat_users(
         "total_messages_processed": total_messages_dispatched,
         "delivered_count": total_delivered,
         "failed_count": total_failed,
+        "first_error": first_error_message,
         "dispatch_all_now": dispatch_all_now,
         "lead_details": results
     }

@@ -82,20 +82,40 @@ async def search_tektutors_courses(query: str) -> str:
     Search TekTutors course catalog, prices, syllabus, prerequisites, and duration.
     Use this tool whenever a customer asks about courses, prices, bootcamps, or learning topics.
     """
+    from app.cache import normalize_course_name, COURSE_SYLLABUS_MAP
+    import re
+
     all_courses = await _get_cached_courses()
+    canonical_target = normalize_course_name(query) if query else None
     matched_specific = False
     matched_courses = []
 
     if query:
-        keywords = [kw.strip().lower() for kw in query.replace(",", " ").replace("?", " ").replace(".", " ").split() if len(kw.strip()) > 2]
-        if keywords:
-            for c in all_courses:
-                title_lower = c["title"].lower()
-                desc_lower = c["description"].lower()
-                syl_lower = c["syllabus"].lower()
+        raw_tokens = [
+            kw.strip().lower()
+            for kw in query.replace(",", " ").replace("?", " ").replace(".", " ").split()
+            if kw.strip()
+        ]
+        short_allow = {"r", "bi", "ai", "ml", "ds", "ba", "hr"}
+        keywords = [w for w in raw_tokens if len(w) > 2 or w in short_allow]
 
-                score = 0
-                for kw in keywords:
+        for c in all_courses:
+            title_lower = c["title"].lower()
+            desc_lower = c["description"].lower()
+            syl_lower = c["syllabus"].lower()
+            c_norm = normalize_course_name(c["title"])
+
+            score = 0
+            if canonical_target and (c_norm == canonical_target or canonical_target.lower() in title_lower or title_lower in canonical_target.lower()):
+                score += 100
+
+            for kw in keywords:
+                if len(kw) <= 2:
+                    if re.search(rf"\b{re.escape(kw)}\b", title_lower):
+                        score += 15
+                    elif re.search(rf"\b{re.escape(kw)}\b", syl_lower):
+                        score += 3
+                else:
                     if kw in title_lower:
                         score += 10
                     elif kw in desc_lower:
@@ -103,38 +123,56 @@ async def search_tektutors_courses(query: str) -> str:
                     elif kw in syl_lower:
                         score += 2
 
-                if score > 0:
-                    matched_courses.append((score, c))
+            if score > 0:
+                matched_courses.append((score, c))
 
-            if matched_courses:
-                matched_courses.sort(key=lambda x: x[0], reverse=True)
-                matched_courses = [c for _, c in matched_courses]
-                matched_specific = True
+        if matched_courses:
+            matched_courses.sort(key=lambda x: x[0], reverse=True)
+            top_score = matched_courses[0][0]
+            # If we have a direct canonical title match (score >= 100), return ONLY the exact requested course
+            # so the LLM never confuses or mixes in unrelated courses!
+            if top_score >= 100:
+                matched_courses = [c for s, c in matched_courses if s >= 100][:1]
+            else:
+                matched_courses = [c for _, c in matched_courses[:2]]
+            matched_specific = True
+
+    # If canonical_target is in COURSE_SYLLABUS_MAP but not in DB table, synthesize from COURSE_SYLLABUS_MAP
+    if canonical_target and canonical_target in COURSE_SYLLABUS_MAP and not matched_courses:
+        s_info = COURSE_SYLLABUS_MAP[canonical_target]
+        return json.dumps([{
+            "title": s_info["title"],
+            "price_monthly": "₦100,000",
+            "duration": s_info["duration"],
+            "syllabus": " | ".join(s_info.get("modules", [])),
+            "prerequisites": s_info.get("prerequisites", "Beginner friendly.")
+        }], separators=(',', ':'))
 
     if not matched_courses:
         # Provide top 3 foundational tracks if no specific match
         matched_courses = all_courses[:3]
         matched_specific = False
 
-    # Cap to top 3 matches to prevent multi-thousand token context bloat
     selected = matched_courses[:3]
     courses_data = []
     for c in selected:
+        c_canonical = normalize_course_name(c["title"]) or c["title"]
+        rich_syl = COURSE_SYLLABUS_MAP.get(c_canonical, {})
         item = {
             "title": c["title"],
+            "canonical_title": c_canonical,
             "price_monthly": f"₦{c['price']:,}",
-            "duration": f"{c['duration_weeks']} Weeks",
+            "duration": rich_syl.get("duration") or f"{c['duration_weeks']} Weeks",
             "career_outcomes": c["career_outcomes"],
-            "prerequisites": c["prerequisites"]
+            "prerequisites": rich_syl.get("prerequisites") or c["prerequisites"]
         }
         if matched_specific or len(selected) <= 2:
-            item["syllabus"] = c["syllabus"]
+            item["syllabus"] = " | ".join(rich_syl.get("modules", [])) if rich_syl.get("modules") else c["syllabus"]
             item["description"] = c["description"]
         else:
             item["summary"] = c["description"][:120] + "..." if len(c["description"]) > 120 else c["description"]
         courses_data.append(item)
 
-    # Minified JSON serialization saves 45-60% whitespace/indent tokens
     return json.dumps(courses_data, separators=(',', ':'))
 
 

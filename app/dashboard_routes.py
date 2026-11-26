@@ -3175,6 +3175,7 @@ class WhatsAppSequenceSendRequest(BaseModel):
     target_audience: Optional[str] = "all_chat_users"  # all_chat_users, hot, qualified, new
     dispatch_all_now: Optional[bool] = True
     lead_id: Optional[int] = None
+    custom_bodies: Optional[Dict[int, str]] = None
 
 
 @router.get("/api/whatsapp/sequence/preview")
@@ -3188,24 +3189,55 @@ async def preview_whatsapp_sequence(
     Generate real-time preview of the 3 intelligently crafted WhatsApp messages
     tailored to a prospect, including WhatsApp Cloud API compliance checks.
     """
-    from app.whatsapp_sequence import generate_personalized_3_step_sequence
+    from app.whatsapp_sequence import (
+        generate_personalized_3_step_sequence,
+        clean_phone_number,
+        detect_course_interest,
+        detect_discussion_line
+    )
 
     lead_name = "Prospect"
+    lead_notes = None
+    chat_history_msgs: List[Dict[str, str]] = []
+    lead = None
+
     if lead_id:
         res = await db.execute(select(Lead).where(Lead.id == lead_id))
         lead = res.scalar_one_or_none()
-        if lead:
-            lead_name = lead.name or "Prospect"
-            course_name = course_name or lead.course_interest
-            skill_level = skill_level or lead.skill_level
+    else:
+        # Default preview to the most recent lead with an active chat conversation if available
+        res = await db.execute(select(Lead).order_by(desc(Lead.id)).limit(1))
+        lead = res.scalars().first()
 
-    course_name = course_name or "Data Analytics & BI Accelerator"
+    if lead:
+        lead_name = lead.name or "Prospect"
+        course_name = course_name or lead.course_interest
+        skill_level = skill_level or lead.skill_level
+        lead_notes = lead.notes
+        clean_phone = clean_phone_number(lead.phone)
+        if clean_phone:
+            conv_res = await db.execute(select(Conversation).where(Conversation.phone == clean_phone))
+            conv = conv_res.scalar_one_or_none()
+            if conv:
+                msgs_res = await db.execute(
+                    select(Message).where(Message.conversation_id == conv.id).order_by(Message.id.desc()).limit(15)
+                )
+                db_msgs = list(reversed(msgs_res.scalars().all()))
+                chat_history_msgs = [{"sender": m.sender, "body": m.body} for m in db_msgs]
+                if not lead.name and conv.customer_name:
+                    lead_name = conv.customer_name
+
+    user_text_corpus = " ".join([m["body"] for m in chat_history_msgs if m.get("sender") == "user"])
+    resolved_course = detect_course_interest(user_text_corpus, default_course=course_name)
+    disc_info = detect_discussion_line(user_text_corpus)
     skill_level = skill_level or "Beginner"
 
     steps = generate_personalized_3_step_sequence(
         lead_name=lead_name,
-        course_name=course_name,
-        skill_level=skill_level
+        course_name=resolved_course,
+        skill_level=skill_level,
+        notes=lead_notes,
+        chat_history=chat_history_msgs
     )
 
     # WhatsApp Cloud API compliance audit for each step
@@ -3231,8 +3263,11 @@ async def preview_whatsapp_sequence(
         })
 
     return {
+        "lead_id": lead.id if lead else None,
         "lead_name": lead_name,
-        "course_name": course_name,
+        "lead_phone": lead.phone if lead else "",
+        "course_name": resolved_course,
+        "discussion_topic": disc_info.get("topic_label", "Course Roadmap & Curriculum"),
         "skill_level": skill_level,
         "whatsapp_cloud_standard": "Meta Graph API v20.0 (Session Messaging & Interactive Reply Buttons)",
         "steps": steps,
@@ -3254,7 +3289,8 @@ async def send_sequence_to_all_chat_users(
     res = await auto_trigger_sequence_for_all_chat_users(
         db=db,
         target_audience=payload.target_audience or "all_chat_users",
-        dispatch_all_now=payload.dispatch_all_now if payload.dispatch_all_now is not None else True
+        dispatch_all_now=payload.dispatch_all_now if payload.dispatch_all_now is not None else True,
+        custom_bodies=payload.custom_bodies
     )
 
     return res
@@ -3264,6 +3300,7 @@ async def send_sequence_to_all_chat_users(
 async def send_sequence_to_single_lead(
     lead_id: int,
     dispatch_all_now: bool = True,
+    payload: Optional[WhatsAppSequenceSendRequest] = Body(default=None),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -3276,11 +3313,23 @@ async def send_sequence_to_single_lead(
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
 
+    effective_dispatch_now = payload.dispatch_all_now if (payload and payload.dispatch_all_now is not None) else dispatch_all_now
+    custom_bodies = payload.custom_bodies if payload else None
+
     res = await enroll_lead_in_3_step_sequence(
         db=db,
         lead=lead,
-        dispatch_all_now=dispatch_all_now
+        dispatch_all_now=effective_dispatch_now,
+        custom_bodies=custom_bodies
     )
+
+    delivered_cnt = sum(1 for s in res.get("steps", []) if s.get("status") in ("delivered", "sent"))
+    failed_cnt = sum(1 for s in res.get("steps", []) if s.get("status") == "failed")
+    first_err = next((s.get("error") for s in res.get("steps", []) if s.get("error")), None)
+    res["delivered_count"] = delivered_cnt
+    res["failed_count"] = failed_cnt
+    res["first_error"] = first_err
+    res["total_leads_targeted"] = 1
 
     return res
 

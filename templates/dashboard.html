@@ -2058,119 +2058,163 @@
     <!-- INTELLIGENT 3-TOUCH WHATSAPP AI SEQUENCE MODAL                             -->
     <!-- ========================================================================= -->
     <div id="whatsapp-sequence-modal" class="modal-overlay" style="display: none; z-index: 1050;">
-        <div class="modal-content glass-card" style="max-width: 980px; width: 94vw; max-height: 90vh; display: flex; flex-direction: column;">
+        <div class="modal-content glass-card" style="max-width: 1180px; width: 96vw; max-height: 93vh; display: flex; flex-direction: column; gap: 0.75rem; padding: 1.25rem 1.5rem; overflow-y: auto;">
             <!-- Modal Header -->
-            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.65rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-shrink: 0;">
                 <div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem; flex-wrap: wrap;">
                         <span class="badge" style="background: rgba(37, 211, 102, 0.2); color: #25D366; font-weight: 700; border: 1px solid rgba(37, 211, 102, 0.4);">
                             <i class="fa-solid fa-wand-magic-sparkles"></i> WHATSAPP CLOUD API AUTOMATION
                         </span>
                         <span class="badge badge-roi"><i class="fa-solid fa-check"></i> Meta Graph API Compliant</span>
+                        <span id="wa-seq-topic-badge" class="badge" style="background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35);">
+                            <i class="fa-solid fa-comments"></i> Context-Aware Follow-Up
+                        </span>
                     </div>
                     <h3 style="display: flex; align-items: center; gap: 0.6rem; font-size: 1.15rem; margin: 0; color: #fff;">
                         <i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> 
                         Intelligent 3-Touch WhatsApp AI Sequence
                     </h3>
-                    <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.3rem 0 0 0;">
-                        Automatically crafts and sends 3 tailored WhatsApp messages suited to individual prospects who chat with Tara at a strict <strong>10-hour interval</strong> (T+0h, T+10h, T+20h).
+                    <p style="font-size: 0.76rem; color: var(--text-muted); margin: 0.2rem 0 0 0;">
+                        Crafts 3 personalized WhatsApp messages tailored to each prospect's discussion topic &amp; course interest (T+2h, T+10h, T+20h). You can inspect or edit each draft below before dispatching.
                     </p>
                 </div>
                 <button class="btn-icon" onclick="closeWhatsAppSequenceModal()" title="Close">&times;</button>
             </div>
 
-            <!-- Target Selection & Compliance Banner -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; padding: 0.85rem 1rem; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px;">
-                <div>
-                    <label style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">
-                        Target Audience (Prospects who chatted with Tara)
-                    </label>
-                    <select id="wa-seq-audience-select" class="form-control" style="font-size: 0.85rem;" onchange="updateSequencePreviewForSelection()">
-                        <option value="all_chat_users">👥 All Prospects who Chatted with Tara</option>
-                        <option value="hot">🔥 Hot Leads Only (High Intent)</option>
-                        <option value="qualified">✅ Qualified Prospects (Curriculum Inquiries)</option>
-                        <option value="new">🆕 New Chat Inquiries</option>
-                    </select>
-                    <div style="margin-top: 0.5rem; font-size: 0.72rem; color: var(--text-muted);">
-                        Or preview for specific lead: 
-                        <select id="wa-seq-lead-select" style="background: rgba(30,41,59,0.8); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.72rem;" onchange="previewSequenceForLead(this.value)">
-                            <option value="">-- Choose Lead --</option>
-                        </select>
+            <!-- Target Selection & Compliance Banner (Compact) -->
+            <div style="display: grid; grid-template-columns: 1.15fr 1fr; gap: 0.85rem; padding: 0.7rem 0.95rem; background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; flex-shrink: 0;">
+                <div style="display: flex; flex-direction: column; gap: 0.45rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; align-items: end;">
+                        <div>
+                            <label style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 0.25rem;">
+                                Target Audience
+                            </label>
+                            <select id="wa-seq-audience-select" class="form-control" style="font-size: 0.8rem; padding: 0.4rem 0.6rem;" onchange="updateSequencePreviewForSelection()">
+                                <option value="all_chat_users">👥 All Prospects who Chatted with Tara</option>
+                                <option value="hot">🔥 Hot Leads Only (High Intent)</option>
+                                <option value="qualified">✅ Qualified Prospects (Curriculum Inquiries)</option>
+                                <option value="new">🆕 New Chat Inquiries</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.7rem; font-weight: 700; color: #38bdf8; text-transform: uppercase; display: block; margin-bottom: 0.25rem;">
+                                Or Target / Preview Specific Lead
+                            </label>
+                            <select id="wa-seq-lead-select" class="form-control" style="font-size: 0.8rem; padding: 0.4rem 0.6rem; border-color: rgba(56,189,248,0.35);" onchange="previewSequenceForLead(this.value)">
+                                <option value="">-- All Leads in Selected Audience --</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <div style="background: rgba(37, 211, 102, 0.08); border: 1px solid rgba(37, 211, 102, 0.25); border-radius: 8px; padding: 0.65rem 0.85rem; font-size: 0.73rem;">
-                    <strong style="color: #25D366; display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.3rem;">
-                        <i class="fa-solid fa-shield-check"></i> WhatsApp Cloud Standards &amp; Timing:
+                <div style="background: rgba(37, 211, 102, 0.07); border: 1px solid rgba(37, 211, 102, 0.22); border-radius: 8px; padding: 0.5rem 0.75rem; font-size: 0.72rem; display: flex; flex-direction: column; justify-content: center;">
+                    <strong style="color: #25D366; display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.2rem;">
+                        <i class="fa-solid fa-shield-check"></i> Meta WhatsApp Cloud Standards &amp; Timing:
                     </strong>
-                    <ul style="margin: 0; padding-left: 1.1rem; color: #cbd5e1; line-height: 1.4;">
-                        <li><strong>10-Hour Interval:</strong> Step 1 (T+0h), Step 2 (T+10h), Step 3 (T+20h) within the 24h window.</li>
-                        <li><strong>Single-Asterisk Bolding:</strong> Uses <code>*bold*</code> (prevents broken double asterisks on mobile).</li>
-                        <li><strong>Interactive Quick-Reply Buttons:</strong> Max 3 buttons, titles &le; 20 chars.</li>
-                        <li><strong>Compliance Disclosures:</strong> Mandatory opt-out instruction included.</li>
-                    </ul>
+                    <div style="color: #cbd5e1; line-height: 1.38;">
+                        &bull; <strong>Smart Cadence:</strong> Step 1 (T+2h), Step 2 (T+10h), Step 3 (T+20h) within the 24h window.<br>
+                        &bull; <strong>Editable Drafts:</strong> Click <em>Edit Draft</em> on any card below to customize text before sending.
+                    </div>
                 </div>
             </div>
 
-            <!-- 3 Messages Sequence Cards Preview Grid -->
-            <div style="flex: 1; overflow-y: auto; padding-right: 0.25rem;">
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.85rem;" id="wa-seq-cards-grid">
-                    <!-- Step 1 Card -->
-                    <div class="glass-card" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; padding: 0.85rem; display: flex; flex-direction: column;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <span class="badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; font-weight: 700;">MESSAGE 1 (Immediate)</span>
-                            <span style="font-size: 0.68rem; color: var(--text-muted);">T + 0h &bull; Discovery</span>
-                        </div>
-                        <h4 style="font-size: 0.85rem; color: #fff; margin: 0 0 0.4rem 0;">Roadmap &amp; Curriculum</h4>
-                        <div style="flex: 1; background: #0b141a; border-radius: 8px; padding: 0.65rem; color: #e9edef; font-size: 0.74rem; line-height: 1.4; white-space: pre-wrap; margin-bottom: 0.5rem; max-height: 230px; overflow-y: auto;" id="wa-seq-msg-1-text">
-                            Loading message 1...
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 0.3rem;" id="wa-seq-msg-1-buttons">
-                            <!-- Buttons rendered dynamically -->
+            <!-- In-Modal Dispatch Result & Diagnostic Banner -->
+            <div id="wa-seq-result-banner" style="display: none; flex-shrink: 0;"></div>
+
+            <!-- 3 Messages Sequence Cards Preview Grid (Full Height & Uncompressed) -->
+            <div style="display: grid; grid-template-columns: repeat(3, minmax(290px, 1fr)); gap: 0.9rem; min-height: 410px; flex-shrink: 0;" id="wa-seq-cards-grid">
+                <!-- Step 1 Card -->
+                <div class="glass-card" style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 12px; padding: 0.9rem; display: flex; flex-direction: column; min-height: 400px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; gap: 0.35rem; flex-wrap: wrap;">
+                        <span class="badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; font-weight: 700; font-size: 0.7rem;">STEP 1 (+2 Hours)</span>
+                        <div style="display: flex; align-items: center; gap: 0.35rem;">
+                            <span id="wa-seq-msg-1-chars" style="font-size: 0.66rem; color: #94a3b8;">0 chars</span>
+                            <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.66rem; padding: 0.15rem 0.45rem;" onclick="toggleWaSeqEdit(1)" id="wa-seq-edit-btn-1">
+                                <i class="fa-solid fa-pen"></i> Edit Draft
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.66rem; padding: 0.15rem 0.45rem;" onclick="copyWaSeqDraft(1)" title="Copy Message 1">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
                         </div>
                     </div>
+                    <h4 id="wa-seq-msg-1-title" style="font-size: 0.82rem; color: #fff; margin: 0 0 0.45rem 0; font-weight: 700;">Step 1: Follow-Up on Discussion</h4>
+                    <!-- Formatted WhatsApp Chat Bubble Preview -->
+                    <div id="wa-seq-msg-1-text" style="flex: 1; background: #0b141a; border: 1px solid rgba(37, 211, 102, 0.22); border-left: 3px solid #38bdf8; border-radius: 10px; padding: 0.75rem 0.85rem; color: #e9edef; font-size: 0.78rem; line-height: 1.52; margin-bottom: 0.55rem; min-height: 255px; max-height: 310px; overflow-y: auto; word-break: break-word;">
+                        Loading message 1...
+                    </div>
+                    <!-- Editable Textarea (hidden unless Edit Draft clicked) -->
+                    <textarea id="wa-seq-msg-1-editor" class="form-control" style="display: none; flex: 1; background: #070d12; border: 1px solid #38bdf8; border-radius: 10px; padding: 0.7rem; color: #f8fafc; font-size: 0.77rem; line-height: 1.48; margin-bottom: 0.55rem; min-height: 255px; resize: vertical; font-family: inherit;" oninput="onWaSeqDraftEdited(1, this.value)"></textarea>
+                    <div style="display: flex; flex-direction: column; gap: 0.3rem; margin-top: auto;" id="wa-seq-msg-1-buttons">
+                        <!-- Buttons rendered dynamically -->
+                    </div>
+                </div>
 
-                    <!-- Step 2 Card -->
-                    <div class="glass-card" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 10px; padding: 0.85rem; display: flex; flex-direction: column;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; font-weight: 700;">MESSAGE 2 (+10 Hours)</span>
-                            <span style="font-size: 0.68rem; color: var(--text-muted);">T + 10h &bull; 10h Interval</span>
-                        </div>
-                        <h4 style="font-size: 0.85rem; color: #fff; margin: 0 0 0.4rem 0;">Social Proof &amp; Capstones</h4>
-                        <div style="flex: 1; background: #0b141a; border-radius: 8px; padding: 0.65rem; color: #e9edef; font-size: 0.74rem; line-height: 1.4; white-space: pre-wrap; margin-bottom: 0.5rem; max-height: 230px; overflow-y: auto;" id="wa-seq-msg-2-text">
-                            Loading message 2...
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 0.3rem;" id="wa-seq-msg-2-buttons">
-                            <!-- Buttons rendered dynamically -->
+                <!-- Step 2 Card -->
+                <div class="glass-card" style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 12px; padding: 0.9rem; display: flex; flex-direction: column; min-height: 400px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; gap: 0.35rem; flex-wrap: wrap;">
+                        <span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; font-weight: 700; font-size: 0.7rem;">STEP 2 (+10 Hours)</span>
+                        <div style="display: flex; align-items: center; gap: 0.35rem;">
+                            <span id="wa-seq-msg-2-chars" style="font-size: 0.66rem; color: #94a3b8;">0 chars</span>
+                            <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.66rem; padding: 0.15rem 0.45rem;" onclick="toggleWaSeqEdit(2)" id="wa-seq-edit-btn-2">
+                                <i class="fa-solid fa-pen"></i> Edit Draft
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.66rem; padding: 0.15rem 0.45rem;" onclick="copyWaSeqDraft(2)" title="Copy Message 2">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
                         </div>
                     </div>
+                    <h4 id="wa-seq-msg-2-title" style="font-size: 0.82rem; color: #fff; margin: 0 0 0.45rem 0; font-weight: 700;">Step 2: Social Proof &amp; Capstones</h4>
+                    <!-- Formatted WhatsApp Chat Bubble Preview -->
+                    <div id="wa-seq-msg-2-text" style="flex: 1; background: #0b141a; border: 1px solid rgba(168, 85, 247, 0.22); border-left: 3px solid #c084fc; border-radius: 10px; padding: 0.75rem 0.85rem; color: #e9edef; font-size: 0.78rem; line-height: 1.52; margin-bottom: 0.55rem; min-height: 255px; max-height: 310px; overflow-y: auto; word-break: break-word;">
+                        Loading message 2...
+                    </div>
+                    <!-- Editable Textarea -->
+                    <textarea id="wa-seq-msg-2-editor" class="form-control" style="display: none; flex: 1; background: #070d12; border: 1px solid #c084fc; border-radius: 10px; padding: 0.7rem; color: #f8fafc; font-size: 0.77rem; line-height: 1.48; margin-bottom: 0.55rem; min-height: 255px; resize: vertical; font-family: inherit;" oninput="onWaSeqDraftEdited(2, this.value)"></textarea>
+                    <div style="display: flex; flex-direction: column; gap: 0.3rem; margin-top: auto;" id="wa-seq-msg-2-buttons">
+                        <!-- Buttons rendered dynamically -->
+                    </div>
+                </div>
 
-                    <!-- Step 3 Card -->
-                    <div class="glass-card" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(37, 211, 102, 0.3); border-radius: 10px; padding: 0.85rem; display: flex; flex-direction: column;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <span class="badge" style="background: rgba(37, 211, 102, 0.2); color: #25D366; font-weight: 700;">MESSAGE 3 (+20 Hours)</span>
-                            <span style="font-size: 0.68rem; color: var(--text-muted);">T + 20h &bull; 10h After Msg 2</span>
+                <!-- Step 3 Card -->
+                <div class="glass-card" style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(37, 211, 102, 0.35); border-radius: 12px; padding: 0.9rem; display: flex; flex-direction: column; min-height: 400px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; gap: 0.35rem; flex-wrap: wrap;">
+                        <span class="badge" style="background: rgba(37, 211, 102, 0.2); color: #25D366; font-weight: 700; font-size: 0.7rem;">STEP 3 (+20 Hours)</span>
+                        <div style="display: flex; align-items: center; gap: 0.35rem;">
+                            <span id="wa-seq-msg-3-chars" style="font-size: 0.66rem; color: #94a3b8;">0 chars</span>
+                            <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.66rem; padding: 0.15rem 0.45rem;" onclick="toggleWaSeqEdit(3)" id="wa-seq-edit-btn-3">
+                                <i class="fa-solid fa-pen"></i> Edit Draft
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.66rem; padding: 0.15rem 0.45rem;" onclick="copyWaSeqDraft(3)" title="Copy Message 3">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
                         </div>
-                        <h4 style="font-size: 0.85rem; color: #fff; margin: 0 0 0.4rem 0;">Urgency &amp; 1-on-1 Call</h4>
-                        <div style="flex: 1; background: #0b141a; border-radius: 8px; padding: 0.65rem; color: #e9edef; font-size: 0.74rem; line-height: 1.4; white-space: pre-wrap; margin-bottom: 0.5rem; max-height: 230px; overflow-y: auto;" id="wa-seq-msg-3-text">
-                            Loading message 3...
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 0.3rem;" id="wa-seq-msg-3-buttons">
-                            <!-- Buttons rendered dynamically -->
-                        </div>
+                    </div>
+                    <h4 id="wa-seq-msg-3-title" style="font-size: 0.82rem; color: #fff; margin: 0 0 0.45rem 0; font-weight: 700;">Step 3: Urgency &amp; 1-on-1 Call</h4>
+                    <!-- Formatted WhatsApp Chat Bubble Preview -->
+                    <div id="wa-seq-msg-3-text" style="flex: 1; background: #0b141a; border: 1px solid rgba(37, 211, 102, 0.22); border-left: 3px solid #25D366; border-radius: 10px; padding: 0.75rem 0.85rem; color: #e9edef; font-size: 0.78rem; line-height: 1.52; margin-bottom: 0.55rem; min-height: 255px; max-height: 310px; overflow-y: auto; word-break: break-word;">
+                        Loading message 3...
+                    </div>
+                    <!-- Editable Textarea -->
+                    <textarea id="wa-seq-msg-3-editor" class="form-control" style="display: none; flex: 1; background: #070d12; border: 1px solid #25D366; border-radius: 10px; padding: 0.7rem; color: #f8fafc; font-size: 0.77rem; line-height: 1.48; margin-bottom: 0.55rem; min-height: 255px; resize: vertical; font-family: inherit;" oninput="onWaSeqDraftEdited(3, this.value)"></textarea>
+                    <div style="display: flex; flex-direction: column; gap: 0.3rem; margin-top: auto;" id="wa-seq-msg-3-buttons">
+                        <!-- Buttons rendered dynamically -->
                     </div>
                 </div>
             </div>
 
             <!-- Modal Action Footer -->
-            <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 0.85rem; margin-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: 0.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; flex-shrink: 0;">
                 <div style="font-size: 0.78rem; color: var(--text-muted);" id="wa-seq-status-text">
                     Ready to send to users who chat with Tara.
                 </div>
-                <div style="display: flex; gap: 0.5rem;">
+                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
                     <button class="btn btn-secondary btn-sm" onclick="closeWhatsAppSequenceModal()">Cancel</button>
-                    <button class="btn btn-primary btn-sm" id="btn-submit-wa-seq" onclick="executeWhatsAppSequenceDispatch()" style="background: #25D366; border-color: #25D366; color: #0b141a; font-weight: 700;">
-                        <i class="fa-solid fa-paper-plane"></i> Send 3 WhatsApp Messages Now
+                    <button class="btn btn-secondary btn-sm" id="btn-schedule-wa-seq" onclick="executeWhatsAppSequenceDispatch(false)" style="border-color: rgba(56,189,248,0.4); color: #38bdf8; font-weight: 600;">
+                        <i class="fa-solid fa-calendar-check"></i> Schedule at 2h / 10h / 20h Intervals
+                    </button>
+                    <button class="btn btn-primary btn-sm" id="btn-submit-wa-seq" onclick="executeWhatsAppSequenceDispatch(true)" style="background: #25D366; border-color: #25D366; color: #0b141a; font-weight: 700;">
+                        <i class="fa-solid fa-paper-plane"></i> Dispatch Now via Meta WhatsApp API
                     </button>
                 </div>
             </div>

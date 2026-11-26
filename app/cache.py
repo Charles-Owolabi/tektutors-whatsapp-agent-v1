@@ -214,65 +214,316 @@ COURSE_SYLLABUS_MAP = {
             "Module 5: Capstone Projects & Career Portfolio (3 Employer-Ready Projects)"
         ],
         "prerequisites": "None. Complete beginners welcome."
+    },
+    "Predictive Analytics": {
+        "title": "Predictive Analytics",
+        "duration": "12 Weeks (3 Months)",
+        "modules": [
+            "Module 1: Foundations of Predictive Modeling, Feature Selection & Data Preparation",
+            "Module 2: Regression Analysis, Forecasting Frameworks & Scenario Modeling",
+            "Module 3: Classification Models, Customer Churn & Credit Risk Scoring",
+            "Module 4: Model Validation, Backtesting & Business ROI Evaluation",
+            "Module 5: End-to-End Enterprise Forecasting & Risk Analytics Capstones"
+        ],
+        "prerequisites": "Intermediate data analysis skills."
+    },
+    "Statistical Analysis for Data Analytics": {
+        "title": "Statistical Analysis for Data Analytics",
+        "duration": "10 Weeks (2.5 Months)",
+        "modules": [
+            "Module 1: Descriptive Statistics, Probability Distributions & Sampling Theory",
+            "Module 2: Confidence Intervals, Hypothesis Testing & A/B Experimentation",
+            "Module 3: Correlation, Linear & Multiple Regression Modeling",
+            "Module 4: ANOVA, Non-Parametric Tests & Statistical Inference",
+            "Module 5: Applied Business & Research Statistical Capstone Projects"
+        ],
+        "prerequisites": "Beginner to Intermediate. Basic math/algebra."
+    },
+    "R for Data Analysis": {
+        "title": "R for Data Analysis",
+        "duration": "6-8 Weeks (1.5-2 Months)",
+        "modules": [
+            "Module 1: R Programming Fundamentals, RStudio Environment & Data Structures",
+            "Module 2: Data Wrangling & Transformation with Tidyverse (dplyr, tidyr)",
+            "Module 3: Publication-Grade Data Visualization with ggplot2",
+            "Module 4: Statistical Modeling, Hypothesis Testing & Regression in R",
+            "Module 5: Automated R Markdown Reporting & Applied Analytics Capstones"
+        ],
+        "prerequisites": "None. Complete beginners welcome."
+    },
+    "Time Series Analysis": {
+        "title": "Time Series Analysis",
+        "duration": "10 Weeks (2.5 Months)",
+        "modules": [
+            "Module 1: Time-Series Components, Stationarity, Autocorrelation & Decomposition",
+            "Module 2: Moving Averages, Exponential Smoothing (ETS) & Holt-Winters",
+            "Module 3: ARIMA, SARIMA & Econometric Forecasting Models",
+            "Module 4: Modern Forecasting with Prophet & Machine Learning Time-Series",
+            "Module 5: Demand, Revenue & Financial Time-Series Capstone Projects"
+        ],
+        "prerequisites": "Basic Python or R and foundational statistics."
+    },
+    "Operations Analytics": {
+        "title": "Operations Analytics",
+        "duration": "8 Weeks (2 Months)",
+        "modules": [
+            "Module 1: Operational KPIs, Process Performance & Throughput Metrics",
+            "Module 2: Supply Chain, Inventory Optimization & Logistics Analytics",
+            "Module 3: SLA Tracking, Bottleneck Identification & Capacity Planning",
+            "Module 4: Interactive Operations Command Dashboards in Excel & Power BI",
+            "Module 5: End-to-End Operations & Supply Chain Optimization Capstones"
+        ],
+        "prerequisites": "Beginner-friendly. Basic spreadsheet familiarity."
+    },
+    "Data Governance & Quality": {
+        "title": "Data Governance & Quality",
+        "duration": "10 Weeks (2.5 Months)",
+        "modules": [
+            "Module 1: Enterprise Data Governance Frameworks, Stewardship & Ownership",
+            "Module 2: Data Quality Dimensions, Profiling, Validation & Cleansing Controls",
+            "Module 3: Metadata Management, Data Lineage & Master Data Management (MDM)",
+            "Module 4: Data Privacy, Regulatory Compliance (NDPR/GDPR) & Security Standards",
+            "Module 5: Enterprise Data Governance Charter & Quality Audit Capstones"
+        ],
+        "prerequisites": "Familiarity with business data workflows."
+    },
+    "Business Analytics": {
+        "title": "Business Analytics",
+        "duration": "12 Weeks (3 Months)",
+        "modules": [
+            "Module 1: Executive KPI Frameworks, Diagnostic & Descriptive Business Analytics",
+            "Module 2: Customer Segmentation, Cohort Analysis & Revenue Drivers",
+            "Module 3: Business Forecasting, Scenario Analysis & Decision Support Models",
+            "Module 4: Executive Storytelling & Interactive BI Dashboards",
+            "Module 5: End-to-End Strategic Business Analytics Capstone Portfolio"
+        ],
+        "prerequisites": "None. Ideal for business professionals and analysts."
+    },
+    "Data Visualization": {
+        "title": "Data Visualization",
+        "duration": "6 Weeks (1.5 Months)",
+        "modules": [
+            "Module 1: Visual Perception, Chart Selection & Information Hierarchy",
+            "Module 2: Designing High-Impact Executive KPI Dashboards",
+            "Module 3: Interactive Filtering, Drill-Throughs & User Experience Design",
+            "Module 4: Data Storytelling & Decision-Ready Executive Presentations",
+            "Module 5: Real-World Interactive Data Visualization Capstone Portfolio"
+        ],
+        "prerequisites": "None. Complete beginners welcome."
+    },
+    "Business Intelligence": {
+        "title": "Business Intelligence",
+        "duration": "12 Weeks (3 Months)",
+        "modules": [
+            "Module 1: Enterprise BI Architecture, Data Warehousing & Dimensional Modeling",
+            "Module 2: Automated ETL Pipelines & Multi-Source Data Integration",
+            "Module 3: Advanced KPI Engineering & Self-Service BI Systems",
+            "Module 4: Executive Reporting Governance & Automated Dashboards",
+            "Module 5: End-to-End Enterprise Business Intelligence Capstone"
+        ],
+        "prerequisites": "Basic Excel or SQL familiarity helpful."
+    },
+    "Research Data Analysis": {
+        "title": "Research Data Analysis",
+        "duration": "8 Weeks (2 Months)",
+        "modules": [
+            "Module 1: Research Design, Survey Data Cleaning & Coding",
+            "Module 2: Descriptive & Inferential Statistical Testing",
+            "Module 3: Regression, Factor Analysis & Quantitative Modeling",
+            "Module 4: Academic & Corporate Research Visualization & Interpretation",
+            "Module 5: Publication-Ready Research Data Analysis Capstone"
+        ],
+        "prerequisites": "Basic research or academic familiarity."
+    },
+    "Advanced Excel & Power Query": {
+        "title": "Advanced Excel & Power Query",
+        "duration": "6 Weeks (1.5 Months)",
+        "modules": [
+            "Module 1: Dynamic Arrays, XLOOKUP, INDEX/MATCH & Complex Formula Engineering",
+            "Module 2: Automated Data Ingestion & M-Language Transformations in Power Query",
+            "Module 3: Data Modeling, Power Pivot & DAX Measures in Excel",
+            "Module 4: Automated Reporting Workflows & Interactive Executive Dashboards",
+            "Module 5: Enterprise Excel Automation & Financial Reporting Capstone"
+        ],
+        "prerequisites": "Basic Excel familiarity."
+    },
+    "AI for Data Analytics": {
+        "title": "AI for Data Analytics",
+        "duration": "6 Weeks (1.5 Months)",
+        "modules": [
+            "Module 1: AI-Powered Data Exploration, Cleaning & Automated Profiling",
+            "Module 2: Generating Complex Excel Formulas, DAX & SQL Queries with AI",
+            "Module 3: Automated Python Analytics & Visualization Workflows",
+            "Module 4: AI-Assisted Executive Insight Generation & Narrative Reporting",
+            "Module 5: Modern AI-Augmented Data Analyst Capstone Project"
+        ],
+        "prerequisites": "None. Beginner friendly."
+    },
+    "Generative AI for Analysts": {
+        "title": "Generative AI for Analysts",
+        "duration": "6 Weeks (1.5 Months)",
+        "modules": [
+            "Module 1: Prompt Engineering Frameworks for Data & Business Analysis",
+            "Module 2: Structured Outputs, Automated Data Synthesis & Report Drafting",
+            "Module 3: AI Workflow Automation for Research & Business Intelligence",
+            "Module 4: Data Privacy, Verification & Responsible Enterprise GenAI Use",
+            "Module 5: End-to-End Generative AI Analytics Assistant Capstone"
+        ],
+        "prerequisites": "None. Beginner friendly."
+    },
+    "AI-Assisted Excel & Power BI": {
+        "title": "AI-Assisted Excel & Power BI",
+        "duration": "6 Weeks (1.5 Months)",
+        "modules": [
+            "Module 1: AI Formula Copilots & Automated Data Cleaning in Excel",
+            "Module 2: AI-Assisted Power Query Transformations & DAX Measure Generation",
+            "Module 3: Smart Narrative Visuals, Anomaly Detection & Q&A in Power BI",
+            "Module 4: Automated Executive Dashboard Design & Insight Storytelling",
+            "Module 5: AI-Accelerated BI Reporting Capstone Project"
+        ],
+        "prerequisites": "Basic spreadsheet familiarity."
+    },
+    "LLMs for Data Applications": {
+        "title": "LLMs for Data Applications",
+        "duration": "12 Weeks (3 Months)",
+        "modules": [
+            "Module 1: Large Language Model Architecture, Tokenization & APIs",
+            "Module 2: Prompt Engineering, Structured JSON Outputs & Function Calling",
+            "Module 3: Vector Databases, Embeddings & Retrieval-Augmented Generation (RAG)",
+            "Module 4: Building Autonomous AI Agents & Text-to-SQL Data Assistants",
+            "Module 5: Production LLM Data Application Deployment Capstone"
+        ],
+        "prerequisites": "Intermediate Python programming."
+    },
+    "AI & Predictive Analytics": {
+        "title": "AI & Predictive Analytics",
+        "duration": "12 Weeks (3 Months)",
+        "modules": [
+            "Module 1: Applied Machine Learning & Predictive Modeling Foundations",
+            "Module 2: Integrating Generative AI with Predictive Business Forecasting",
+            "Module 3: Customer Propensity, Churn & Automated Decision Systems",
+            "Module 4: Model Evaluation, Explainability & API Deployment",
+            "Module 5: End-to-End AI & Predictive Intelligence Capstone"
+        ],
+        "prerequisites": "Basic data analysis or Python familiarity."
     }
 }
+
+
+def is_multi_track_menu_text(text: Optional[str]) -> bool:
+    """Return True if the text is a multi-track catalog menu dump from the assistant."""
+    if not text or not isinstance(text, str):
+        return False
+    low = text.lower()
+    if "1️⃣" in text and ("4️⃣" in text or "5️⃣" in text):
+        return True
+    if "other available courses & specialized tracks" in low and "advanced ai & data science" in low:
+        return True
+    if "specialized tracks & advanced courses at tektutors" in low:
+        return True
+    if "reply with the number of your choice (1-6)" in low:
+        return True
+    return False
 
 
 def normalize_course_name(name: Optional[str]) -> Optional[str]:
     """
     Sanitize and normalize any course name or query string into a canonical course title.
-    Returns None if the name is empty or an invalid placeholder like 'Not specified'.
+    Returns None if the name is empty, an invalid placeholder, or a multi-track catalog menu.
+    Prioritizes specific multi-word course titles before single-tool keywords so assistant
+    descriptions of Data Analytics (which mention Excel, SQL, Power BI, Python) never get
+    misclassified as Power BI or Excel.
     """
     if not name or not isinstance(name, str):
         return None
     clean = name.strip()
     lower = clean.lower()
-    if lower in INVALID_COURSE_NAMES:
+    if lower in INVALID_COURSE_NAMES or is_multi_track_menu_text(clean):
         return None
 
-    # Exact or alias matches
-    if "machine learning" in lower or "machine-learning" in lower or re.search(r'\bml\b', lower):
-        return "Machine Learning with Python"
-    if "data science" in lower or re.search(r'\bds\b', lower):
-        return "Data Science with Python"
-    if "power bi" in lower or "powerbi" in lower:
-        return "Power BI & Business Intelligence"
-    if "sql" in lower or "database" in lower or "postgres" in lower or "mysql" in lower:
-        return "SQL & Enterprise Database Analytics"
-    if "excel" in lower:
-        return "Excel for Data Analysis & Business Modeling"
-    if "applied python" in lower or "python for data" in lower or (re.search(r'\bpython\b', lower) and "machine" not in lower and "data science" not in lower):
-        return "Applied Python for Data Analysis & AI"
-    if "business analysis" in lower or "business analyst" in lower or re.search(r'\bba\b', lower):
-        return "Business Analysis"
-    if "financial analytic" in lower or "finance" in lower:
-        return "Financial Analytics"
-    if "hr analytic" in lower or "people analytic" in lower:
-        return "HR Analytics"
-    if "marketing analytic" in lower:
-        return "Marketing Analytics"
-    if "data analytic" in lower or "data analysis" in lower or "business intelligence" in lower or re.search(r'\bbi\b', lower):
-        return "Data Analytics & BI Accelerator"
-
-    # Exact canonical check
+    # 0. Exact canonical title match
     for canonical in COURSE_SYLLABUS_MAP:
         if canonical.lower() == lower:
             return canonical
 
-    # Track info catalog check
-    for track_num, track in TRACK_INFO.items():
-        if track_num == 6:
-            continue
-        if track["title"].lower() in lower or str(track_num) == lower:
-            if "excel" in track["title"].lower():
-                return "Excel for Data Analysis & Business Modeling"
-            if "sql" in track["title"].lower():
-                return "SQL & Enterprise Database Analytics"
-            if "power bi" in track["title"].lower():
-                return "Power BI & Business Intelligence"
-            if "python" in track["title"].lower():
-                return "Applied Python for Data Analysis & AI"
-            return "Data Analytics & BI Accelerator"
+    # 1. Explicit Track header match from assistant confirmation (e.g. "Track 1: Data Analytics & BI Accelerator")
+    track_header_m = re.search(r"track\s*([1-5])\s*:\s*([^\n\*]+)", lower)
+    if track_header_m:
+        tr_idx = int(track_header_m.group(1))
+        tr_map = {
+            1: "Data Analytics & BI Accelerator",
+            2: "Excel for Data Analysis & Business Modeling",
+            3: "SQL & Enterprise Database Analytics",
+            4: "Power BI & Business Intelligence",
+            5: "Applied Python for Data Analysis & AI",
+        }
+        if tr_idx in tr_map:
+            return tr_map[tr_idx]
+
+    # 2. Specific AI / Specialized tracks first (longest & most specific phrases first)
+    if "llm" in lower or "large language model" in lower or "rag" in lower:
+        return "LLMs for Data Applications"
+    if "ai-assisted excel" in lower or "ai assisted excel" in lower:
+        return "AI-Assisted Excel & Power BI"
+    if "generative ai" in lower or "genai" in lower or "gen ai" in lower or "prompt engineering" in lower:
+        return "Generative AI for Analysts"
+    if "ai & predictive" in lower or "ai and predictive" in lower:
+        return "AI & Predictive Analytics"
+    if "ai for data analytic" in lower:
+        return "AI for Data Analytics"
+    if "advanced excel" in lower or ("power query" in lower and "power bi" not in lower and "data analytic" not in lower):
+        return "Advanced Excel & Power Query"
+    if "machine learning" in lower or "machine-learning" in lower or re.search(r"\bml\b", lower):
+        return "Machine Learning with Python"
+    if "data science" in lower or re.search(r"\bds\b", lower):
+        return "Data Science with Python"
+    if "predictive analytic" in lower:
+        return "Predictive Analytics"
+    if "time series" in lower or "time-series" in lower:
+        return "Time Series Analysis"
+    if "statistical analysis" in lower or ("statistics" in lower and "data science" not in lower and "machine learning" not in lower):
+        return "Statistical Analysis for Data Analytics"
+    if "research data" in lower:
+        return "Research Data Analysis"
+    if "r for data" in lower or re.search(r"\br\s+programming\b|\brstudio\b|\btidyverse\b", lower):
+        return "R for Data Analysis"
+    if "data governance" in lower or "data quality" in lower:
+        return "Data Governance & Quality"
+    if "operations analytic" in lower or "supply chain analytic" in lower:
+        return "Operations Analytics"
+    if "financial analytic" in lower or "financial data analytic" in lower or ("finance" in lower and "analytic" in lower):
+        return "Financial Analytics"
+    if "hr analytic" in lower or "people analytic" in lower or "hr / people" in lower:
+        return "HR Analytics"
+    if "marketing analytic" in lower:
+        return "Marketing Analytics"
+    if "business analysis" in lower or "business analyst" in lower or re.search(r"\bba\b", lower):
+        return "Business Analysis"
+    if "business analytics" in lower:
+        return "Business Analytics"
+    if "data visualization" in lower:
+        return "Data Visualization"
+
+    # 3. Check if Data Analytics & BI Accelerator is explicitly named before single-tool keywords!
+    # (Critical because Data Analytics descriptions mention Excel, SQL, Power BI, and Python)
+    if "data analytics & bi" in lower or "bi accelerator" in lower:
+        return "Data Analytics & BI Accelerator"
+    if ("data analytic" in lower or "data analysis" in lower) and not any(
+        specific in lower for specific in ["excel for data", "sql for data", "python for data", "r for data", "power bi data", "ai for data", "statistical analysis for data", "financial data", "research data"]
+    ):
+        return "Data Analytics & BI Accelerator"
+
+    # 4. Single-tool core tracks
+    if "power bi" in lower or "powerbi" in lower or re.search(r"\bdax\b", lower):
+        return "Power BI & Business Intelligence"
+    if "sql" in lower or "database" in lower or "postgres" in lower or "mysql" in lower:
+        return "SQL & Enterprise Database Analytics"
+    if "excel" in lower or "spreadsheet" in lower or "vlookup" in lower or "xlookup" in lower or "pivottable" in lower:
+        return "Excel for Data Analysis & Business Modeling"
+    if "applied python" in lower or "python" in lower or "pandas" in lower or "numpy" in lower or "jupyter" in lower:
+        return "Applied Python for Data Analysis & AI"
+    if "business intelligence" in lower or re.search(r"\bbi\b", lower):
+        return "Data Analytics & BI Accelerator"
 
     return None
 
@@ -291,6 +542,95 @@ def get_course_syllabus(course_name: Optional[str]) -> tuple:
 def detect_target_course(text: str) -> Optional[str]:
     """Identify which specific course is being discussed or requested."""
     return normalize_course_name(text)
+
+
+async def resolve_active_course_for_phone(
+    phone: str,
+    current_text: Optional[str] = None,
+    chat_history_messages: Optional[List[Dict[str, str]]] = None,
+    persist_if_explicit: bool = True
+) -> Optional[str]:
+    """
+    Intelligently resolve the customer's active course of interest across multi-turn chats:
+    1. Explicit course mention in current_text.
+    2. Recent USER messages in reverse chronological order (newest first).
+    3. Recent single-course ASSISTANT confirmations (ignoring multi-track catalog menus).
+    4. Stored Lead.course_interest in the CRM database.
+    Persists newly detected explicit course onto the Lead record so follow-ups stay locked in.
+    """
+    clean_phone = (phone or "").strip().replace("+", "")
+    explicit_current = detect_target_course(current_text) if current_text else None
+    resolved_course = explicit_current
+
+    try:
+        from app.models import Lead, Conversation, Message
+        from sqlalchemy import desc
+        async with AsyncSessionLocal() as db:
+            conv_rec = None
+            recent_msgs = []
+            if not resolved_course:
+                if chat_history_messages:
+                    # 2a. Scan provided chat_history_messages: user messages first (newest first)
+                    for m in reversed(chat_history_messages):
+                        if isinstance(m, dict) and m.get("sender") == "user":
+                            c_found = detect_target_course(m.get("body") or "")
+                            if c_found:
+                                resolved_course = c_found
+                                break
+                    # 2b. Then non-menu assistant confirmations
+                    if not resolved_course:
+                        for m in reversed(chat_history_messages):
+                            if isinstance(m, dict) and m.get("sender") == "assistant":
+                                c_found = detect_target_course(m.get("body") or "")
+                                if c_found:
+                                    resolved_course = c_found
+                                    break
+
+                if not resolved_course and clean_phone:
+                    conv_rec = (
+                        await db.execute(select(Conversation).where(Conversation.phone == clean_phone).limit(1))
+                    ).scalars().first()
+                    if conv_rec:
+                        recent_msgs = (
+                            await db.execute(
+                                select(Message)
+                                .where(Message.conversation_id == conv_rec.id)
+                                .order_by(desc(Message.id))
+                                .limit(12)
+                            )
+                        ).scalars().all()
+                        # Scan user messages first (most recent first)
+                        for m in recent_msgs:
+                            if m.sender == "user":
+                                c_found = detect_target_course(m.body or "")
+                                if c_found:
+                                    resolved_course = c_found
+                                    break
+                        # Then scan non-menu assistant confirmations
+                        if not resolved_course:
+                            for m in recent_msgs:
+                                if m.sender == "assistant":
+                                    c_found = detect_target_course(m.body or "")
+                                    if c_found:
+                                        resolved_course = c_found
+                                        break
+
+            # Check or update Lead.course_interest in DB
+            if clean_phone:
+                lead_rec = (
+                    await db.execute(select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1))
+                ).scalars().first()
+                if not resolved_course and lead_rec and lead_rec.course_interest:
+                    resolved_course = normalize_course_name(lead_rec.course_interest)
+
+                if persist_if_explicit and resolved_course:
+                    if lead_rec and lead_rec.course_interest != resolved_course:
+                        lead_rec.course_interest = resolved_course
+                        await db.commit()
+    except Exception as e:
+        logger.warning(f"Course context resolution note for {clean_phone}: {e}")
+
+    return resolved_course
 
 
 GREETING_PATTERNS = [
@@ -560,6 +900,8 @@ async def check_fast_path(phone: str, user_text: str) -> Optional[Dict[str, Any]
 async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str, Any]]:
     """
     Internal implementation of deterministic fast-path patterns.
+    Course-aware: resolves the customer's active course across multi-turn chats so
+    follow-up questions stay locked onto the exact course the customer requested.
     """
     clean_phone = phone.strip().replace("+", "")
     text_clean = user_text.strip()
@@ -567,13 +909,23 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
     start_time = time.time()
     norm_key = _normalize_key(text_clean)
 
+    # Resolve active course context across current message, recent user messages, and CRM lead
+    active_course = await resolve_active_course_for_phone(clean_phone, text_clean)
+    cache_key = f"{norm_key}::{active_course or 'general'}"
+    course_for_heading = f" ({active_course})" if active_course else ""
+    course_cta_prompt = (
+        f"Would you like me to email you the full *{active_course}* syllabus PDF, or schedule a quick 1-on-1 advisor call for *{active_course}*?"
+        if active_course else
+        "Which course track would you like to enroll in? (Reply with a track number 1-6 or course name!)"
+    )
+
     # Conversational inquiry filter: Allow natural advising to flow to LLM
     if is_conversational_query(text_clean):
-        logger.info(f"Conversational inquiry detected for {clean_phone} ('{text_clean[:60]}') - routing to AI Model.")
+        logger.info(f"Conversational inquiry detected for {clean_phone} ('{text_clean[:60]}') [Course: {active_course}] - routing to AI Model.")
         return None
 
-    # 0. Instant in-memory cache hit (< 0.1ms)
-    cached = _QUERY_RESPONSE_CACHE.get(norm_key)
+    # 0. Instant in-memory cache hit (< 0.1ms), scoped by active_course
+    cached = _QUERY_RESPONSE_CACHE.get(cache_key)
     if cached and (time.time() - cached["timestamp"]) < _CACHE_TTL_SECONDS:
         return {
             "response": cached["data"]["response"],
@@ -588,21 +940,23 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
             from app.tools import qualify_and_capture_lead
             await qualify_and_capture_lead.ainvoke({
                 "phone": clean_phone,
-                "notes": "Requested 1-on-1 Admissions Discovery Call via fast path"
+                "course_interest": active_course,
+                "notes": f"Requested 1-on-1 Admissions Discovery Call via fast path ({active_course or 'General'})"
             })
+            step3_line = f"3. *Course Track:* *{active_course}* (confirmed)\n\n" if active_course else "3. *Course Track of interest* (or reply 'Not sure yet')\n\n"
             response = (
-                "📅 *Book Your 1-on-1 Admissions Discovery Call*\n\n"
+                f"📅 *Book Your 1-on-1 Admissions Discovery Call{course_for_heading}*\n\n"
                 "I'd love to set up your complimentary 15-minute 1-on-1 Strategy Session with a Senior TekTutors Admissions Advisor! 🎯\n\n"
                 "During this private consultation, we will:\n"
                 "• Review your current background & career aspirations\n"
-                "• Recommend the optimal learning track for your target salary\n"
+                f"• Map out your personalized *{active_course or 'TekTutors'}* learning roadmap\n"
                 "• Walk you through our live 1-on-1 industry mentor format & practical projects\n"
                 "• Answer any questions about our flexible schedule and tuition\n\n"
                 "🎁 *Special Bonus:* Booking a call reserves a *Free 1-on-1 CV Optimization & LinkedIn Audit* (valued at ₦35,000) upon enrollment!\n\n"
                 "👉 *To lock in your call slot, please reply with:*\n"
                 "1. *Your Full Name*\n"
                 "2. *Preferred Time & Day* (e.g., Tomorrow at 2:00 PM)\n"
-                "3. *Course Track of interest* (or reply 'Not sure yet')\n\n"
+                f"{step3_line}"
                 f"You can also secure your enrollment directly anytime at:\n🔗 {REGISTRATION_URL}"
             )
             elapsed_ms = (time.time() - start_time) * 1000
@@ -613,7 +967,7 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
                 "fast_path": True,
                 "tokens_saved": 1050
             }
-            cache_query_response(norm_key, res_dict)
+            cache_query_response(cache_key, res_dict)
             return res_dict
 
     # 2. Payment Plans & Month-to-Month Tuition Fast Path
@@ -622,11 +976,12 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
             from app.tools import qualify_and_capture_lead
             await qualify_and_capture_lead.ainvoke({
                 "phone": clean_phone,
-                "notes": "Inquired about flexible payment plans via fast path"
+                "course_interest": active_course,
+                "notes": f"Inquired about flexible payment plans via fast path ({active_course or 'General'})"
             })
             response = (
-                "💳 *TekTutors Flexible Tuition & Payment Plans*\n\n"
-                "We believe quality tech training should be accessible, empowering, and completely risk-free. Here are our flexible options:\n\n"
+                f"💳 *TekTutors Flexible Tuition & Payment Plans{course_for_heading}*\n\n"
+                f"We believe quality tech training in *{active_course or 'our practical pathways'}* should be accessible, empowering, and completely risk-free. Here are our flexible options:\n\n"
                 f"1️⃣ *Flexible Month-to-Month Plan (Most Popular):*\n"
                 f"• *{STANDARD_MONTHLY_FEE} / month* — pay as you learn with zero financial pressure\n"
                 "• Zero long-term debt or huge upfront lump sum; cancel anytime\n"
@@ -638,7 +993,7 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
                 "🎁 *Fast-Action Perk:* All students build 3 employer-ready capstones and receive job placement coaching.\n\n"
                 f"👉 *Ready to get started? Enroll securely on our official portal:*\n"
                 f"🔗 {REGISTRATION_URL}\n\n"
-                "Which course track would you like to enroll in? (Reply with a track number 1-6 or course name!)"
+                f"{course_cta_prompt}"
             )
             elapsed_ms = (time.time() - start_time) * 1000
             await log_cost_savings(clean_phone, "fast_path_payment_plans", tokens_saved=950, latency_ms=elapsed_ms)
@@ -648,7 +1003,7 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
                 "fast_path": True,
                 "tokens_saved": 950
             }
-            cache_query_response(norm_key, res_dict)
+            cache_query_response(cache_key, res_dict)
             return res_dict
 
     # 3. Direct Human Escalation Fast Path
@@ -683,11 +1038,12 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
             from app.tools import qualify_and_capture_lead
             await qualify_and_capture_lead.ainvoke({
                 "phone": clean_phone,
-                "notes": "Fast-path payment & registration link request"
+                "course_interest": active_course,
+                "notes": f"Fast-path payment & registration link request ({active_course or 'General'})"
             })
             response = (
-                "🎯 *Ready to accelerate your career with TekTutors?*\n\n"
-                f"You can register and complete your enrollment securely online here:\n"
+                f"🎯 *Ready to Enroll in {active_course or 'TekTutors'}?*\n\n"
+                f"You can register and complete your *{active_course or 'course'}* enrollment securely online here:\n"
                 f"👉 *Official Portal:* {REGISTRATION_URL}\n\n"
                 "💳 *Accepted Payment Options on Portal:*\n"
                 "• Instant Bank Transfer\n"
@@ -719,36 +1075,7 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
     if email_match and (any(kw in lower_text for kw in email_trigger_keywords) or is_standalone_email):
         extracted_email = email_match.group(0)
         from app.tools import qualify_and_capture_lead
-        # 1. Detect target course from current text
-        detected_course = detect_target_course(lower_text)
-
-        # 2. If not found in current message (e.g. user just supplied their email), look up recent conversation or lead's prior course_interest
-        if not detected_course:
-            try:
-                from app.database import AsyncSessionLocal
-                from app.models import Lead, Conversation, Message
-                from sqlalchemy import select, desc
-                async with AsyncSessionLocal() as db:
-                    # Check recent messages in the conversation first
-                    conv_rec = (await db.execute(select(Conversation).where(Conversation.phone == clean_phone).limit(1))).scalars().first()
-                    if conv_rec:
-                        recent_msgs = (await db.execute(select(Message).where(Message.conversation_id == conv_rec.id).order_by(desc(Message.id)).limit(8))).scalars().all()
-                        for m in recent_msgs:
-                            c_found = detect_target_course(m.body or "")
-                            if c_found:
-                                detected_course = c_found
-                                break
-
-                    # If still not found, check lead's recorded course_interest
-                    if not detected_course:
-                        lead_rec = (await db.execute(select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1))).scalars().first()
-                        if lead_rec and lead_rec.course_interest:
-                            norm_interest = normalize_course_name(lead_rec.course_interest)
-                            if norm_interest:
-                                detected_course = norm_interest
-            except Exception as e:
-                logger.warning(f"Fast-path curriculum course resolution note: {e}")
-
+        detected_course = active_course or detect_target_course(lower_text)
         course_label, syllabus_data = get_course_syllabus(detected_course)
 
         await qualify_and_capture_lead.ainvoke({
@@ -823,32 +1150,7 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
         if re.search(pat, lower_text) and not email_match:
             from app.tools import qualify_and_capture_lead
 
-            # Detect if a specific course was requested
-            detected_course = detect_target_course(lower_text)
-            if not detected_course:
-                try:
-                    from app.database import AsyncSessionLocal
-                    from app.models import Lead, Conversation, Message
-                    from sqlalchemy import select, desc
-                    async with AsyncSessionLocal() as db:
-                        conv_rec = (await db.execute(select(Conversation).where(Conversation.phone == clean_phone).limit(1))).scalars().first()
-                        if conv_rec:
-                            recent_msgs = (await db.execute(select(Message).where(Message.conversation_id == conv_rec.id).order_by(desc(Message.id)).limit(8))).scalars().all()
-                            for m in recent_msgs:
-                                c_found = detect_target_course(m.body or "")
-                                if c_found:
-                                    detected_course = c_found
-                                    break
-
-                        if not detected_course:
-                            lead_rec = (await db.execute(select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1))).scalars().first()
-                            if lead_rec and lead_rec.course_interest:
-                                norm_interest = normalize_course_name(lead_rec.course_interest)
-                                if norm_interest:
-                                    detected_course = norm_interest
-                except Exception as e:
-                    logger.warning(f"Fast-path syllabus overview course resolution note: {e}")
-
+            detected_course = active_course or detect_target_course(lower_text)
             target_course, syllabus_data = get_course_syllabus(detected_course)
 
             await qualify_and_capture_lead.ainvoke({
@@ -887,11 +1189,11 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
     if num_match or other_courses_match:
         # Check active conversation context before assuming this is Track 1-6!
         last_asst_body = ""
-        active_course_context = None
+        active_course_context = active_course
         has_catalog_menu_prompt = False
         try:
             from app.database import AsyncSessionLocal
-            from app.models import Conversation, Message, Lead
+            from app.models import Conversation, Message
             from sqlalchemy import select, desc
             async with AsyncSessionLocal() as db:
                 conv_rec = (await db.execute(select(Conversation).where(Conversation.phone == clean_phone).limit(1))).scalars().first()
@@ -900,19 +1202,12 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
                         select(Message)
                         .where(Message.conversation_id == conv_rec.id)
                         .order_by(desc(Message.id))
-                        .limit(8)
+                        .limit(6)
                     )).scalars().all()
                     for m in recent_msgs:
                         if m.sender == "assistant" and not last_asst_body:
                             last_asst_body = m.body or ""
-                        if not active_course_context:
-                            c_found = detect_target_course(m.body or "")
-                            if c_found:
-                                active_course_context = c_found
-                    if not active_course_context:
-                        lead_rec = (await db.execute(select(Lead).where(Lead.phone == clean_phone).order_by(desc(Lead.id)).limit(1))).scalars().first()
-                        if lead_rec and lead_rec.course_interest:
-                            active_course_context = normalize_course_name(lead_rec.course_interest) or lead_rec.course_interest
+                            break
         except Exception as e:
             logger.warning(f"Context resolution note in fast path: {e}")
 
@@ -935,7 +1230,7 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
 
         # If the assistant specifically asked a 2-option question (e.g. 1: Email syllabus vs 2: Book call)
         if is_two_option_prompt and not has_catalog_menu_prompt:
-            target_course = active_course_context or "Machine Learning with Python"
+            target_course = active_course_context or "Data Analytics & BI Accelerator"
             if raw_num == 1:
                 response = (
                     f"📧 *Awesome! Please share your Email Address*\n\n"
@@ -972,7 +1267,7 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
 
         # If user is in an active course conversation (e.g. discussing Machine Learning) and did NOT receive the 6-track catalog menu,
         # do NOT intercept with Track 1-6! Route to AI Model so it answers in context.
-        if active_course_context and active_course_context != "Data Analytics & BI Accelerator" and not has_catalog_menu_prompt:
+        if active_course_context and active_course_context != "Data Analytics & BI Accelerator" and not has_catalog_menu_prompt and not re.search(r"\b(track|course)\s*[1-6]\b", lower_text):
             logger.info(f"User in active course context ({active_course_context}) replied '{text_clean}' - routing to AI Model.")
             return None
 
@@ -1024,10 +1319,11 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
         track = TRACK_INFO.get(track_num)
         if track:
             from app.tools import qualify_and_capture_lead
+            canonical_tr = normalize_course_name(track["title"]) or track["title"]
             await qualify_and_capture_lead.ainvoke({
                 "phone": clean_phone,
-                "course_interest": track["title"],
-                "notes": f"Selected Track {track_num} via fast path"
+                "course_interest": canonical_tr,
+                "notes": f"Selected Track {track_num} ({canonical_tr}) via fast path"
             })
             response = (
                 f"🎯 *Excellent choice! Track {track_num}: {track['title']}*\n\n"
@@ -1079,7 +1375,7 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
                 "fast_path": True,
                 "tokens_saved": 800
             }
-            cache_query_response(norm_key, res_dict)
+            cache_query_response(cache_key, res_dict)
             return res_dict
 
     # 6. Career Background & Transition Fast Path (Banking, Accounting, Beginners, Zero-Coding)
@@ -1088,10 +1384,23 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
             from app.tools import qualify_and_capture_lead
             await qualify_and_capture_lead.ainvoke({
                 "phone": clean_phone,
-                "notes": f"Inquired about career transition/background: {text_clean[:60]}"
+                "course_interest": active_course,
+                "notes": f"Inquired about career transition/background ({active_course or 'General'}): {text_clean[:60]}"
             })
             is_finance = bool(re.search(r"\b(bank|account|finance|audit|econ)", lower_text))
-            if is_finance:
+            if active_course:
+                _, syl_info = get_course_syllabus(active_course)
+                mod_preview = "\n".join([f"• {m}" for m in syl_info.get("modules", [])[:3]])
+                response = (
+                    f"🌟 *You can 100% succeed in {active_course} with TekTutors!*\n\n"
+                    f"Over 70% of our learners start *{active_course}* as complete beginners or career switchers. Here is how we ensure your success:\n\n"
+                    f"• *Private 1-on-1 Mentorship:* Your dedicated mentor teaches *{active_course}* from the ground up at your exact pace ({syl_info.get('duration', 'Flexible pace')}).\n"
+                    f"• *Core Foundation Modules:*\n{mod_preview}\n"
+                    f"• *3 Employer-Ready Capstones:* You build a practical *{active_course}* portfolio to showcase to recruiters.\n\n"
+                    f"👉 *Reply with your Email Address* so I can send you the complete *{active_course}* beginner-to-pro syllabus PDF, or register directly at:\n"
+                    f"🔗 {REGISTRATION_URL}"
+                )
+            elif is_finance:
                 response = (
                     "📊 *Perfect fit for Banking & Financial Professionals!*\n\n"
                     "Many of our most successful learners come from accounting, banking, and audit backgrounds. For your career path, we highly recommend:\n\n"
@@ -1117,7 +1426,7 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
                 "fast_path": True,
                 "tokens_saved": 1100
             }
-            cache_query_response(norm_key, res_dict)
+            cache_query_response(cache_key, res_dict)
             return res_dict
 
     # 7. Laptop & System Hardware Requirements Fast Path
@@ -1125,12 +1434,12 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
         if re.search(pat, lower_text):
             phone_note = "\n\n📱 *Can I learn on my phone?*\nWhile you can attend video calls on a phone, practical hands-on exercises require a laptop or PC to run professional tools (Power BI, Python, SQL, Excel)." if any(w in lower_text for w in ["phone", "mobile"]) else ""
             response = (
-                "💻 *Laptop & System Requirements for TekTutors Training:*\n\n"
+                f"💻 *Laptop & System Requirements for {active_course or 'TekTutors Training'}:*\n\n"
                 "You only need a standard personal laptop to get started:\n"
                 "• **Operating System:** Windows 10/11, macOS, or Linux\n"
                 "• **Memory (RAM):** 4GB minimum (8GB recommended for smooth multitasking)\n"
                 "• **Internet:** Reliable connection for live 1-on-1 video mentoring sessions\n\n"
-                "💡 *All software is free:* Tools like Power BI Desktop, VS Code, Python/Jupyter, and MySQL are completely free. Your 1-on-1 mentor will guide you step-by-step through installing everything in session 1!"
+                "💡 *All software is free:* Your 1-on-1 mentor will guide you step-by-step through installing all required software in Session 1!"
                 f"{phone_note}\n\n"
                 f"Ready to begin? Complete your registration online:\n🔗 {REGISTRATION_URL}"
             )
@@ -1142,20 +1451,20 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
                 "fast_path": True,
                 "tokens_saved": 950
             }
-            cache_query_response(norm_key, res_dict)
+            cache_query_response(cache_key, res_dict)
             return res_dict
 
     # 8. Schedule, Weekend Classes & Working Professionals Fast Path
     for pat in SCHEDULE_PATTERNS:
         if re.search(pat, lower_text):
             response = (
-                "⏰ *Flexible Schedule for Busy Working Professionals:*\n\n"
-                "Because your training is **live 1-on-1 with a private mentor**, your schedule is 100% tailored to you!\n\n"
+                f"⏰ *Flexible Schedule for Busy Working Professionals{course_for_heading}:*\n\n"
+                f"Because your *{active_course or 'TekTutors'}* training is **live 1-on-1 with a private mentor**, your schedule is 100% tailored to you!\n\n"
                 "• **Weekend Options:** Saturday and Sunday sessions available (morning, afternoon, or evening).\n"
                 "• **Weekday Evenings:** After-work sessions available (e.g. 7:00 PM - 9:00 PM).\n"
                 "• **Pace:** Typically 3-5 hours of dedicated practice per week.\n"
                 "• **Never Fall Behind:** If an emergency comes up, simply reschedule with your mentor in advance.\n\n"
-                "Would you prefer weekend sessions or weekday evening sessions?"
+                f"Would you prefer weekend sessions or weekday evening sessions for *{active_course or 'your training'}*?"
             )
             elapsed_ms = (time.time() - start_time) * 1000
             await log_cost_savings(clean_phone, "fast_path_schedule", tokens_saved=950, latency_ms=elapsed_ms)
@@ -1165,20 +1474,20 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
                 "fast_path": True,
                 "tokens_saved": 950
             }
-            cache_query_response(norm_key, res_dict)
+            cache_query_response(cache_key, res_dict)
             return res_dict
 
     # 9. International Payments & Currency Fast Path (USD, GBP, etc.)
     for pat in INTERNATIONAL_PAYMENT_PATTERNS:
         if re.search(pat, lower_text):
             response = (
-                "🌍 *International Students & Foreign Currency Payments:*\n\n"
+                f"🌍 *International Students & Foreign Currency Payments{course_for_heading}:*\n\n"
                 "Yes, we welcome learners globally! Our training is 100% online live via interactive screen sharing.\n\n"
                 "• **Tuition Rate:** Approximately **$75 - $80 USD / month** (equivalent to ₦100,000 NGN/month).\n"
                 "• **Payment Methods:** You can pay with any international Mastercard, Visa, or debit card on our secure portal.\n"
                 "• **Billing:** Month-to-month flexible billing with zero long-term commitments.\n\n"
                 f"👉 *Register securely online:* {REGISTRATION_URL}\n\n"
-                "Which skill track would you like to enroll in?"
+                f"{course_cta_prompt}"
             )
             elapsed_ms = (time.time() - start_time) * 1000
             await log_cost_savings(clean_phone, "fast_path_international_payment", tokens_saved=950, latency_ms=elapsed_ms)
@@ -1188,20 +1497,20 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
                 "fast_path": True,
                 "tokens_saved": 950
             }
-            cache_query_response(norm_key, res_dict)
+            cache_query_response(cache_key, res_dict)
             return res_dict
 
     # 10. Certification & Job Support Fast Path
     for pat in CERTIFICATION_PATTERNS:
         if re.search(pat, lower_text):
             response = (
-                "🎓 *Certification & Career Placement Support:*\n\n"
-                "Every student at TekTutors graduates with verifiable, employer-recognized credentials:\n\n"
-                "• **Accredited Certificate:** Issued upon successful capstone project completion.\n"
+                f"🎓 *Certification & Career Placement Support{course_for_heading}:*\n\n"
+                f"Every *{active_course or 'TekTutors'}* student graduates with verifiable, employer-recognized credentials:\n\n"
+                f"• **Accredited Certificate:** Official TekTutors Certificate in *{active_course or 'your chosen track'}* issued upon capstone completion.\n"
                 "• **3 Portfolio Projects:** Real-world datasets hosted on your GitHub / LinkedIn to prove your expertise to employers.\n"
                 "• **Career Guidance:** 1-on-1 resume optimization, LinkedIn profile review, and mock interview coaching.\n\n"
                 f"👉 *Start your journey today:* {REGISTRATION_URL}\n\n"
-                "Which course track would you like to get certified in?"
+                f"{course_cta_prompt}"
             )
             elapsed_ms = (time.time() - start_time) * 1000
             await log_cost_savings(clean_phone, "fast_path_certification", tokens_saved=950, latency_ms=elapsed_ms)
@@ -1211,10 +1520,48 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
                 "fast_path": True,
                 "tokens_saved": 950
             }
-            cache_query_response(norm_key, res_dict)
+            cache_query_response(cache_key, res_dict)
             return res_dict
 
-    # 11. Direct Course Inquiries by Track Name Fast Path
+    # 11. Direct Course Inquiries by Specialized or Core Track Name Fast Path
+    explicit_in_query = detect_target_course(text_clean)
+    if explicit_in_query and explicit_in_query not in (
+        "Data Analytics & BI Accelerator",
+        "Excel for Data Analysis & Business Modeling",
+        "SQL & Enterprise Database Analytics",
+        "Power BI & Business Intelligence",
+        "Applied Python for Data Analysis & AI",
+    ) and not any(w in lower_text for w in ["backpropagation", "neural network"]):
+        from app.tools import qualify_and_capture_lead
+        _, syl_info = get_course_syllabus(explicit_in_query)
+        await qualify_and_capture_lead.ainvoke({
+            "phone": clean_phone,
+            "course_interest": explicit_in_query,
+            "notes": f"Inquired about {explicit_in_query} via fast path"
+        })
+        mod_bullets = "\n".join([f"• *{m.split(':')[0].strip()}:* {':'.join(m.split(':')[1:]).strip() if ':' in m else m}" for m in syl_info.get("modules", [])])
+        response = (
+            f"🎯 *{explicit_in_query} (1-on-1 Mentorship)*\n\n"
+            f"Our *{explicit_in_query}* program ({syl_info['duration']}) is 100% practical, project-driven, and delivered via dedicated private 1-on-1 mentorship with an industry expert.\n\n"
+            f"📚 *Curriculum Modules You Will Master:*\n{mod_bullets}\n\n"
+            f"⏱️ *Duration:* {syl_info['duration']}\n"
+            f"💵 *Tuition:* {STANDARD_MONTHLY_FEE} / month (or *₦90,000 upfront* with 10% discount!)\n"
+            f"📌 *Prerequisites:* {syl_info['prerequisites']}\n\n"
+            f"👉 *Register & Enroll Here:* {REGISTRATION_URL}\n\n"
+            f"To personalize your *{explicit_in_query}* roadmap:\n"
+            f"*Do you have prior experience in this area, or are you starting from scratch?* (Reply with your *Email Address* to receive the full *{explicit_in_query}* syllabus PDF!)"
+        )
+        elapsed_ms = (time.time() - start_time) * 1000
+        await log_cost_savings(clean_phone, "fast_path_specialized_course", tokens_saved=1100, latency_ms=elapsed_ms)
+        res_dict = {
+            "response": response,
+            "tool_logs": ["search_tektutors_courses", "qualify_and_capture_lead"],
+            "fast_path": True,
+            "tokens_saved": 1100
+        }
+        cache_query_response(cache_key, res_dict)
+        return res_dict
+
     for pat, tr_num in COURSE_QUERY_PATTERNS:
         if re.search(pat, lower_text) and not any(w in lower_text for w in ["backpropagation", "neural network"]):
             track = TRACK_INFO.get(tr_num)
@@ -1234,6 +1581,13 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
                     f"🔗 {REGISTRATION_URL}"
                 )
             elif track:
+                from app.tools import qualify_and_capture_lead
+                canonical_tr = normalize_course_name(track["title"]) or track["title"]
+                await qualify_and_capture_lead.ainvoke({
+                    "phone": clean_phone,
+                    "course_interest": canonical_tr,
+                    "notes": f"Inquired about {canonical_tr} via fast path"
+                })
                 response = (
                     f"🎯 *Track {tr_num}: {track['title']}*\n\n"
                     f"This program is 100% practical, project-driven, and delivered via personalized 1-on-1 mentorship with an experienced industry mentor.\n\n"
@@ -1257,14 +1611,14 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
                 "fast_path": True,
                 "tokens_saved": 1100
             }
-            cache_query_response(norm_key, res_dict)
+            cache_query_response(cache_key, res_dict)
             return res_dict
 
     # 12. Tuition Discounts, Scholarships & Promo Codes Fast Path
     for pat in DISCOUNT_PROMO_PATTERNS:
         if re.search(pat, lower_text):
             response = (
-                "🎁 *Exclusive TekTutors Tuition Discounts & Savings!*\n\n"
+                f"🎁 *Exclusive TekTutors Tuition Discounts & Savings{course_for_heading}!*\n\n"
                 "We want to ensure financial constraints never hold you back from acquiring high-income tech skills. Here are our active offers:\n\n"
                 "1️⃣ *10% Full-Payment Discount:*\n"
                 "Pay your course tuition upfront and instantly save *10%* — pay just *₦90,000* instead of ₦100,000 (Save ₦10,000)!\n\n"
@@ -1276,7 +1630,7 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
                 "• Flexible ₦100,000/month pay-as-you-learn plan with zero debt\n\n"
                 f"👉 *Claim your discount and enroll securely online:*\n"
                 f"🔗 {REGISTRATION_URL}\n\n"
-                "Which skill track would you like to enroll in? (Reply with a track number 1-6 or course name!)"
+                f"{course_cta_prompt}"
             )
             elapsed_ms = (time.time() - start_time) * 1000
             await log_cost_savings(clean_phone, "fast_path_discount_promo", tokens_saved=1050, latency_ms=elapsed_ms)
@@ -1286,7 +1640,7 @@ async def _raw_check_fast_path(phone: str, user_text: str) -> Optional[Dict[str,
                 "fast_path": True,
                 "tokens_saved": 1050
             }
-            cache_query_response(norm_key, res_dict)
+            cache_query_response(cache_key, res_dict)
             return res_dict
 
     # 13. Location, Physical Address & Training Format Fast Path
